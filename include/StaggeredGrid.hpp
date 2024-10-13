@@ -11,7 +11,8 @@ enum Component{
     U = 0,
     V = 1,
     W = 2,
-    P = 3
+    P = 3,
+    N_COMPONENTS = 4
 };
 
 /**
@@ -38,9 +39,10 @@ public:
             _nx(nx),
             _ny(ny),
             _nz(nz) {
-        auto dim = nx * ny * nz * N_COMPONENTS;
+        auto dim = nx * ny * nz * Component::N_COMPONENTS;
         _entries.resize(dim);
         std::fill(_entries.begin(), _entries.end(), 0);
+
     }
 
     /**

@@ -17,9 +17,4 @@ enum class Addressing_T {
  */
 typedef float Real;
 
-/**
- * Constant value of number of unknown components
- */
-const int N_COMPONENTS = 4;
-
 #endif //AEROHPC_A_TRAITS_H
