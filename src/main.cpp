@@ -1,25 +1,28 @@
-#include "../include/utils.hpp"
+#include <utils.hpp>
+#include <iostream>
 
-
+using namespace std;
 
 int main(){
-    float spatial_discr = 0.1;
-    Model<float> model(1.0, 1.0, 1.0, spatial_discr);
-    float nodes = model.get_nodes_number();
-    //size_t nodi = model.get_nodes_number();
-    std::cout << "Number of nodes: " << "dummy" << std::endl;
-    std::vector<float> u0 = {1.0, 1.0, 1.0}, u1 = {2.0, 2.0, 2.0};
-    std::vector<size_t> node = {1,1,1};
-    model.assign_cost_field(u0);
-    model.assign_cost_BC(u1);
-    std::cout << "Size of u_x: " << model.u_x.size()*model.u_x[0].size() << std::endl;
-    std::cout << "value ux node (2,3,4): " << model.u_x[3][21] << std::endl;
-    std::cout << "du_dx: " << model.du_dx(node, spatial_discr)[0] << std::endl;
-    std::cout << "du_dy: " << model.du_dy(node, spatial_discr)[0] << std::endl;
-    std::cout << "du_dz: " << model.du_dz(node, spatial_discr)[0] << std::endl;
-    std::cout << "laplacian u: " << model.laplacian_u(node, spatial_discr)[0] << std::endl;
-    //std::cout << "p_derivative: " << model.p_derivative(node, spatial_discr) << std::endl;
-    std::cout << "u_interp_x: " << model.u_interp_x(node)[0] << std::endl;
-    std::cout << "u_interp_y: " << model.u_interp_y(node)[0] << std::endl;
+    //Random stuff to see if everything works (hopefully correctly)
+    constexpr int lx=3;
+    constexpr int ly=3;
+    constexpr int lz=3;
+
+    StaggeredGrid<Real,Addressing_T::STANDARD> grid(lx,ly,lz);
+    for(int i=0;i<lx;i++){
+        for(int j=0;j<ly;j++){
+            for(int k=0;k<lz;k++){
+                grid(Component::U,i,j,k) = i*j*k;
+                grid(Component::V,i,j,k) = i*j*k;
+                grid(Component::W,i,j,k) = i*j*k;
+                grid(Component::P,i,j,k) = i*j*k;
+            }
+        }
+    }
+
+
+    cout << utils::du_dx(grid,1,1,1) << endl;
+    cout << utils::get_interpolation(grid,Component::U,Component::V,1,1,1) << endl;
     return 0;
 }
