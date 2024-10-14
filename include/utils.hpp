@@ -1,53 +1,96 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#pragma once
+#include <StaggeredGrid.hpp>
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <fstream>
-#include <math.h>
-
-template<typename T>
-class Model{
-    public:
-    Model(const T x_length, const T y_length, const T z_length, const T spatial_discr):
-        x_Length(x_length), y_Length(y_length), z_Length(z_length), spatial_discr(spatial_discr)
+namespace utils
+{
+    constexpr int CHANGE_THIS = 3;
+    // Utils for first order derivatives
+    inline Real du_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
     {
-       size_t nodes = get_nodes_number();
+        return (grid(Component::U, i + 1, j, k) - grid(Component::U, i - 1, j, k)) / (CHANGE_THIS);
+    }
 
-    };
+    inline Real du_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::U, i, j + 1, k) - grid(Component::U, i, j - 1, k)) / (CHANGE_THIS);
+    }
 
-    size_t get_nodes_number();
+    inline Real du_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::U, i, j, k + 1) - grid(Component::U, i, j, k - 1)) / (CHANGE_THIS);
+    }
 
-    std::vector<T> du_dx(std::vector<size_t>& node, T spatial_discr);
-    std::vector<T> du_dy(std::vector<size_t>& node, T spatial_discr);
-    std::vector<T> du_dz(std::vector<size_t>& node, T spatial_discr);
-    std::vector<T> p_derivative(std::vector<size_t>& node, T spatial_discr);
+    inline Real dv_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::V, i + 1, j, k) - grid(Component::V, i - 1, j, k)) / (CHANGE_THIS);
+    }
 
-    std::vector<T> u_interp_x(std::vector<size_t>& node);
-    std::vector<T> u_interp_y(std::vector<size_t>& node);
-    std::vector<T> u_interp_z(std::vector<size_t>& node);
+    inline Real dv_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::V, i, j + 1, k) - grid(Component::V, i, j - 1, k)) / (CHANGE_THIS);
+    }
 
-    std::vector<T> laplacian_u(std::vector<size_t>& node, T spatial_discr);
+    inline Real dv_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::V, i, j, k + 1) - grid(Component::V, i, j, k - 1)) / (CHANGE_THIS);
+    }
 
-    void assign_cost_field(std::vector<T> u0);
+    inline Real dw_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::W, i + 1, j, k) - grid(Component::W, i - 1, j, k)) / (CHANGE_THIS);
+    }
 
-    void assign_cost_BC(std::vector<T> u0);
+    inline Real dw_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::W, i, j + 1, k) - grid(Component::W, i, j - 1, k)) / (CHANGE_THIS);
+    }
 
+    inline Real dw_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    {
+        return (grid(Component::W, i, j, k + 1) - grid(Component::W, i, j, k - 1)) / (CHANGE_THIS);
+    }
 
-
-    std::vector<std::vector<T>> u_x, u_y, u_z, pressure;
-    size_t x_nodes, y_nodes, z_nodes;
-
-    private:
-    T x_Length, y_Length, z_Length, spatial_discr;
-    
-
-};
-
-
-
-
-
-
-#endif //UTILS_HPP
+    // Util for interpolation between staggered grids
+    inline Real get_interpolation(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component to, Component from, int i, int j, int k)
+    {
+        switch (to)
+        {
+        case Component::U:
+            if (from == Component::V)
+            {
+                // Interpolate from V grid to U grid
+                return (grid(Component::V, i, j, k) + grid(Component::V, i + 1, j, k) + grid(Component::V, i, j - 1, k) + grid(Component::V, i + 1, j - 1, k)) / 4;
+            }
+            else
+            {
+                // Interpolate from W grid to U grid
+                return (grid(Component::W, i, j, k) + grid(Component::W, i + 1, j, k) + grid(Component::W, i, j, k - 1) + grid(Component::W, i + 1, j, k - 1)) / 4;
+            }
+            break;
+        case Component::V:
+            if (from == Component::U)
+            {
+                // Interpolate from U grid to V grid
+                return (grid(Component::U, i, j, k) + grid(Component::U, i, j + 1, k) + grid(Component::U, i - 1, j, k) + grid(Component::U, i - 1, j + 1, k)) / 4;
+            }
+            else
+            {
+                // Interpolate from W grid to V grid
+                return (grid(Component::W, i, j, k) + grid(Component::W, i, j + 1, k) + grid(Component::W, i, j, k - 1) + grid(Component::W, i, j + 1, k - 1)) / 4;
+            }
+            break;
+        case Component::W:
+            if (from == Component::U)
+            {
+                // Interpolate from U grid to W grid
+                return (grid(Component::U, i, j, k) + grid(Component::U, i, j, k + 1) + grid(Component::U, i - 1, j, k) + grid(Component::U, i - 1, j, k + 1)) / 4;
+            }
+            else
+            {
+                // Interpolate from V grid to W grid
+                return (grid(Component::V, i, j, k) + grid(Component::V, i, j, k + 1) + grid(Component::V, i, j - 1, k) + grid(Component::V, i, j - 1, k + 1)) / 4;
+            }
+            break;
+        }
+    }
+}
