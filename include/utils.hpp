@@ -14,39 +14,35 @@ namespace utils
     }
 
     template <typename T, Addressing_T A>
-    inline T d_dy(const StaggeredGrid<T, A> &grid, int i, int j, int k)
+    inline T d_dy(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j + 1, k) - grid(c, i, j - 1, k)) / (CHANGE_THIS);
     }
 
     template <typename T, Addressing_T A>
-    inline T d_dz(const StaggeredGrid<T, A> &grid, int i, int j, int k)
+    inline T d_dz(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j, k + 1) - grid(c, i, j, k - 1)) / (CHANGE_THIS);
     }
 
     // Utils for second order derivatives
     template <typename T, Addressing_T A>
-    inline T d2_dx2(const StaggeredGrid<T, A> &grid,Component c, int i, int j, int k)
+    inline T d2_dx2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i - 1, j, k) - 2 * grid(c, i, j, k) + grid(c, i + 1, j, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
     template <typename T, Addressing_T A>
-    inline T d2_dy2(const StaggeredGrid<T, A> &grid, int i, int j, int k)
+    inline T d2_dy2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j - 1, k) - 2 * grid(c, i, j, k) + grid(c, i, j + 1, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
     template <typename T, Addressing_T A>
-    inline T d2_dz2(const StaggeredGrid<T, A> &grid, int i, int j, int k)
+    inline T d2_dz2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j, k - 1) - 2 * grid(c, i, j, k) + grid(c, i, j, k + 1)) / (CHANGE_THIS * CHANGE_THIS);
     }
-
-
-
-
 
     // Util for interpolation between staggered grids
     template <typename T, Addressing_T A>
