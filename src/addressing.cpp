@@ -61,7 +61,7 @@ public:
      * Operator that accesses the memory using a 3D view of the object
      */
     Real& operator()(const size_t i, const size_t j, const size_t k){
-        if constexpr(Order=ADDRESSING::STANDARD)
+        if constexpr(Order==ADDRESSING::STANDARD)
             return i + j*_ny + k*_nx*_ny;
     }
 
@@ -69,7 +69,7 @@ public:
      * Operator that accesses 3D view for read-only operations
      */
     const Real& operator()(const size_t i, const size_t j, const size_t k) const{
-        if constexpr(Order=ADDRESSING::STANDARD)
+        if constexpr(Order==ADDRESSING::STANDARD)
             return i + j*_nx + k*_nx*_ny;
     }
 
