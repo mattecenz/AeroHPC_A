@@ -3,7 +3,7 @@
 
 using namespace std;
 
-int main(){
+int main(int argc, char** argv){
     //Random stuff to see if everything works (hopefully correctly)
     constexpr int lx=3;
     constexpr int ly=3;
@@ -22,7 +22,8 @@ int main(){
     }
 
 
-    cout << utils::du_dx(grid,1,1,1) << endl;
-    cout << utils::get_interpolation(grid,Component::U,Component::V,1,1,1) << endl;
+    cout << utils::d_dx<Real,Addressing_T::STANDARD>(grid,Component::U,1,1,1) << endl;
+    cout << utils::d2_dz2<Real,Addressing_T::STANDARD>(grid,Component::W,1,1,1) << endl;
+    cout << utils::get_interpolation<Real,Addressing_T::STANDARD>(grid,Component::U,Component::V,1,1,1) << endl;
     return 0;
 }

@@ -1,57 +1,56 @@
-#pragma once
-#include <StaggeredGrid.hpp>
+#ifndef AEROHPC_A_UTILS_H
+#define AEROHPC_A_UTILS_H
 
+#include <StaggeredGrid.hpp>
 namespace utils
 {
     constexpr int CHANGE_THIS = 3;
+
     // Utils for first order derivatives
-    inline Real du_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    template <typename T, Addressing_T A>
+    inline T d_dx(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
-        return (grid(Component::U, i + 1, j, k) - grid(Component::U, i - 1, j, k)) / (CHANGE_THIS);
+        return (grid(c, i + 1, j, k) - grid(c, i - 1, j, k)) / (CHANGE_THIS);
     }
 
-    inline Real du_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    template <typename T, Addressing_T A>
+    inline T d_dy(const StaggeredGrid<T, A> &grid, int i, int j, int k)
     {
-        return (grid(Component::U, i, j + 1, k) - grid(Component::U, i, j - 1, k)) / (CHANGE_THIS);
+        return (grid(c, i, j + 1, k) - grid(c, i, j - 1, k)) / (CHANGE_THIS);
     }
 
-    inline Real du_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    template <typename T, Addressing_T A>
+    inline T d_dz(const StaggeredGrid<T, A> &grid, int i, int j, int k)
     {
-        return (grid(Component::U, i, j, k + 1) - grid(Component::U, i, j, k - 1)) / (CHANGE_THIS);
+        return (grid(c, i, j, k + 1) - grid(c, i, j, k - 1)) / (CHANGE_THIS);
     }
 
-    inline Real dv_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    // Utils for second order derivatives
+    template <typename T, Addressing_T A>
+    inline T d2_dx2(const StaggeredGrid<T, A> &grid,Component c, int i, int j, int k)
     {
-        return (grid(Component::V, i + 1, j, k) - grid(Component::V, i - 1, j, k)) / (CHANGE_THIS);
+        return (grid(c, i - 1, j, k) - 2 * grid(c, i, j, k) + grid(c, i + 1, j, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
-    inline Real dv_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    template <typename T, Addressing_T A>
+    inline T d2_dy2(const StaggeredGrid<T, A> &grid, int i, int j, int k)
     {
-        return (grid(Component::V, i, j + 1, k) - grid(Component::V, i, j - 1, k)) / (CHANGE_THIS);
+        return (grid(c, i, j - 1, k) - 2 * grid(c, i, j, k) + grid(c, i, j + 1, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
-    inline Real dv_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
+    template <typename T, Addressing_T A>
+    inline T d2_dz2(const StaggeredGrid<T, A> &grid, int i, int j, int k)
     {
-        return (grid(Component::V, i, j, k + 1) - grid(Component::V, i, j, k - 1)) / (CHANGE_THIS);
+        return (grid(c, i, j, k - 1) - 2 * grid(c, i, j, k) + grid(c, i, j, k + 1)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
-    inline Real dw_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
-    {
-        return (grid(Component::W, i + 1, j, k) - grid(Component::W, i - 1, j, k)) / (CHANGE_THIS);
-    }
 
-    inline Real dw_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
-    {
-        return (grid(Component::W, i, j + 1, k) - grid(Component::W, i, j - 1, k)) / (CHANGE_THIS);
-    }
 
-    inline Real dw_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, int i, int j, int k)
-    {
-        return (grid(Component::W, i, j, k + 1) - grid(Component::W, i, j, k - 1)) / (CHANGE_THIS);
-    }
+
 
     // Util for interpolation between staggered grids
-    inline Real get_interpolation(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component to, Component from, int i, int j, int k)
+    template <typename T, Addressing_T A>
+    inline T get_interpolation(const StaggeredGrid<T, A> &grid, Component to, Component from, int i, int j, int k)
     {
         switch (to)
         {
@@ -94,3 +93,4 @@ namespace utils
         }
     }
 }
+#endif
