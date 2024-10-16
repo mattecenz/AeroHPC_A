@@ -41,7 +41,7 @@ namespace utils
     }
 
     template <>
-    inline Real lap(const StaggeredGrid<Real,Addressing_T::STANDARD> &grid, Component c, int i,int j,int k){
+    Real lap(const StaggeredGrid<Real,Addressing_T::STANDARD> &grid, Component c, int i,int j,int k){
         return d2_dx2(grid,c,i,j,k)+d2_dy2(grid,c,i,j,k)+d2_dz2(grid,c,i,j,k);
     }
 
@@ -85,6 +85,29 @@ namespace utils
                 // Interpolate from V grid to W grid
                 return (grid(Component::V, i, j, k) + grid(Component::V, i, j, k + 1) + grid(Component::V, i, j - 1, k) + grid(Component::V, i, j - 1, k + 1)) / 4;
             }
+            break;
+        }
+    }
+
+    template <>
+    Real conv(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    {
+        switch (c)
+        {
+        case Component::U:
+            return grid(c, i, j, k) * d_dx(grid, c, i, j, k) +
+                get_interpolation(grid, Component::U, Component::V, i, j, k) * d_dy(grid, c, i, j, k) +
+                get_interpolation(grid, Component::U, Component::W, i, j, k) * d_dz(grid, c, i, j, k);
+            break;
+        case Component::V:
+            return get_interpolation(grid, Component::V, Component::U, i, j, k) * d_dx(grid, c, i, j, k) +
+                grid(c, i, j, k) * d_dy(grid, c, i, j, k) +
+                get_interpolation(grid, Component::V, Component::W, i, j, k) * d_dz(grid, c, i, j, k);
+            break;
+        case Component::W:
+            return get_interpolation(grid, Component::W, Component::U, i, j, k) * d_dx(grid, c, i, j, k) +
+                get_interpolation(grid, Component::W, Component::V, i, j, k) * d_dy(grid, c, i, j, k) +
+                grid(c, i, j, k) * d_dz(grid, c, i, j, k);
             break;
         }
     }

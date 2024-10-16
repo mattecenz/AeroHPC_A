@@ -71,15 +71,6 @@ namespace utils
     template <typename T, Addressing_T A>
     inline T d2_dz2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
 
-    /**
-    @param[in] grid Staggered grid
-    @param[in] c Component whose laplacian has to be computed
-    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
-    @return Laplacian evaluation in point (i,j,k)
-    @brief Computes the value of the laplacian in a point
-    */
-    template <typename T,Addressing_T A>
-    inline T lap(const StaggeredGrid<T,A> &grid, Component c, int i,int j,int k);
 
     /**
     @param[in] grid Staggered grid
@@ -88,10 +79,8 @@ namespace utils
     @return Laplacian evaluation in point (i,j,k)
     @brief Computes the value of the laplacian in a point
     */
-    template <typename T,Addressing_T A>
-    inline T div(const StaggeredGrid<T,A> &grid, Component c, int i,int j,int k){
-        return 
-    }
+    template <typename T, Addressing_T A>
+    inline T lap(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -103,5 +92,15 @@ namespace utils
     */
     template <typename T, Addressing_T A>
     inline T get_interpolation(const StaggeredGrid<T, A> &grid, Component to, Component from, int i, int j, int k);
+
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose convective term has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Convective term evaluation in point (i,j,k)
+    @brief Computes the value of convective term of the Navier-Stokes equation in a point
+    */
+    template <typename T, Addressing_T A>
+    inline T conv(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
 }
 #endif

@@ -25,5 +25,7 @@ int main(int argc, char** argv){
     cout << utils::d_dx<Real,Addressing_T::STANDARD>(grid,Component::U,1,1,1) << endl;
     cout << utils::d2_dz2<Real,Addressing_T::STANDARD>(grid,Component::W,1,1,1) << endl;
     cout << utils::get_interpolation<Real,Addressing_T::STANDARD>(grid,Component::U,Component::V,1,1,1) << endl;
+    cout << utils::conv<Real,Addressing_T::STANDARD>(grid,Component::U,1,1,1) << endl;
+
     return 0;
 }
