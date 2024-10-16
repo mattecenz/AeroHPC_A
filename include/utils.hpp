@@ -1,3 +1,8 @@
+/**
+@file utils.h
+@brief Math utilities
+*/
+
 #ifndef AEROHPC_A_UTILS_H
 #define AEROHPC_A_UTILS_H
 
@@ -6,45 +11,92 @@ namespace utils
 {
     constexpr int CHANGE_THIS = 3;
 
-    // Utils for first order derivatives
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose derivative has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return First derivative evaluation in point (i,j,k)
+    @brief Computes the value of the first order derivative in a point along the x direction
+    */
     template <typename T, Addressing_T A>
     inline T d_dx(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i + 1, j, k) - grid(c, i - 1, j, k)) / (CHANGE_THIS);
     }
 
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose derivative has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return First derivative evaluation in point (i,j,k)
+    @brief Computes the value of the first order derivative in a point along the y direction
+    */
     template <typename T, Addressing_T A>
     inline T d_dy(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j + 1, k) - grid(c, i, j - 1, k)) / (CHANGE_THIS);
     }
 
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose derivative has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return First derivative evaluation in point (i,j,k)
+    @brief Computes the value of the first order derivative in a point along the z direction
+    */
     template <typename T, Addressing_T A>
     inline T d_dz(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j, k + 1) - grid(c, i, j, k - 1)) / (CHANGE_THIS);
     }
 
-    // Utils for second order derivatives
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose derivative has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Second derivative evaluation in point (i,j,k)
+    @brief Computes the value of the second order derivative in a point along the x direction
+    */
     template <typename T, Addressing_T A>
     inline T d2_dx2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i - 1, j, k) - 2 * grid(c, i, j, k) + grid(c, i + 1, j, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose derivative has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Second derivative evaluation in point (i,j,k)
+    @brief Computes the value of the second order derivative in a point along the y direction
+    */
     template <typename T, Addressing_T A>
     inline T d2_dy2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j - 1, k) - 2 * grid(c, i, j, k) + grid(c, i, j + 1, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose derivative has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Second derivative evaluation in point (i,j,k)
+    @brief Computes the value of the second order derivative in a point along the z direction
+    */
     template <typename T, Addressing_T A>
     inline T d2_dz2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j, k - 1) - 2 * grid(c, i, j, k) + grid(c, i, j, k + 1)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
-    // Util for interpolation between staggered grids
+    /**
+    @param[in] grid Staggered grid
+    @param[in] to Destination grid of the interpolation
+    @param[in] from Source grid of the interpolation
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Interpolated value
+    @brief Computes the interpolation of a component from the grid "from" to the grid "to" in the point i,j,k of the "to" grid
+    */
     template <typename T, Addressing_T A>
     inline T get_interpolation(const StaggeredGrid<T, A> &grid, Component to, Component from, int i, int j, int k)
     {
