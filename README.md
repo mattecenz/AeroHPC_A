@@ -1,8 +1,10 @@
 # AeroHPC_A
 
-Compile in `src` folder with
+## How to compile
 
 ```
-g++ -o main main.cpp utils.cpp
-
+mkdir builds
+cd builds
+cmake ..
+make -j %n
 ```
