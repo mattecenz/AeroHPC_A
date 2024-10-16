@@ -222,7 +222,7 @@ public:
     ScalarsSection(std::string section_name, std::vector<entry_T> &values)
             : DataSection(section_name), _values(values) {}
 
-
+    // Overrided functions -------------------------------------------------------- //
     std::ostream &operator>>(std::ostream &output) override {
         // standard data field header
         output << "SCALARS " << _section_name << " " << _type_name << " " << Value_Size << "\n";
@@ -243,12 +243,16 @@ public:
         return output;
     }
 
+    size_t getSize() override { return _values.size(); }
+    // ---------------------------------------------------------------------------- //
+    
+    /**
+     * Setup the section values
+     */
     ScalarsSection &operator<<(std::vector<entry_T> &values) {
         _values = values;
         return *this;
     }
-
-    size_t getSize() override { return _values.size(); }
 
 protected:
 
