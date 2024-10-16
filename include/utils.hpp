@@ -70,6 +70,18 @@ namespace utils
     */
     template <Addressing_T A>
     inline Real d2_dz2(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
+
+
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose laplacian has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Laplacian evaluation in point (i,j,k)
+    @brief Computes the value of the laplacian in a point
+    */
+    template <Addressing_T A>
+    inline Real lap(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
+
     /**
     @param[in] grid Staggered grid
     @param[in] to Destination grid of the interpolation
@@ -80,5 +92,15 @@ namespace utils
     */
     template <Addressing_T A>
     inline Real get_interpolation(const StaggeredGrid<A> &grid, Component to, Component from, int i, int j, int k);
+
+    /**
+    @param[in] grid Staggered grid
+    @param[in] c Component whose convective term has to be computed
+    @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
+    @return Convective term evaluation in point (i,j,k)
+    @brief Computes the value of convective term of the Navier-Stokes equation in a point
+    */
+    template <typename T, Addressing_T A>
+    inline Real conv(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 }
 #endif
