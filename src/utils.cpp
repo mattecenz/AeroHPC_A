@@ -5,43 +5,43 @@ namespace utils
 {
 
     template <>
-    Real d_dx(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    Real d_dx(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i + 1, j, k) - grid(c, i - 1, j, k)) / (CHANGE_THIS);
     }
 
     template <>
-    Real d_dy(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    Real d_dy(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j + 1, k) - grid(c, i, j - 1, k)) / (CHANGE_THIS);
     }
 
     template <>
-    Real d_dz(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    Real d_dz(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j, k + 1) - grid(c, i, j, k - 1)) / (CHANGE_THIS);
     }
 
     template <>
-    Real d2_dx2(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    Real d2_dx2(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i - 1, j, k) - 2 * grid(c, i, j, k) + grid(c, i + 1, j, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
     template <>
-    Real d2_dy2(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    Real d2_dy2(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j - 1, k) - 2 * grid(c, i, j, k) + grid(c, i, j + 1, k)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
     template <>
-    Real d2_dz2(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
+    Real d2_dz2(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component c, int i, int j, int k)
     {
         return (grid(c, i, j, k - 1) - 2 * grid(c, i, j, k) + grid(c, i, j, k + 1)) / (CHANGE_THIS * CHANGE_THIS);
     }
 
     template <>
-    Real get_interpolation(const StaggeredGrid<Real, Addressing_T::STANDARD> &grid, Component to, Component from, int i, int j, int k)
+    Real get_interpolation(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component to, Component from, int i, int j, int k)
     {
         switch (to)
         {

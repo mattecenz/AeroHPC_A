@@ -11,10 +11,10 @@
  * Components of the problem
  */
 enum Component{
-    U = 0,
-    V = 1,
-    W = 2,
-    P = 3,
+    U = 0, // x-axis velocity
+    V = 1, // y-axis velocity
+    W = 2, // z-axis velocity
+    P = 3, // pressure
     N_COMPONENTS = 4
 };
 
@@ -28,7 +28,7 @@ enum Component{
  * For the moment the ordering is: first x-y plane as if it were a row-major matrix then move on the z axis
  *
  */
-template<typename Type, Addressing_T Addressing>
+template<Addressing_T Addressing>
 class StaggeredGrid {
 
 public:
@@ -51,12 +51,12 @@ public:
     /**
      * Operator that accesses the memory using a 3D view of the object
      */
-    Type &operator()(Component c, size_t i, size_t j, size_t k);
+    Real &operator()(Component c, size_t i, size_t j, size_t k);
 
     /**
      * Operator that accesses 3D view for read-only operations
      */
-    const Type &operator()(Component c, size_t i, size_t j, size_t k) const;
+    const Real &operator()(Component c, size_t i, size_t j, size_t k) const;
 
 private:
     /**

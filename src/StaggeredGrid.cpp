@@ -4,7 +4,7 @@
  * Define standard addressing methods for the StaggeredGrid class
  */
 template<>
-Real &StaggeredGrid<Real, Addressing_T::STANDARD>::operator()(const Component c,
+Real &StaggeredGrid<Addressing_T::STANDARD>::operator()(const Component c,
                                                               const size_t i,
                                                               const size_t j,
                                                               const size_t k) {
@@ -15,7 +15,7 @@ Real &StaggeredGrid<Real, Addressing_T::STANDARD>::operator()(const Component c,
  * Define standard addressing methods for the StaggeredGrid class
  */
 template<>
-const Real &StaggeredGrid<Real, Addressing_T::STANDARD>::operator()(const Component c,
+const Real &StaggeredGrid<Addressing_T::STANDARD>::operator()(const Component c,
                                                                     const size_t i,
                                                                     const size_t j,
                                                                     const size_t k) const {

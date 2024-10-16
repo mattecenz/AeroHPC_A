@@ -18,8 +18,8 @@ namespace utils
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the x direction
     */
-    template <typename T, Addressing_T A>
-    inline T d_dx(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real d_dx(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -28,8 +28,8 @@ namespace utils
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the y direction
     */
-    template <typename T, Addressing_T A>
-    inline T d_dy(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real d_dy(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -38,8 +38,8 @@ namespace utils
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the z direction
     */
-    template <typename T, Addressing_T A>
-    inline T d_dz(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real d_dz(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -48,8 +48,8 @@ namespace utils
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the x direction
     */
-    template <typename T, Addressing_T A>
-    inline T d2_dx2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real d2_dx2(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -58,8 +58,8 @@ namespace utils
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the y direction
     */
-    template <typename T, Addressing_T A>
-    inline T d2_dy2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real d2_dy2(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -68,8 +68,8 @@ namespace utils
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the z direction
     */
-    template <typename T, Addressing_T A>
-    inline T d2_dz2(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real d2_dz2(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
     /**
     @param[in] grid Staggered grid
     @param[in] to Destination grid of the interpolation
@@ -78,7 +78,7 @@ namespace utils
     @return Interpolated value
     @brief Computes the interpolation of a component from the grid "from" to the grid "to" in the point i,j,k of the "to" grid
     */
-    template <typename T, Addressing_T A>
-    inline T get_interpolation(const StaggeredGrid<T, A> &grid, Component to, Component from, int i, int j, int k);
+    template <Addressing_T A>
+    inline Real get_interpolation(const StaggeredGrid<A> &grid, Component to, Component from, int i, int j, int k);
 }
 #endif
