@@ -7,6 +7,9 @@
 
 #include <Traits.hpp>
 
+/**
+ * Components of the problem
+ */
 enum Component{
     U = 0,
     V = 1,
@@ -56,14 +59,23 @@ public:
     const Type &operator()(Component c, size_t i, size_t j, size_t k) const;
 
 private:
+    /**
+     * Nodes data
+     */
+    std::vector<Real> _entries;
 
-
-    std::vector<Type> _entries;
-
+    /**
+     * Number of nodes on x axis
+     */
     size_t _nx;
+    /**
+     * Number of nodes on y axis
+     */
     size_t _ny;
+    /**
+     * Number of nodes on z axis
+     */
     size_t _nz;
-
 };
 
 
