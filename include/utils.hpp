@@ -100,7 +100,7 @@ namespace utils
     @return Convective term evaluation in point (i,j,k)
     @brief Computes the value of convective term of the Navier-Stokes equation in a point
     */
-    template <typename T, Addressing_T A>
+    template <Addressing_T A>
     inline Real conv(const StaggeredGrid<A> &grid, Component c, int i, int j, int k);
 }
 #endif
