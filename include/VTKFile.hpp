@@ -4,6 +4,8 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <string>
+#include <fstream>
 
 // Preprocessing macros useful to checks whether the data type is supported ---- //
 template<typename T>
@@ -245,7 +247,7 @@ public:
 
     size_t getSize() override { return _values.size(); }
     // ---------------------------------------------------------------------------- //
-    
+
     /**
      * Setup the section values
      */
