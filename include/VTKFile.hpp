@@ -33,7 +33,6 @@ void swap_endian(T &var) {
 class DataSection {
 public:
 
-
     /**
      * Construct a named data field with uninitialized data
      */
@@ -114,6 +113,16 @@ public:
         }
         return *this;
     }
+
+    /**
+     * Append a list of data section to the file
+     */
+     VTKFile &operator<<(const std::vector<DataSection *>& dataSections){
+         for(DataSection *data : dataSections)
+             this->operator<<(*data);
+
+         return *this;
+     }
 
     /**
      * Print the content of the class into a file with the given name
