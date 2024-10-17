@@ -27,58 +27,50 @@ public:
      *  - Initial pressure function
      *  - Inlet velocity function
      */
-    Model(std::array<Real, 3> phy_dim, std::array<size_t, 3> nodes, Real Reynolds,
-          const Function& initial_velocity, const Function& initial_pressure,
-          Function  boundary_inlet) : _nodes(nodes),
-                                     _boundary_inlet(std::move(boundary_inlet)),
+    Model(const std::array<Real, 3>& phy_dim, const std::array<size_t, 3>& nodes, Real Reynolds,
+          const Function &initial_velocity, const Function &initial_pressure,
+          Function boundary_inlet) : _boundary_inlet(std::move(boundary_inlet)),
                                      _Reynolds(Reynolds),
-                                     _grid(nodes[0], nodes[1], nodes[2]) {
-        _spacing = {phy_dim[0] / nodes[0],
-                    phy_dim[1] / nodes[1],
-                    phy_dim[2] / nodes[2]};
+                                     _grid(nodes),
+                                     _spacing{phy_dim[0] / nodes[0],
+                                              phy_dim[1] / nodes[1],
+                                              phy_dim[2] / nodes[2]} {
         initGrid(initial_velocity, initial_pressure);
     }
 
     /**
      * Returns the grid of the model
      */
-    StaggeredGrid<A> &getGrid() { return _grid; }
-
-    /**
-     * Returns the number of nodes of the model
-     */
-    std::array<size_t, 3> &getNodes() { return _nodes; }
+    StaggeredGrid<A> &grid() { return _grid; }
 
     /**
      * Returns the node spacing of the model
      */
-     std::array<Real, 3> &getSpacing() { return _spacing; }
+    const std::array<Real, 3> &spacing() { return _spacing; }
 
 private:
     /**
      * Node spacing
      */
-    std::array<Real, 3> _spacing;
-    /**
-     * Number of nodes
-     */
-    std::array<size_t, 3> _nodes;
+    const std::array<Real, 3> _spacing;
+
     /**
      * Reynolds number
      */
-    Real _Reynolds;
+    const Real _Reynolds;
     /**
      * Inlet velocity boundary condition
      */
-    Function _boundary_inlet;
+    const Function _boundary_inlet;
     /**
      * Model space grid
      */
     StaggeredGrid<A> _grid;
+
     /**
      * Initialize the space grid
      */
-    void initGrid(const Function& initial_velocity, const Function& initial_pressure);
+    void initGrid(const Function &initial_velocity, const Function &initial_pressure);
 };
 
 #endif //AEROHPC_A_MODEL_H

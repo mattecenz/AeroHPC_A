@@ -10,9 +10,9 @@ void Model<Addressing_T::STANDARD>::initGrid(const Function& initial_velocity, c
     Real sdy = _spacing[1]/2;
     Real sdz = _spacing[2]/2;
 
-    for (size_t z = 0; z < _nodes[2]; ++z) {
-        for (size_t y = 0; y < _nodes[1]; ++y) {
-            for (size_t x = 0; x < _nodes[0]; ++x) {
+    for (size_t z = 0; z < _grid._nz; ++z) {
+        for (size_t y = 0; y < _grid._ny; ++y) {
+            for (size_t x = 0; x < _grid._nx; ++x) {
                 _grid(U, x, y, z) = initial_velocity(x + sdx, y, z);
                 _grid(V, x, y, z) = initial_velocity(x, y + sdy, z);
                 _grid(W, x, y, z) = initial_velocity(x, y, z + sdz);
