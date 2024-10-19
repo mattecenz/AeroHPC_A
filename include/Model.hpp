@@ -27,37 +27,47 @@ public:
      *  - Initial pressure function
      *  - Inlet velocity function
      */
-    Model(const std::array<Real, 3>& phy_dim, const std::array<size_t, 3>& nodes, Real Reynolds,
+    Model(const std::array<Real, 3> &spacing, const std::array<size_t, 3> &nodes, Real reynolds,
           const Function &initial_velocity, const Function &initial_pressure,
           Function boundary_inlet) : _boundary_inlet(std::move(boundary_inlet)),
-                                     _Reynolds(Reynolds),
+                                     reynolds(reynolds),
                                      _grid(nodes),
-                                     _spacing{phy_dim[0] / nodes[0],
-                                              phy_dim[1] / nodes[1],
-                                              phy_dim[2] / nodes[2]} {
+                                     spacing(spacing) {
         initGrid(initial_velocity, initial_pressure);
     }
 
     /**
      * Returns the grid of the model
      */
-    StaggeredGrid<A> &grid() { return _grid; }
+    StaggeredGrid<A> &grid = _grid;
 
-    /**
-     * Returns the node spacing of the model
-     */
-    const std::array<Real, 3> &spacing() { return _spacing; }
-
-private:
     /**
      * Node spacing
      */
-    const std::array<Real, 3> _spacing;
+    const std::array<Real, 3> spacing;
+
+    /**
+     * Alias for x-axes spacing
+     */
+    const Real &dx = spacing[0];
+
+    /**
+     * Alias for y-axes spacing
+     */
+    const Real &dy = spacing[1];
+
+    /**
+     * Alias for z-axes spacing
+     */
+    const Real &dz = spacing[2];
 
     /**
      * Reynolds number
      */
-    const Real _Reynolds;
+    const Real reynolds;
+
+private:
+
     /**
      * Inlet velocity boundary condition
      */

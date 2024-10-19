@@ -8,7 +8,7 @@ Real &StaggeredGrid<Addressing_T::STANDARD>::operator()(const Component c,
                                                               const size_t i,
                                                               const size_t j,
                                                               const size_t k) {
-    return _entries[c + (i + (j + k * _nx) * _ny) * Component::N_COMPONENTS];
+    return _entries[c + (i + (j + k * nx) * ny) * Component::N_COMPONENTS];
 }
 
 /**
@@ -19,5 +19,5 @@ const Real &StaggeredGrid<Addressing_T::STANDARD>::operator()(const Component c,
                                                                     const size_t i,
                                                                     const size_t j,
                                                                     const size_t k) const {
-    return _entries[c + (i + (j + k * _nx) * _ny) * Component::N_COMPONENTS];
+    return _entries[c + (i + (j + k * nx) * ny) * Component::N_COMPONENTS];
 }

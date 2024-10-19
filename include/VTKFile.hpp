@@ -494,7 +494,7 @@ private:
             input >> temp;
             toLower(temp);
             if (temp == "origin") {
-                //TODO add origin values (needed for multiprocessing)
+                //to-do add origin values (needed for multiprocessing)
                 std::getline(input, temp, '\n');
                 ori = true;
             } else if (temp == "dimensions") {
