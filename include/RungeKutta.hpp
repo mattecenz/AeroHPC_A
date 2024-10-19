@@ -10,69 +10,77 @@ using namespace utils;
 #define alpha1 (64.0/120.0)
 #define alpha2 (30.0/120.0)
 #define alpha3 (50.0/120.0)
-
-
-void compute (){
-
-} 
-
-
-//Runge-Kutta method
-void rungeKutta(int n,  int Re, StaggeredGrid<double,Addressing_T::STANDARD> grid,
-StaggeredGrid<double,Addressing_T::STANDARD>  &grid_out, double deltat, double h) {
-
-    StaggeredGrid<double,Addressing_T::STANDARD> grid_out = grid;
-
-      for (int i = 1; i < n; ++i) {
-        for (int j = 1; j < n; ++j) {
-            for (int k = 1; k < n; ++k) {
-
-                double Kappa = (alpha*deltat)/Re ;
-
-                 grid_out(Component::U, i,j,k) =  grid_out(Component::U, (i-1), (j-1), (k-1));
-
-                 grid_out(Component::V, i,j,k) = grid_out(Component::V, (i-1), (j-1), (k-1));
-
-                 grid_out(Component::W, i,j,k) = grid_out(Component::W, (i-1), (j-1), (k-1));
-            }
-        }
-    }
-    
-
-}
+#define alpha4 (90.0/120.0)
 
 //RHS function
 template <typename T, Addressing_T A>
-void rhs(const StaggeredGrid<T, A> grid, const StaggeredGrid<T, A> &grid_out,  Component c, int i, int j, int k, double Kappa) {
+Real rhs(const StaggeredGrid<T, A> &grid, Component c, int i, int j, int k, double Kappa, int Re) {
 
-    
-    switch (c){
-        case Component::U:
-
-            grid_out(Component::U, i,j,k) =  grid(c,i,j,k)*d_dx(grid,c,i,j,k) + 
-            get_interpolation(grid, Component::U, Component::V, i, j, k)*d_dy(grid,c,i,j,k) 
-            + get_interpolation(grid, Component::U, Component::W, i, j, k)*d_dz(grid,c,i,j,k) 
-            + Kappa*(d2_dx2(grid, Component::U, i, j, k)+d2_dy2(grid, Component::U, i, j, k)+d2_dz2(grid, Component::U, i, j, k));
-
-            break;
-
-        case Component::V:
-            grid_out(Component::V, i,j,k) =  get_interpolation(grid, Component::V, Component::U, i, j, k)*d_dx(grid,c,i,j,k) 
-            + grid(c,i,j,k)*d_dy(grid,c,i,j,k) + 
-            get_interpolation(grid, Component::V, Component::W, i, j, k)*d_dz(grid,c,i,j,k)
-            +  Kappa*(d2_dx2(grid, Component::V, i, j, k)+d2_dy2(grid, Component::V, i, j, k)+d2_dz2(grid, Component::V, i, j, k));
-
-            break;
-
-        case Component::W:
-            grid_out(Component::W, i,j,k) = get_interpolation(grid, Component::W, Component::U, i, j, k)*d_dx(grid,c,i,j,k) 
-            + get_interpolation(grid, Component::W, Component::V, i, j, k)*d_dy(grid,c,i,j,k)
-            + grid(c,i,j,k)*d_dz(grid,c,i,j,k)
-            +  Kappa*(d2_dx2(grid, Component::W, i, j, k)+d2_dy2(grid, Component::W, i, j, k)+d2_dz2(grid, Component::W, i, j, k));
-
-            break;
-
-        }
+    return Kappa*(conv(grid,c,i,j,k)+ (Kappa/Re)* lap(grid,c, i,j,k));
 }
+
+//Runge-Kutta method
+void rungeKutta(int n,  int Re, const StaggeredGrid<double,Addressing_T::STANDARD> grid,
+StaggeredGrid<double,Addressing_T::STANDARD>  &grid_out, double deltat) {
+
+    //Y1
+    double Kappa;
+    double Kappa2;
+    // no default constructor.....
+    StaggeredGrid<double,Addressing_T::STANDARD> K2 = grid;
+    StaggeredGrid<double,Addressing_T::STANDARD> K3 = grid;
+
+    Kappa = (alpha1*deltat) ;    
+
+    //Y2
+      for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int k = 0; k < n; ++k) {
+                
+                K2(Component::U, i,j,k) = grid(Component::U, i,j,k) - rhs(grid,Component::U,i,j,k,Kappa,Re);
+                K2(Component::V, i,j,k) = grid(Component::V, i,j,k) - rhs(grid,Component::V,i,j,k,Kappa,Re);
+                K2(Component::W, i,j,k) = grid(Component::W, i,j,k) - rhs(grid,Component::W,i,j,k,Kappa,Re);                
+            }
+        }
+    }
+
+    Kappa = (alpha3*deltat);
+    Kappa2 =(alpha2*deltat);
+
+   //Y3
+      for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int k = 0; k < n; ++k) {
+
+                K3(Component::U, i,j,k) = K2(Component::U, i,j,k) - rhs(K2,Component::U,i,j,k,Kappa,Re) + rhs(K2,Component::U,i,j,k,Kappa,Re);
+                K3(Component::V, i,j,k) = K2(Component::V, i,j,k) - rhs(K2,Component::V,i,j,k,Kappa,Re) + rhs(K2,Component::V,i,j,k,Kappa,Re);
+                K3(Component::W, i,j,k) = K2(Component::W, i,j,k) - rhs(K2,Component::W,i,j,k,Kappa,Re) + rhs(K2,Component::W,i,j,k,Kappa,Re);  
+
+                 
+            }
+        }
+    }
+
+    Kappa2 = (alpha3*deltat);
+    Kappa =(alpha4*deltat);
+
+   //Final answer
+      for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            for (int k = 0; k < n; ++k) {
+
+                grid_out(Component::U, i,j,k) = K3(Component::U, i,j,k) - rhs(K3,Component::U,i,j,k,Kappa,Re) + rhs(grid,Component::U,i,j,k,Kappa2,Re);
+                grid_out(Component::V, i,j,k) = K3(Component::V, i,j,k) - rhs(K3,Component::V,i,j,k,Kappa,Re) + rhs(grid,Component::V,i,j,k,Kappa2,Re);
+                grid_out(Component::W, i,j,k) = K3(Component::W, i,j,k) - rhs(K3,Component::W,i,j,k,Kappa,Re) + rhs(grid,Component::W,i,j,k,Kappa2,Re);  
+
+                 
+            }
+        }
+    }
+
+
+}
+
+   
 
 #endif //AEROHPC_A_RUNGEKUTTA_H
