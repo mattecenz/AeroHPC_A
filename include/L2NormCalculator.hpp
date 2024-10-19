@@ -1,67 +1,67 @@
 #ifndef AEROHPC_A_L2NORM_CALCULATOR_H
 #define AEROHPC_A_L2NORM_CALCULATOR_H
 
+#include "StaggeredGrid.hpp"
 #include <cmath>
 #include <stdexcept>
 #include <array>
-#include "StaggeredGrid.hpp"
-#include "utils.hpp" 
+
+// let's assume the spacing factor is h in all dimensions:
+constexpr double h = 0.1;
 
 // Define the exact solution functions for the u, v, and w components
-template<typename T>
 class ExactSolution {
 public:
-    static T u(T x, T y, T z, T t) {
+    static double u(double x, double y, double z, double t) {
         return std::sin(x) * std::cos(y) * std::sin(z) * std::sin(t);
     }
 
-    static T v(T x, T y, T z, T t) {
+    static double v(double x, double y, double z, double t) {
         return std::cos(x) * std::sin(y) * std::sin(z) * std::sin(t);
     }
 
-    static T w(T x, T y, T z, T t) {
+    static double w(double x, double y, double z, double t) {
         return 2 * std::cos(x) * std::cos(y) * std::cos(z) * std::sin(t);
     }
 };
 
-
-template<typename T>
 class L2NormCalculator {
 public:
-    static typename Traits<T>::Real computeL2Norm(const utils::StaggeredGridType<T>& grid, T time) {
-        typename Traits<T>::Real sum = 0.0;
-        
-        T h = 0.1;
+    // Static method to compute the L2 norm of the difference between the grid values and exact solutions
+    static double computeL2Norm(const /*StaggeredGrid<double, Addressing_T::A>*/& grid, double time) {
+        double sum = 0.0;
 
+        // Loop through the entire grid
         for (size_t k = 0; k < grid.getNz(); ++k) {
             for (size_t j = 0; j < grid.getNy(); ++j) {
                 for (size_t i = 0; i < grid.getNx(); ++i) {
-                    T x = static_cast<T>(i) * h;
-                    T y = static_cast<T>(j) * h;
-                    T z = static_cast<T>(k) * h;
 
-                    // Calculate exact solution
-                    T exactU = ExactSolution<T>::u(x, y, z, time);
-                    T exactV = ExactSolution<T>::v(x, y, z, time);
-                    T exactW = ExactSolution<T>::w(x, y, z, time);
+                    // Convert grid indices to real space coordinates
+                    double x = static_cast<double>(i) * h;
+                    double y = static_cast<double>(j) * h;
+                    double z = static_cast<double>(k) * h;
 
-                    // Access grid components
-                    T gridU = grid(Component::U, i, j, k);
-                    T gridV = grid(Component::V, i, j, k);
-                    T gridW = grid(Component::W, i, j, k);
+                    // Calculate the exact solution for each component
+                    double exactU = ExactSolution<double>::u(x, y, z, time);
+                    double exactV = ExactSolution<double>::v(x, y, z, time);
+                    double exactW = ExactSolution<double>::w(x, y, z, time);
 
-                    // Compute differences
-                    T diffU = gridU - exactU;
-                    T diffV = gridV - exactV;
-                    T diffW = gridW - exactW;
+                    // Access the computed grid components
+                    double gridU = grid(Component::U, i, j, k);
+                    double gridV = grid(Component::V, i, j, k);
+                    double gridW = grid(Component::W, i, j, k);
 
-                    // Accumulate the sum of squares
+                    // Calculate the differences
+                    double diffU = gridU - exactU;
+                    double diffV = gridV - exactV;
+                    double diffW = gridW - exactW;
+
+                    // Add the squares of the differences to sum
                     sum += (diffU * diffU) + (diffV * diffV) + (diffW * diffW);
                 }
             }
         }
 
-        // Return the L2 norm
         return std::sqrt(sum) / (h * h * h);
     }
 };
