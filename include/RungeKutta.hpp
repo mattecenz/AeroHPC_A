@@ -52,11 +52,11 @@ void rungeKutta(int n, int Re, const StaggeredGrid<Addressing_T::STANDARD> grid,
             for (int k = 0; k < n; ++k) {
 
                 K3(Component::U, i, j, k) = K2(Component::U, i, j, k) + rhs(K2, Component::U, i, j, k, Kappa, Re) -
-                                            rhs(K2, Component::U, i, j, k, Kappa, Re);
+                                            rhs(K2, Component::U, i, j, k, Kappa2, Re);
                 K3(Component::V, i, j, k) = K2(Component::V, i, j, k) + rhs(K2, Component::V, i, j, k, Kappa, Re) -
-                                            rhs(K2, Component::V, i, j, k, Kappa, Re);
+                                            rhs(K2, Component::V, i, j, k, Kappa2, Re);
                 K3(Component::W, i, j, k) = K2(Component::W, i, j, k) + rhs(K2, Component::W, i, j, k, Kappa, Re) -
-                                            rhs(K2, Component::W, i, j, k, Kappa, Re);
+                                            rhs(K2, Component::W, i, j, k, Kappa2, Re);
 
             }
         }
