@@ -15,7 +15,7 @@ using namespace utils;
 //RHS function
 template<Addressing_T A>
 inline Real rhs(const StaggeredGrid<A> &grid, Component c, int i, int j, int k, double Kappa, int Re) {
-    return Kappa * (-(conv(grid, c, i, j, k) + (1 / Re)) * lap(grid, c, i, j, k));
+    return Kappa * (-(conv(grid, c, i, j, k)) + (1 / Re) * lap(grid, c, i, j, k));
 }
 
 //Runge-Kutta method
