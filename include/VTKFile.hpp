@@ -64,6 +64,8 @@ static inline void toLower(std::string &s) {
 class DataSection {
 public:
 
+    DataSection() = delete;
+
     /**
      * Construct a named data field with uninitialized data
      */
@@ -108,6 +110,8 @@ public:
      * Data entry value type
      */
     typedef typename std::vector<Value_Type> entry_T;
+
+    ScalarsSection() = delete;
 
     /**
       * Construct a named data field with uninitialized data
@@ -264,6 +268,9 @@ protected:
  */
 class VTKFile {
 public:
+
+    VTKFile() = delete;
+
     /**
      * Build a class with the given file description
      */
