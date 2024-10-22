@@ -7,10 +7,13 @@
 using namespace utils;
 
 
-#define alpha1 (64.0/120.0)
-#define alpha2 (34.0/120.0)
-#define alpha3 (50.0/120.0)
-#define alpha4 (90.0/120.0)
+struct RKConstants {
+    static constexpr double alpha1 = 64.0 / 120.0;
+    static constexpr double alpha2 = 50.0 / 120.0;
+    static constexpr double alpha3 = 34.0 / 120.0;
+    static constexpr double alpha4 = 90.0 / 120.0;
+};
+
 
 //RHS function
 template<Addressing_T A>
@@ -18,72 +21,69 @@ inline Real rhs(const StaggeredGrid<A> &grid, Component c, int i, int j, int k, 
     return Kappa * (-(conv(grid, c, i, j, k)) + (1 / Re) * lap(grid, c, i, j, k));
 }
 
+
 //Runge-Kutta method
 void rungeKutta(int n, int Re, const StaggeredGrid<Addressing_T::STANDARD> grid,
                 StaggeredGrid<Addressing_T::STANDARD> &grid_out, double deltat) {
 
-    //Y1
-    double Kappa;
-    double Kappa2;
+    //grid -> Y1
+    //kappa -> weighted_deltat 
+    std::array<double, 4> kappa;
 
+    kappa[0] = RKConstants::alpha1 * deltat;
+    kappa[1] = RKConstants::alpha2 * deltat;
+    kappa[2] = RKConstants::alpha3 * deltat;
+    kappa[3] = RKConstants::alpha4 * deltat;
+    
     //BUFFERS
-    StaggeredGrid<Addressing_T::STANDARD> K2(grid.nodes);
-    StaggeredGrid<Addressing_T::STANDARD> K3(grid.nodes);
+    StaggeredGrid<Addressing_T::STANDARD> Y2(grid.nodes);
+    StaggeredGrid<Addressing_T::STANDARD> Y3(grid.nodes);
 
-    Kappa = (alpha1 * deltat);
-
-    //Y2
+    //Y2.
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int k = 0; k < n; ++k) {
-                K2(Component::U, i, j, k) = grid(Component::U, i, j, k) + rhs(grid, Component::U, i, j, k, Kappa, Re);
-                K2(Component::V, i, j, k) = grid(Component::V, i, j, k) + rhs(grid, Component::V, i, j, k, Kappa, Re);
-                K2(Component::W, i, j, k) = grid(Component::W, i, j, k) + rhs(grid, Component::W, i, j, k, Kappa, Re);
+                Y2(Component::U, i, j, k) = grid(Component::U, i, j, k) + rhs(grid, Component::U, i, j, k, kappa[0], Re);
+                Y2(Component::V, i, j, k) = grid(Component::V, i, j, k) + rhs(grid, Component::V, i, j, k, kappa[0], Re);
+                Y2(Component::W, i, j, k) = grid(Component::W, i, j, k) + rhs(grid, Component::W, i, j, k, kappa[0], Re);
             }
         }
     }
 
-    Kappa = (alpha3 * deltat);
-    Kappa2 = (alpha2 * deltat);
-
-    //Y3
+    //Y3.
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int k = 0; k < n; ++k) {
 
-                K3(Component::U, i, j, k) = K2(Component::U, i, j, k) + rhs(K2, Component::U, i, j, k, Kappa, Re) -
-                                            rhs(K2, Component::U, i, j, k, Kappa2, Re);
-                K3(Component::V, i, j, k) = K2(Component::V, i, j, k) + rhs(K2, Component::V, i, j, k, Kappa, Re) -
-                                            rhs(K2, Component::V, i, j, k, Kappa2, Re);
-                K3(Component::W, i, j, k) = K2(Component::W, i, j, k) + rhs(K2, Component::W, i, j, k, Kappa, Re) -
-                                            rhs(K2, Component::W, i, j, k, Kappa2, Re);
+                Y3(Component::U, i, j, k) = Y2(Component::U, i, j, k) + rhs(Y2, Component::U, i, j, k, kappa[1], Re) -
+                                            rhs(grid, Component::U, i, j, k, kappa[2], Re);
+                Y3(Component::V, i, j, k) = Y2(Component::V, i, j, k) + rhs(Y2, Component::V, i, j, k, kappa[1], Re) -
+                                            rhs(grid, Component::V, i, j, k, kappa[2], Re);
+                Y3(Component::W, i, j, k) = Y2(Component::W, i, j, k) + rhs(Y2, Component::W, i, j, k, kappa[1], Re) -
+                                            rhs(grid, Component::W, i, j, k, kappa[2], Re);
 
             }
         }
     }
 
-    Kappa2 = (alpha3 * deltat);
-    Kappa = (alpha4 * deltat);
-
-    //Final answer
+    //u(n+1)    
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             for (int k = 0; k < n; ++k) {
 
                 grid_out(Component::U, i, j, k) =
-                        K3(Component::U, i, j, k) + rhs(K3, Component::U, i, j, k, Kappa, Re) -
-                        rhs(grid, Component::U, i, j, k, Kappa2, Re);
+                        Y3(Component::U, i, j, k) + rhs(Y3, Component::U, i, j, k, kappa[3], Re) -
+                        rhs(Y2, Component::U, i, j, k, kappa[1], Re);
                 grid_out(Component::V, i, j, k) =
-                        K3(Component::V, i, j, k) + rhs(K3, Component::V, i, j, k, Kappa, Re) -
-                        rhs(grid, Component::V, i, j, k, Kappa2, Re);
+                        Y3(Component::V, i, j, k) + rhs(Y3, Component::V, i, j, k, kappa[3], Re) -
+                        rhs(Y2, Component::V, i, j, k, kappa[1], Re);
                 grid_out(Component::W, i, j, k) =
-                        K3(Component::W, i, j, k) + rhs(K3, Component::W, i, j, k, Kappa, Re) -
-                        rhs(grid, Component::W, i, j, k, Kappa2, Re);
+                        Y3(Component::W, i, j, k) + rhs(Y3, Component::W, i, j, k, kappa[3], Re) -
+                        rhs(Y2, Component::W, i, j, k, kappa[1], Re);
 
             }
         }
     }
-
 
 }
 
