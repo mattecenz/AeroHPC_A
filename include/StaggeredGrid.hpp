@@ -52,13 +52,13 @@ public:
     /**
      * Operator that accesses the memory using a 3D view of the object
      */
-    Real &operator()(Component c, size_t i, size_t j, size_t k);
+    virtual Real &operator()(Component c, size_t i, size_t j, size_t k);
 
 #pragma inline
     /**
      * Operator that accesses 3D view for read-only operations
      */
-    const Real &operator()(Component c, size_t i, size_t j, size_t k) const;
+    virtual const Real &operator()(Component c, size_t i, size_t j, size_t k) const;
 
     /**
      * Number of nodes
@@ -78,7 +78,7 @@ public:
      */
     const size_t &nz = nodes[2];
 
-private:
+protected:
     /**
      * Nodes data
      */
