@@ -1,6 +1,13 @@
 #ifndef AEROHPC_A_TRAITS_H
 #define AEROHPC_A_TRAITS_H
 
+#include <functional>
+
+/**
+ * Typedef for real values
+ */
+typedef float Real;
+
 /**
  * Enum for easy modification of the class addressing
  */
@@ -12,9 +19,16 @@ enum class Addressing_T {
     STANDARD = 0
 };
 
+typedef std::array<Real, 3> Vector;
+
 /**
- * Typedef for real values
+ * Typedef shortening lambda definition of spatial function
  */
-typedef float Real;
+typedef std::function<Real(Real x, Real y, Real z)> Function;
+
+/**
+ * Typedef shortening lambda definition of vector spatial function
+ */
+typedef std::function<Vector(Real x, Real y, Real z)> VectorFunction;
 
 #endif //AEROHPC_A_TRAITS_H

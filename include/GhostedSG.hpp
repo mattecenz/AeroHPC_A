@@ -4,7 +4,7 @@
 #include "StaggeredGrid.hpp"
 
 template<Addressing_T A>
-class GhostedSG : private StaggeredGrid<A> {
+class GhostedSG : public StaggeredGrid<A> {
 public:
 
     GhostedSG() = delete;

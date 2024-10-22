@@ -3,21 +3,36 @@
 
 #include "Traits.hpp"
 #include "StaggeredGrid.hpp"
+#include "BoundaryCondition.hpp"
 #include <array>
-#include <functional>
 #include <utility>
 
-/**
- * Typedef shortening lambda definition
- */
-typedef std::function<Real(Real x, Real y, Real z)> Function;
 
 /**
  * Model of the problem
  */
 template<Addressing_T A>
 class Model {
+private:
+
+    /**
+     * Inlet velocity boundary condition
+     */
+    std::vector<BoundaryCondition<A>> _bcs;
+
+    /**
+     * Model space grid
+     */
+    StaggeredGrid<A> *_grid;
+
+    /**
+     * Initialize the space grid
+     */
+    void initGrid(const VectorFunction &initial_velocity, const Function &initial_pressure);
+
+
 public:
+
     /**
      * Construct a model given:
      *  - physical dimension
@@ -27,24 +42,33 @@ public:
      *  - Initial pressure function
      *  - Inlet velocity function
      */
-    Model(const std::array<Real, 3> &spacing, const std::array<size_t, 3> &nodes, Real reynolds,
-          const Function &initial_velocity, const Function &initial_pressure,
-          Function boundary_inlet) : _boundary_inlet(std::move(boundary_inlet)),
-                                     reynolds(reynolds),
-                                     _grid(nodes),
-                                     spacing(spacing) {
+    Model(const Vector &spacing, StaggeredGrid<A> &grid, Real reynolds,
+          const VectorFunction &initial_velocity, const Function &initial_pressure) : _grid(&grid),
+                                                                                      reynolds(reynolds),
+                                                                                      spacing(spacing) {
         initGrid(initial_velocity, initial_pressure);
     }
 
     /**
+     * Add a boundary condition to the list of the model
+     */
+    void addBC(const BoundaryCondition<A> &bc) { _bcs.push_back(bc); }
+
+    /**
+     * Apply all the boundary conditions of the model,
+     * Be aware that the insertion order of the conditions can affect the result of the application
+     */
+    void applyBCs() { for (BoundaryCondition<A> bc: _bcs) bc.apply(_grid); }
+
+    /**
      * Returns the grid of the model
      */
-    StaggeredGrid<A> &grid = _grid;
+    StaggeredGrid<A> &grid = *_grid;
 
     /**
      * Node spacing
      */
-    const std::array<Real, 3> spacing;
+    const Vector spacing;
 
     /**
      * Alias for x-axes spacing
@@ -65,22 +89,6 @@ public:
      * Reynolds number
      */
     const Real reynolds;
-
-private:
-
-    /**
-     * Inlet velocity boundary condition
-     */
-    const Function _boundary_inlet;
-    /**
-     * Model space grid
-     */
-    StaggeredGrid<A> _grid;
-
-    /**
-     * Initialize the space grid
-     */
-    void initGrid(const Function &initial_velocity, const Function &initial_pressure);
 };
 
 #endif //AEROHPC_A_MODEL_H

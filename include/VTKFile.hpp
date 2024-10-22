@@ -228,8 +228,10 @@ public:
                 break;
             }
 
-        if (values_coherent)
+        if (values_coherent) {
             _values = values;
+            _entry_size = s;
+        }
 
         return *this;
     }
@@ -284,7 +286,7 @@ public:
      * Construct a class with the given file description
      * Initialize the dataset with the given physical dimension and node number
      */
-    VTKFile(std::array<Real, 3> physical_dimension, std::array<size_t, 3> nodes, std::string description = "")
+    VTKFile(Vector physical_dimension, std::array<size_t, 3> nodes, std::string description = "")
             : VTKFile(std::move(description)) {
         setupDataset(physical_dimension, nodes);
     }
@@ -292,7 +294,7 @@ public:
     /**
      * Initialize the dataset with the given physical dimension and node number
      */
-    void setupDataset(std::array<Real, 3> physical_dimension, std::array<size_t, 3> n) {
+    void setupDataset(Vector physical_dimension, std::array<size_t, 3> n) {
         _nodes = n;
         _spacing = {physical_dimension[0] / static_cast<Real>(_nodes[0]),
                     physical_dimension[1] / static_cast<Real>(_nodes[1]),
@@ -394,7 +396,7 @@ public:
     /**
      * Alias for datased nodes spacing
      */
-    const std::array<Real, 3> &spacing = _spacing;
+    const Vector &spacing = _spacing;
 
 private:
     /**
@@ -408,7 +410,7 @@ private:
     /**
      * Node spacing of the dataset
      */
-    std::array<Real, 3> _spacing{};
+    Vector _spacing{};
     /**
      * Size of dataset (total number of nodes)
      */
