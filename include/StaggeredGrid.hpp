@@ -36,20 +36,17 @@ public:
 
     // Constructors
 
+    StaggeredGrid() = delete;
+
     /**
      * Constructor of a nx * ny * nz tensor with initial value equal to zero
      */
-    StaggeredGrid(const std::array<size_t, 3> &nodes) :
+    explicit StaggeredGrid(const std::array<size_t, 3> &nodes) :
             nodes(nodes) {
         auto dim = nodes[0] * nodes[1] * nodes[2] * Component::N_COMPONENTS;
         _entries.resize(dim);
         std::fill(_entries.begin(), _entries.end(), 0);
     }
-
-    /**
-     * Constructor of a nx * ny * nz tensor with initial value equal to zero
-     */
-    StaggeredGrid(size_t nx, size_t ny, size_t nz) : StaggeredGrid({nx, ny, nz}) {}
 
 #pragma inline
     /**
