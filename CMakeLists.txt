@@ -17,3 +17,6 @@ set(MAIN_FILE "main.cpp")
 set(TARGET_FILE "AeroHPC_A")
 
 add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
+
+#ForcingTerm FLAG
+add_definitions(-DForcingTerm)
