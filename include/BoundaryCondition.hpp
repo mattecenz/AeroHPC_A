@@ -9,12 +9,14 @@
 template<Addressing_T A>
 class BoundaryCondition {
 
+public:
+
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef std::function<void(StaggeredGrid<A> &, Function &)> Mapper;
+    typedef std::function<void(StaggeredGrid<A> &, const Function &)> Mapper;
 
-public:
+
     BoundaryCondition() = delete;
 
     /**
@@ -25,7 +27,7 @@ public:
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(StaggeredGrid<A> grid) const { _mapper(grid, _function); }
+    void apply(StaggeredGrid<A> &grid) const { _mapper(grid, _function); }
 
 private:
     /**
