@@ -1,0 +1,83 @@
+# Binaries for C++ or C
+*.out
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Object files
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.dll
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Compiled executable files
+*.exe
+*.out
+*.app
+
+# Debugging Files
+*.dSYM/
+*.stackdump
+
+# Generated files
+*.gch
+*.pch
+
+# CMake build folders and generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# VS Code settings and other IDE-specific files
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.pid
+
+# Build directories (for common IDEs and manual builds)
+build/
+Build/
+bin/
+debug/
+release/
+Debug/
+Release/
+x64/
+x86/
+
+# clang-format, if using in development
+.clang-format
+
+# Coverage reports
+*.gcno
+*.gcda
+*.gcov
+*.lcov
+
+# Temporary files for development
+*.swp
+*~ 
+\#*\#
+
+# C++ Cache Files
+*.cache
+
+# System files
+.DS_Store
+Thumbs.db
