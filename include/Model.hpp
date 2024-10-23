@@ -49,6 +49,14 @@ public:
         initGrid(initial_velocity, initial_pressure);
     }
 
+    // Copy constructor, used in the RK method
+    // Leaves the grid empty since it will be overwritten anyways
+    Model(Model& m){
+        grid=StaggeredGrid<A>(m.grid.nodes);
+        spacing=m.spacing;
+        reynolds=m.reynolds;
+    }
+
     /**
      * Add a boundary condition to the list of the model
      */
