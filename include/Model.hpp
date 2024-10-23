@@ -18,7 +18,7 @@ private:
     /**
      * Inlet velocity boundary condition
      */
-    std::vector<BoundaryCondition<A>> _bcs;
+    std::vector<BoundaryCondition<A> *> _bcs;
 
     /**
      * Model space grid
@@ -56,13 +56,13 @@ public:
     /**
      * Add a boundary condition to the list of the model
      */
-    void addBC(const BoundaryCondition<A> &bc) { _bcs.push_back(bc); }
+    void addBC(BoundaryCondition<A> &bc) { _bcs.push_back(&bc); }
 
     /**
      * Apply all the boundary conditions of the model,
      * Be aware that the insertion order of the conditions can affect the result of the application
      */
-    void applyBCs() { for (BoundaryCondition<A> bc: _bcs) bc.apply(_grid); }
+    void applyBCs() { for (BoundaryCondition<A> *bc: _bcs) bc->apply(grid); }
 
     /**
      * Returns the grid of the model
