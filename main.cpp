@@ -1,4 +1,5 @@
 #include <iostream>
+#include "L2NormCalculator.hpp"
 #include "StaggeredGrid.hpp"
 #include "GhostedSG.hpp"
 #include "Model.hpp"
@@ -28,30 +29,39 @@ void solver() {
 
     // build the model
     // initialize the grid with initial values
-    Model<Addressing_T::STANDARD> model(spacing, sg, 1, initialVel, initialPres);
 
-    auto inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, Function &fun){
-        for(int i = 0; i<grid.ny; i++)
-            for(int j= 0; i<grid.nz; j++) {
-                grid(U, 0, i, j) = fun(0,i,j);
-                grid(V, 0, i, j) = fun(0,i,j);
-                grid(W, 0, i, j) = fun(0,i,j);
-            }
-    };
+    // ERROR
+    // double free or corruption (!prev)
+    // Aborted (core dumped)
+    Model<Addressing_T::STANDARD> model(spacing, &sg, 1, initialVel, initialPres);
 
-    auto inletFunction = [](Real x, Real y, Real z) -> Real {
-        return 0;
-    };
+    // auto inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, Function &fun){
+    //     for(int i = 0; i<grid.ny; i++)
+    //         for(int j= 0; i<grid.nz; j++) {
+    //             grid(U, 0, i, j) = fun(0,i,j);
+    //             grid(V, 0, i, j) = fun(0,i,j);
+    //             grid(W, 0, i, j) = fun(0,i,j);
+    //         }
+    // };
 
-    BoundaryCondition<Addressing_T::STANDARD> inletBoundary(inletMapping, inletFunction);
-    model.addBC(inletBoundary);
+    // auto inletFunction = [](Real x, Real y, Real z) -> Real {
+    //     return 0;
+    // };
 
-    // causing errors
+    // BoundaryCondition<Addressing_T::STANDARD> inletBoundary(inletMapping, inletFunction);
+    // model.addBC(inletBoundary);
+
+    // ERROR
     // model.applyBCs();
 
 
+    // couldnt test, try later
+    // double time = 0.001;
+    // double l2Norm = computeL2Norm<Addressing_T::STANDARD>(model, time);
+
+
     double currentTime = 0.0;
-    unsigned int stepCounter = 0;
+    int stepCounter = 0;
     while (currentTime < T){
         // apply boundary cond
         // call RK
@@ -62,7 +72,8 @@ void solver() {
 }
 
 int main() {
-    
+
+    // try the solver
     solver();
     return 0;
 }
