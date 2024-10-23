@@ -51,7 +51,7 @@ public:
 
     // Copy constructor, used in the RK method
     // Leaves the grid empty since it will be overwritten anyway
-    Model(Model& m) : _grid(m.grid.nodes), spacing(m.spacing), reynolds(m.reynolds){}
+    Model(Model& m) : _grid(&(m.grid)), spacing(m.spacing), reynolds(m.reynolds){}
 
     /**
      * Add a boundary condition to the list of the model
