@@ -42,63 +42,59 @@ namespace utils {
         return d2_dx2(model, c, i, j, k) + d2_dy2(model, c, i, j, k) + d2_dz2(model, c, i, j, k);
     }
 
-    template<>
-    Real
-    get_interpolation(const StaggeredGrid<Addressing_T::STANDARD> &grid, Component to, Component from, int i, int j,
-                      int k) {
-        switch (to) {
-            case Component::U:
-                if (from == Component::V) {
-                    // Interpolate from V grid to U grid
-                    return (grid(Component::V, i, j, k) + grid(Component::V, i + 1, j, k) +
-                            grid(Component::V, i, j - 1, k) + grid(Component::V, i + 1, j - 1, k)) / 4;
-                } else {
-                    // Interpolate from W grid to U grid
-                    return (grid(Component::W, i, j, k) + grid(Component::W, i + 1, j, k) +
-                            grid(Component::W, i, j, k - 1) + grid(Component::W, i + 1, j, k - 1)) / 4;
-                }
-            case Component::V:
-                if (from == Component::U) {
-                    // Interpolate from U grid to V grid
-                    return (grid(Component::U, i, j, k) + grid(Component::U, i, j + 1, k) +
-                            grid(Component::U, i - 1, j, k) + grid(Component::U, i - 1, j + 1, k)) / 4;
-                } else {
-                    // Interpolate from W grid to V grid
-                    return (grid(Component::W, i, j, k) + grid(Component::W, i, j + 1, k) +
-                            grid(Component::W, i, j, k - 1) + grid(Component::W, i, j + 1, k - 1)) / 4;
-                }
-            case Component::W:
-                if (from == Component::U) {
-                    // Interpolate from U grid to W grid
-                    return (grid(Component::U, i, j, k) + grid(Component::U, i, j, k + 1) +
-                            grid(Component::U, i - 1, j, k) + grid(Component::U, i - 1, j, k + 1)) / 4;
-                } else {
-                    // Interpolate from V grid to W grid
-                    return (grid(Component::V, i, j, k) + grid(Component::V, i, j, k + 1) +
-                            grid(Component::V, i, j - 1, k) + grid(Component::V, i, j - 1, k + 1)) / 4;
-                }
-            default:
-                return 0;
+    template<Component to, Component from>
+    Real get_interpolation(const StaggeredGrid<Addressing_T::STANDARD> &grid, int i, int j, int k) {
+        if constexpr (to == U) {
+            if (from == V) {
+                // Interpolate from V grid to U grid
+                return (grid(V, i, j, k) + grid(V, i + 1, j, k) +
+                        grid(V, i, j - 1, k) + grid(V, i + 1, j - 1, k)) / 4;
+            } else {
+                // Interpolate from W grid to U grid
+                return (grid(W, i, j, k) + grid(W, i + 1, j, k) +
+                        grid(W, i, j, k - 1) + grid(W, i + 1, j, k - 1)) / 4;
+            }
+        } else if constexpr (to == V) {
+            if (from == U) {
+                // Interpolate from U grid to V grid
+                return (grid(U, i, j, k) + grid(U, i, j + 1, k) +
+                        grid(U, i - 1, j, k) + grid(U, i - 1, j + 1, k)) / 4;
+            } else {
+                // Interpolate from W grid to V grid
+                return (grid(W, i, j, k) + grid(W, i, j + 1, k) +
+                        grid(W, i, j, k - 1) + grid(W, i, j + 1, k - 1)) / 4;
+            }
+        } else if constexpr (to == W) {
+            if (from == U) {
+                // Interpolate from U grid to W grid
+                return (grid(U, i, j, k) + grid(U, i, j, k + 1) +
+                        grid(U, i - 1, j, k) + grid(U, i - 1, j, k + 1)) / 4;
+            } else {
+                // Interpolate from V grid to W grid
+                return (grid(V, i, j, k) + grid(V, i, j, k + 1) +
+                        grid(V, i, j - 1, k) + grid(V, i, j - 1, k + 1)) / 4;
+            }
+        } else {
+            return 0;
         }
     }
 
-    template<>
-    Real conv(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k) {
-        switch (c) {
-            case Component::U:
-                return model.grid(c, i, j, k) * d_dx(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::U, Component::V, i, j, k) * d_dy(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::U, Component::W, i, j, k) * d_dz(model, c, i, j, k);
-            case Component::V:
-                return get_interpolation(model.grid, Component::V, Component::U, i, j, k) * d_dx(model, c, i, j, k) +
-                       model.grid(c, i, j, k) * d_dy(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::V, Component::W, i, j, k) * d_dz(model, c, i, j, k);
-            case Component::W:
-                return get_interpolation(model.grid, Component::W, Component::U, i, j, k) * d_dx(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::W, Component::V, i, j, k) * d_dy(model, c, i, j, k) +
-                       model.grid(c, i, j, k) * d_dz(model, c, i, j, k);
-            default:
-                return 0;
+    template<Component c>
+    Real conv(const Model<Addressing_T::STANDARD> &model, int i, int j, int k) {
+        if constexpr (c == U) {
+            return model.grid(c, i, j, k) * d_dx(model, c, i, j, k) +
+                   get_interpolation<U, V>(model.grid, i, j, k) * d_dy(model, c, i, j, k) +
+                   get_interpolation<U, W>(model.grid, i, j, k) * d_dz(model, c, i, j, k);
+        } else if constexpr (c == V) {
+            return get_interpolation<V, U>(model.grid, i, j, k) * d_dx(model, c, i, j, k) +
+                   model.grid(c, i, j, k) * d_dy(model, c, i, j, k) +
+                   get_interpolation<V, W>(model.grid, i, j, k) * d_dz(model, c, i, j, k);
+        } else if constexpr (c == W) {
+            return get_interpolation<W, U>(model.grid, i, j, k) * d_dx(model, c, i, j, k) +
+                   get_interpolation<W, V>(model.grid, i, j, k) * d_dy(model, c, i, j, k) +
+                   model.grid(c, i, j, k) * d_dz(model, c, i, j, k);
+        } else {
+            return 0;
         }
     }
 }

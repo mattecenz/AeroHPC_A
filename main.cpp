@@ -6,7 +6,7 @@
 
 void solver() {
 
-    std::cout << "Runing the solver" << std::endl;
+    std::cout << "Running the solver" << std::endl;
     
     // define T & deltaT
     double T = 0.1;
@@ -33,17 +33,16 @@ void solver() {
     // ERROR
     // double free or corruption (!prev)
     // Aborted (core dumped)
-    // Model<Addressing_T::STANDARD> model(spacing, &sg, 1, initialVel, initialPres);
     Model<Addressing_T::STANDARD> model(spacing, sg, 1, initialVel, initialPres);
 
-    auto inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, Function &fun){
-        for(int i = 0; i<grid.ny; i++)
-            for(int j= 0; i<grid.nz; j++) {
-                grid(U, 0, i, j) = fun(0,i,j);
-                grid(V, 0, i, j) = fun(0,i,j);
-                grid(W, 0, i, j) = fun(0,i,j);
-            }
-    };
+    // auto inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, Function &fun){
+    //     for(int i = 0; i<grid.ny; i++)
+    //         for(int j= 0; i<grid.nz; j++) {
+    //             grid(U, 0, i, j) = fun(0,i,j);
+    //             grid(V, 0, i, j) = fun(0,i,j);
+    //             grid(W, 0, i, j) = fun(0,i,j);
+    //         }
+    // };
 
     auto inletFunction = [](Real x, Real y, Real z) -> Real {
         return 0;
