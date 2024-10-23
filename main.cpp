@@ -3,14 +3,20 @@
 #include "StaggeredGrid.hpp"
 #include "GhostedSG.hpp"
 #include "Model.hpp"
+#include "BoundaryCondition.hpp"
+#include "RungeKutta.hpp"
+
+// Declare the RungeKutta function if not already declared in the included headers
+void RungeKutta(int order, Real Re, Model<Addressing_T::STANDARD> &model, Model<Addressing_T::STANDARD> &model_out, double deltaT, double currentTime);
 
 void solver() {
 
     std::cout << "Running the solver" << std::endl;
 
-    // define T & deltaT
+    // define T & deltaT  & Re
     double T = 0.1;
     double deltaT = 0.0001;
+    Real Re = 47000.0;
 
     // define the mesh:
     // instantiate from ghosted stagg grid
@@ -55,13 +61,15 @@ void solver() {
 //     double time = 0.001;
 //     double l2Norm = computeL2Norm<Addressing_T::STANDARD>(model, time);
 
+    //Output Model:
+    Model<Addressing_T::STANDARD> model_out(model);
 
     double currentTime = 0.0;
     int stepCounter = 0;
     while (currentTime < T) {
         // apply boundary cond
         // call RK
-
+    RungeKutta(5, Re, model, model_out, deltaT, currentTime);
         currentTime += deltaT;
         stepCounter++;
     }
