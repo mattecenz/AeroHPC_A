@@ -29,7 +29,7 @@ inline Real rhsforcingterm(ForcingTerm &forcingterm, Component c, int i, int j, 
 template<Addressing_T A>
 inline Real rhs(Model<A> &model, Component c, int i, int j, int k, double Kappa, Real Re  
 ,const ForcingTerm &forcingterm, double time) {
-    return Kappa * (-(conv(model.grid, c, i, j, k)) + (1 / Re) * lap(model.grid, c, i, j, k)    
+    return Kappa * (-(conv(model, c, i, j, k)) + (1 / Re) * lap(model, c, i, j, k)    
     + rhsforcingterm(forcingterm,c,i,j,k,time));
 }
 
@@ -38,7 +38,7 @@ inline Real rhs(Model<A> &model, Component c, int i, int j, int k, double Kappa,
 //RHS function
 template<Addressing_T A>
 inline Real rhs(Model<A> &model, Component c, int i, int j, int k, double Kappa, Real Re) {
-    return Kappa * (-(conv(model.grid, c, i, j, k)) + (1 / Re) * lap(model.grid, c, i, j, k));
+    return Kappa * (-(conv(model, c, i, j, k)) + (1 / Re) * lap(model, c, i, j, k));
 }
 
 
