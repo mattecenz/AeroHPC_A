@@ -63,7 +63,7 @@ public:
     /**
      * Returns the grid of the model
      */
-    StaggeredGrid<A> &grid = *_grid;
+    StaggeredGrid<A> grid = *_grid;
 
     /**
      * Node spacing
