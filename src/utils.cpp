@@ -7,37 +7,37 @@ namespace utils
     template <>
     Real d_dx(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k)
     {
-        return (model.grid(c, i + 1, j, k) - model.grid(c, i - 1, j, k)) / (2*model.spacing(0));
+        return (model.grid(c, i + 1, j, k) - model.grid(c, i - 1, j, k)) / (2*model.dx);
     }
 
     template <>
     Real d_dy(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k)
     {
-        return (model.grid(c, i, j + 1, k) - model.grid(c, i, j - 1, k)) / (2*model.spacing(1));
+        return (model.grid(c, i, j + 1, k) - model.grid(c, i, j - 1, k)) / (2*model.dy);
     }
 
     template <>
     Real d_dz(const Model<Addressing_T::STANDARD> &Model, Component c, int i, int j, int k)
     {
-        return (model.grid(c, i, j, k + 1) - model.grid(c, i, j, k - 1)) / (2*model.spacing(2));
+        return (model.grid(c, i, j, k + 1) - model.grid(c, i, j, k - 1)) / (2*model.dz);
     }
 
     template <>
     Real d2_dx2(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k)
     {
-        return (model.grid(c, i - 1, j, k) - 2 * model.grid(c, i, j, k) + model.grid(c, i + 1, j, k)) / (model.spacing(0) * model.spacing(0));
+        return (model.grid(c, i - 1, j, k) - 2 * model.grid(c, i, j, k) + model.grid(c, i + 1, j, k)) / (model.dx * model.dx);
     }
 
     template <>
     Real d2_dy2(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k)
     {
-        return (model.grid(c, i, j - 1, k) - 2 * model.grid(c, i, j, k) + model.grid(c, i, j + 1, k)) / (model.spacing(1) * model.spacing(1));
+        return (model.grid(c, i, j - 1, k) - 2 * model.grid(c, i, j, k) + model.grid(c, i, j + 1, k)) / (model.dy * model.dy);
     }
 
     template <>
     Real d2_dz2(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k)
     {
-        return (model.grid(c, i, j, k - 1) - 2 * model.grid(c, i, j, k) + model.grid(c, i, j, k + 1)) / (model.spacing(2) * model.spacing(2));
+        return (model.grid(c, i, j, k - 1) - 2 * model.grid(c, i, j, k) + model.grid(c, i, j, k + 1)) / (model.dz * model.dz);
     }
 
     template <>
