@@ -17,7 +17,7 @@ namespace utils
     }
 
     template <>
-    Real d_dz(const Model<Addressing_T::STANDARD> &Model, Component c, int i, int j, int k)
+    Real d_dz(const Model<Addressing_T::STANDARD> &model, Component c, int i, int j, int k)
     {
         return (model.grid(c, i, j, k + 1) - model.grid(c, i, j, k - 1)) / (2*model.dz);
     }

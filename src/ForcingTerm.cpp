@@ -24,6 +24,10 @@ Real ForcingTerm::get_Re() const{
     return Re;
 }
 
+
+double ForcingTerm::get_time() const{
+    return time;
+}
   
 // Method to compute the forcing term at a given point in space and time
 double ForcingTerm::compute(double x, double y, double z, Component c) const{
@@ -40,6 +44,7 @@ double ForcingTerm::compute(double x, double y, double z, Component c) const{
             return computeGz(x, y, z, get_time(), get_Re()); //Gz
             break;
     }
+    return 0.0;
 }
 
 // Private method to compute Gx

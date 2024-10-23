@@ -23,7 +23,7 @@ public:
     double get_time() const;
 
     //Time update
-    void ForcingTerm::update_time(double extraTime);
+    void update_time(double extraTime);
 
     // Method to compute the forcing term at a given point in space and time
     double compute(double x, double y, double z, Component c) const;

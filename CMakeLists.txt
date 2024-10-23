@@ -19,4 +19,4 @@ set(TARGET_FILE "AeroHPC_A")
 add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 
 #ForcingTerm FLAG
-add_definitions(-DForcingTerm)
+add_definitions(-DForcingT)

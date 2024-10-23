@@ -17,7 +17,7 @@ struct RKConstants {
     static constexpr double alpha5 = 2.0 / 3.0;
 };
 
-#ifdef ForcingTerm
+#ifdef ForcingT
 
 inline Real rhsforcingterm(const ForcingTerm &forcingterm, Component c, int i, int j, int k, double timeUpdate){
     forcingterm.update_time(timeUpdate);
@@ -60,7 +60,7 @@ void rungeKutta(int n, Real Re, const StaggeredGrid<Addressing_T::STANDARD> grid
     StaggeredGrid<Addressing_T::STANDARD> Y2(grid.nodes);
     StaggeredGrid<Addressing_T::STANDARD> Y3(grid.nodes);
 
-    #ifdef ForcingTerm 
+    #ifdef ForcingT 
     ForcingTerm forcingterm(Re);
     #endif
 
@@ -69,7 +69,7 @@ void rungeKutta(int n, Real Re, const StaggeredGrid<Addressing_T::STANDARD> grid
         for (int j = 0; j < n; ++j) {
             for (int k = 0; k < n; ++k) {
 
-                #ifdef ForcingTerm
+                #ifdef ForcingT
                 Y2(Component::U, i, j, k) = grid(Component::U, i, j, k) + rhs(grid, Component::U, i, j, k, kappa[0], Re, forcingterm, time);
                 Y2(Component::V, i, j, k) = grid(Component::V, i, j, k) + rhs(grid, Component::V, i, j, k, kappa[0], Re, forcingterm, time);
                 Y2(Component::W, i, j, k) = grid(Component::W, i, j, k) + rhs(grid, Component::W, i, j, k, kappa[0], Re, forcingterm, time);
@@ -88,7 +88,7 @@ void rungeKutta(int n, Real Re, const StaggeredGrid<Addressing_T::STANDARD> grid
         for (int j = 0; j < n; ++j) {
             for (int k = 0; k < n; ++k) {
 
-                #ifdef ForcingTerm
+                #ifdef ForcingT
                 Y3(Component::U, i, j, k) = Y2(Component::U, i, j, k) + rhs(Y2, Component::U, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0])) -
                                             rhs(grid, Component::U, i, j, k, kappa[2], Re, forcingTerm,time);
                 Y3(Component::V, i, j, k) = Y2(Component::V, i, j, k) + rhs(Y2, Component::V, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0])) -
@@ -115,7 +115,7 @@ void rungeKutta(int n, Real Re, const StaggeredGrid<Addressing_T::STANDARD> grid
         for (int j = 0; j < n; ++j) {
             for (int k = 0; k < n; ++k) {
 
-                #ifdef ForcingTerm
+                #ifdef ForcingT
                 grid_out(Component::U, i, j, k) =
                         Y3(Component::U, i, j, k) + rhs(Y3, Component::U, i, j, k, kappa[3], Re, forcingterm, (time+ Kappa[4])) -
                         rhs(Y2, Component::U, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0]));
