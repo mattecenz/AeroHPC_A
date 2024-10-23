@@ -33,31 +33,32 @@ void solver() {
     // ERROR
     // double free or corruption (!prev)
     // Aborted (core dumped)
-    Model<Addressing_T::STANDARD> model(spacing, &sg, 1, initialVel, initialPres);
+    // Model<Addressing_T::STANDARD> model(spacing, &sg, 1, initialVel, initialPres);
+    Model<Addressing_T::STANDARD> model(spacing, sg, 1, initialVel, initialPres);
 
-    // auto inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, Function &fun){
-    //     for(int i = 0; i<grid.ny; i++)
-    //         for(int j= 0; i<grid.nz; j++) {
-    //             grid(U, 0, i, j) = fun(0,i,j);
-    //             grid(V, 0, i, j) = fun(0,i,j);
-    //             grid(W, 0, i, j) = fun(0,i,j);
-    //         }
-    // };
+    auto inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, Function &fun){
+        for(int i = 0; i<grid.ny; i++)
+            for(int j= 0; i<grid.nz; j++) {
+                grid(U, 0, i, j) = fun(0,i,j);
+                grid(V, 0, i, j) = fun(0,i,j);
+                grid(W, 0, i, j) = fun(0,i,j);
+            }
+    };
 
-    // auto inletFunction = [](Real x, Real y, Real z) -> Real {
-    //     return 0;
-    // };
+    auto inletFunction = [](Real x, Real y, Real z) -> Real {
+        return 0;
+    };
 
-    // BoundaryCondition<Addressing_T::STANDARD> inletBoundary(inletMapping, inletFunction);
-    // model.addBC(inletBoundary);
+    BoundaryCondition<Addressing_T::STANDARD> inletBoundary(inletMapping, inletFunction);
+    model.addBC(inletBoundary);
 
     // ERROR
     // model.applyBCs();
 
 
     // couldnt test, try later
-    // double time = 0.001;
-    // double l2Norm = computeL2Norm<Addressing_T::STANDARD>(model, time);
+    double time = 0.001;
+    double l2Norm = computeL2Norm<Addressing_T::STANDARD>(model, time);
 
 
     double currentTime = 0.0;
