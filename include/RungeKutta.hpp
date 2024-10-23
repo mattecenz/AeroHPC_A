@@ -28,7 +28,7 @@ inline Real rhsforcingterm(ForcingTerm &forcingterm, Component c, int i, int j, 
 //RHS function
 template<Addressing_T A>
 inline Real rhs(Model<A> &model, Component c, int i, int j, int k, double Kappa, Real Re  
-,const ForcingTerm &forcingterm, double time) {
+,ForcingTerm &forcingterm, double time) {
     return Kappa * (-(conv(model, c, i, j, k)) + (1 / Re) * lap(model, c, i, j, k)    
     + rhsforcingterm(forcingterm,c,i,j,k,time));
 }
@@ -90,12 +90,12 @@ void rungeKutta(int n, Real Re, Model<Addressing_T::STANDARD> model,
             for (int k = 0; k < n; ++k) {
 
                 #ifdef ForcingT
-                Y3.grid(Component::U, i, j, k) = Y2(Component::U, i, j, k) + rhs(Y2, Component::U, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0])) -
-                                            rhs(model, Component::U, i, j, k, kappa[2], Re, forcingTerm,time);
-                Y3.grid(Component::V, i, j, k) = Y2(Component::V, i, j, k) + rhs(Y2, Component::V, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0])) -
-                                            rhs(model, Component::V, i, j, k, kappa[2], Re, forcingTerm,time);
-                Y3.grid(Component::W, i, j, k) = Y2(Component::W, i, j, k) + rhs(Y2, Component::W, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0])) -
-                                            rhs(model, Component::W, i, j, k, kappa[2], Re, forcingTerm,time);
+                Y3.grid(Component::U, i, j, k) = Y2.grid(Component::U, i, j, k) + rhs(Y2, Component::U, i, j, k, kappa[1], Re, forcingterm, (time+ kappa[0])) -
+                                            rhs(model, Component::U, i, j, k, kappa[2], Re, forcingterm,time);
+                Y3.grid(Component::V, i, j, k) = Y2.grid(Component::V, i, j, k) + rhs(Y2, Component::V, i, j, k, kappa[1], Re, forcingterm, (time+ kappa[0])) -
+                                            rhs(model, Component::V, i, j, k, kappa[2], Re, forcingterm,time);
+                Y3.grid(Component::W, i, j, k) = Y2.grid(Component::W, i, j, k) + rhs(Y2, Component::W, i, j, k, kappa[1], Re, forcingterm, (time+ kappa[0])) -
+                                            rhs(model, Component::W, i, j, k, kappa[2], Re, forcingterm,time);
                 #else
                 Y3.grid(Component::U, i, j, k) = Y2.grid(Component::U, i, j, k) + rhs(Y2, Component::U, i, j, k, kappa[1], Re) -
                                             rhs(model, Component::U, i, j, k, kappa[2], Re);
@@ -117,15 +117,15 @@ void rungeKutta(int n, Real Re, Model<Addressing_T::STANDARD> model,
             for (int k = 0; k < n; ++k) {
 
                 #ifdef ForcingT
-                grid_out(Component::U, i, j, k) =
-                        Y3(Component::U, i, j, k) + rhs(Y3, Component::U, i, j, k, kappa[3], Re, forcingterm, (time+ Kappa[4])) -
-                        rhs(Y2, Component::U, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0]));
-                grid_out(Component::V, i, j, k) =
-                        Y3(Component::V, i, j, k) + rhs(Y3, Component::V, i, j, k, kappa[3], Re, forcingterm, (time+ Kappa[4])) -
-                        rhs(Y2, Component::V, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0]));
-                grid_out(Component::W, i, j, k) =
-                        Y3(Component::W, i, j, k) + rhs(Y3, Component::W, i, j, k, kappa[3], Re, forcingterm, (time+ Kappa[4])) -
-                        rhs(Y2, Component::W, i, j, k, kappa[1], Re, forcingterm, (time+ Kappa[0]));
+                model_out.grid(Component::U, i, j, k) =
+                        Y3.grid(Component::U, i, j, k) + rhs(Y3, Component::U, i, j, k, kappa[3], Re, forcingterm, (time+ kappa[4])) -
+                        rhs(Y2, Component::U, i, j, k, kappa[1], Re, forcingterm, (time+ kappa[0]));
+                model_out.grid(Component::V, i, j, k) =
+                        Y3.grid(Component::V, i, j, k) + rhs(Y3, Component::V, i, j, k, kappa[3], Re, forcingterm, (time+ kappa[4])) -
+                        rhs(Y2, Component::V, i, j, k, kappa[1], Re, forcingterm, (time+ kappa[0]));
+                model_out.grid(Component::W, i, j, k) =
+                        Y3.grid(Component::W, i, j, k) + rhs(Y3, Component::W, i, j, k, kappa[3], Re, forcingterm, (time+ kappa[4])) -
+                        rhs(Y2, Component::W, i, j, k, kappa[1], Re, forcingterm, (time+ kappa[0]));
                 #else
                 model_out.grid(Component::U, i, j, k) =
                         Y3.grid(Component::U, i, j, k) + rhs(Y3, Component::U, i, j, k, kappa[3], Re) -
