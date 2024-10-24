@@ -1,3 +1,0 @@
-/home/viken/Desktop/AEROSPACE/AeroHPC_A/build/CMakeFiles/rebuild_cache.dir
-/home/viken/Desktop/AEROSPACE/AeroHPC_A/build/CMakeFiles/edit_cache.dir
-/home/viken/Desktop/AEROSPACE/AeroHPC_A/build/CMakeFiles/AeroHPC_A.dir
