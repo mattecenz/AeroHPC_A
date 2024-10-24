@@ -21,11 +21,6 @@ private:
     std::vector<BoundaryCondition<A> *> _bcs;
 
     /**
-     * Model space grid
-     */
-    StaggeredGrid<A> *_grid;
-
-    /**
      * Initialize the space grid
      */
     void initGrid(const VectorFunction &initial_velocity, const Function &initial_pressure);
@@ -43,7 +38,7 @@ public:
      *  - Inlet velocity function
      */
     Model(const Vector &spacing, StaggeredGrid<A> &grid, Real reynolds,
-          const VectorFunction &initial_velocity, const Function &initial_pressure) : _grid(&grid),
+          const VectorFunction &initial_velocity, const Function &initial_pressure) : grid(grid),
                                                                                       reynolds(reynolds),
                                                                                       spacing(spacing) {
         initGrid(initial_velocity, initial_pressure);
@@ -51,7 +46,7 @@ public:
 
     // Copy constructor, used in the RK method
     // Leaves the grid empty since it will be overwritten anyway
-    Model(Model& m) : _grid(&(m.grid)), spacing(m.spacing), reynolds(m.reynolds){}
+    Model(Model &m) : grid((m.grid)), spacing(m.spacing), reynolds(m.reynolds) {}
 
     /**
      * Add a boundary condition to the list of the model
@@ -65,9 +60,9 @@ public:
     void applyBCs() { for (BoundaryCondition<A> *bc: _bcs) bc->apply(grid); }
 
     /**
-     * Returns the grid of the model
-     */
-    StaggeredGrid<A> grid = *_grid;
+      * Model space grid
+      */
+    StaggeredGrid<A> &grid;
 
     /**
      * Node spacing

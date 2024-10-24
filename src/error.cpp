@@ -10,14 +10,15 @@ double computeL2Norm(const Model<A> &model, double time) {
     const auto &grid = model.grid; // Access grid from model
 
     // Loop through the entire grid
-    for (size_t k = 0; k < grid.nx; ++k) {
-        for (size_t j = 0; j < grid.ny; ++j) {
-            for (size_t i = 0; i < grid.nz; ++i) {
+    for (index_t i = 0; i < grid.nx; ++i) {
+        for (index_t j = 0; j < grid.ny; ++j) {
+            for (index_t k = 0; k < grid.nz; ++k) {
 
                 // Convert grid indices to real space coordinates
-                double x = static_cast<double>(i) * model.dx;
-                double y = static_cast<double>(j) * model.dy;
-                double z = static_cast<double>(k) * model.dz;
+                // TODO check if adding dx/dy/dz is correct
+                double x = static_cast<double>(i) * model.dx + model.dx;
+                double y = static_cast<double>(j) * model.dy + model.dy;
+                double z = static_cast<double>(k) * model.dz + model.dz;
 
                 // Calculate the exact solution for each component
                 double exactU = ExactSolution<A>::u(x, y, z, time);

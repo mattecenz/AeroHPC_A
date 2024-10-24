@@ -5,9 +5,9 @@
  */
 template<>
 Real &StaggeredGrid<STANDARD>::operator()(const Component c,
-                                                              const size_t i,
-                                                              const size_t j,
-                                                              const size_t k) {
+                                                              const index_t i,
+                                                              const index_t j,
+                                                              const index_t k) {
     return _entries[c + (i + (j + k * nx) * ny) * N_COMPONENTS];
 }
 
@@ -16,8 +16,8 @@ Real &StaggeredGrid<STANDARD>::operator()(const Component c,
  */
 template<>
 const Real &StaggeredGrid<STANDARD>::operator()(const Component c,
-                                                                    const size_t i,
-                                                                    const size_t j,
-                                                                    const size_t k) const {
+                                                                    const index_t i,
+                                                                    const index_t j,
+                                                                    const index_t k) const {
     return _entries[c + (i + (j + k * nx) * ny) * N_COMPONENTS];
 }

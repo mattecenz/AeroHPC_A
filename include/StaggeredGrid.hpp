@@ -41,8 +41,8 @@ public:
     /**
      * Constructor of a nx * ny * nz tensor with initial value equal to zero
      */
-    explicit StaggeredGrid(const std::array<size_t, 3> &nodes) :
-            nodes(nodes) {
+    explicit StaggeredGrid(const std::array<index_t, 3> &nodes) :
+            _nodes(nodes) {
         auto dim = nodes[0] * nodes[1] * nodes[2] * N_COMPONENTS;
         _entries.resize(dim);
         std::fill(_entries.begin(), _entries.end(), 0);
@@ -52,37 +52,42 @@ public:
     /**
      * Operator that accesses the memory using a 3D view of the object
      */
-    virtual Real &operator()(Component c, size_t i, size_t j, size_t k);
+    virtual Real &operator()(Component c, index_t i, index_t j, index_t k);
 
 #pragma inline
     /**
      * Operator that accesses 3D view for read-only operations
      */
-    virtual const Real &operator()(Component c, size_t i, size_t j, size_t k) const;
+    virtual const Real &operator()(Component c, index_t i, index_t j, index_t k) const;
 
     /**
      * Number of nodes
      */
-    const std::array<size_t, 3> nodes;
+    const std::array<index_t, 3> &nodes = _nodes;
 
     /**
      * Alias for x-axes nodes number
      */
-    const size_t &nx = nodes[0];
+    const index_t &nx = nodes[0];
     /**
      * Alias for y-axes nodes number
      */
-    const size_t &ny = nodes[1];
+    const index_t &ny = nodes[1];
     /**
      * Alias for z-axes nodes number
      */
-    const size_t &nz = nodes[2];
+    const index_t &nz = nodes[2];
 
 protected:
     /**
      * Nodes data
      */
     std::vector<Real> _entries;
+
+    /**
+     *
+     */
+    std::array<index_t, 3> _nodes;
 
 };
 

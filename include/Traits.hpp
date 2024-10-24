@@ -8,6 +8,8 @@
  */
 typedef float Real;
 
+typedef long index_t;
+
 /**
  * Enum for easy modification of the class addressing
  */
