@@ -5,7 +5,7 @@
  * Initialize the space grid with standard addressing
  */
 template<>
-void Model<Addressing_T::STANDARD>::initGrid(const VectorFunction &initial_velocity, const Function &initial_pressure) {
+void Model<STANDARD>::initGrid(const VectorFunction &initial_velocity, const Function &initial_pressure) {
     Real sdx = dx/2;
     Real sdy = dy/2;
     Real sdz = dz/2;

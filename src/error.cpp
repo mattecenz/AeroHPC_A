@@ -44,4 +44,4 @@ double computeL2Norm(const Model<A> &model, double time) {
 }
 
 // Explicit instantiation for the Addressing_T 
-template double computeL2Norm<Addressing_T::STANDARD>(const Model<Addressing_T::STANDARD> &model, double time);
+template double computeL2Norm<STANDARD>(const Model<STANDARD> &model, double time);

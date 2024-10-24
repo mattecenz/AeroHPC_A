@@ -18,7 +18,7 @@ void solver() {
     // define the mesh:
     // instantiate from ghosted stagg grid
     // hint: second method, num of nodes in each direction, number of ghosts=1
-    GhostedSG<Addressing_T::STANDARD> sg({5, 5, 5}, 1);
+    GhostedSG<STANDARD> sg({5, 5, 5}, 1);
 
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
         return {x, y, z};
@@ -32,9 +32,9 @@ void solver() {
 
     // build the model
     // initialize the grid with initial values
-    Model<Addressing_T::STANDARD> model(spacing, sg, 1, initialVel, initialPres);
+    Model<STANDARD> model(spacing, sg, 1, initialVel, initialPres);
 
-    BoundaryCondition<Addressing_T::STANDARD>::Mapper inletMapping = [](StaggeredGrid<Addressing_T::STANDARD> &grid, const Function &fun) {
+    BoundaryCondition<STANDARD>::Mapper inletMapping = [](StaggeredGrid<STANDARD> &grid, const Function &fun) {
         for (int i = 0; i < grid.ny; i++)
             for (int j = 0; j < grid.nz; j++) {
                 grid(U, 0, i, j) = fun(0, i, j);
@@ -47,7 +47,7 @@ void solver() {
         return 0;
     };
 
-    BoundaryCondition<Addressing_T::STANDARD> inletBoundary(inletMapping, inletFunction);
+    BoundaryCondition<STANDARD> inletBoundary(inletMapping, inletFunction);
     model.addBC(inletBoundary);
 
     // ERROR
@@ -56,10 +56,10 @@ void solver() {
 
     // couldnt test, try later
 //     double time = 0.001;
-//     double l2Norm = computeL2Norm<Addressing_T::STANDARD>(model, time);
+//     double l2Norm = computeL2Norm<STANDARD>(model, time);
 
     //Output Model:
-    Model<Addressing_T::STANDARD> model_out(model);
+    Model<STANDARD> model_out(model);
 
     double currentTime = 0.0;
     int stepCounter = 0;

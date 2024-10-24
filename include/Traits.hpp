@@ -11,7 +11,7 @@ typedef float Real;
 /**
  * Enum for easy modification of the class addressing
  */
-enum class Addressing_T {
+enum Addressing_T {
     /**
      * Multidimensional grid flattened into a single dimension array composed by cells of 4 values:
      * [u000, v000, w000, p000, u100, v100, w100, p100,  ... ]

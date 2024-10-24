@@ -41,8 +41,8 @@ inline Real rhs(Model<A> &model, Component c,
 }
 
 //Runge-Kutta method
-void rungeKutta(int n, Real Re, Model<Addressing_T::STANDARD> model,
-                Model<Addressing_T::STANDARD> &model_out, double deltat, double time) {
+void rungeKutta(int n, Real Re, Model<STANDARD> model,
+                Model<STANDARD> &model_out, double deltat, double time) {
 
     //grid -> Y1
     //kappa -> weighted_deltat 
@@ -55,8 +55,8 @@ void rungeKutta(int n, Real Re, Model<Addressing_T::STANDARD> model,
     };
 
     //BUFFERS
-    Model<Addressing_T::STANDARD> Y2(model);
-    Model<Addressing_T::STANDARD> Y3(model);
+    Model<STANDARD> Y2(model);
+    Model<STANDARD> Y3(model);
 
 #ifdef ForcingT
     ForcingTerm forcingterm(Re);

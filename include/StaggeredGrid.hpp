@@ -43,7 +43,7 @@ public:
      */
     explicit StaggeredGrid(const std::array<size_t, 3> &nodes) :
             nodes(nodes) {
-        auto dim = nodes[0] * nodes[1] * nodes[2] * Component::N_COMPONENTS;
+        auto dim = nodes[0] * nodes[1] * nodes[2] * N_COMPONENTS;
         _entries.resize(dim);
         std::fill(_entries.begin(), _entries.end(), 0);
     }
