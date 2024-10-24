@@ -6,9 +6,6 @@
 #include "BoundaryCondition.hpp"
 #include "RungeKutta.hpp"
 
-// Declare the RungeKutta function if not already declared in the included headers
-void RungeKutta(int order, Real Re, Model<Addressing_T::STANDARD> &model, Model<Addressing_T::STANDARD> &model_out, double deltaT, double currentTime);
-
 void solver() {
 
     std::cout << "Running the solver" << std::endl;
@@ -69,7 +66,7 @@ void solver() {
     while (currentTime < T) {
         // apply boundary cond
         // call RK
-    RungeKutta(5, Re, model, model_out, deltaT, currentTime);
+        rungeKutta(5, Re, model, model_out, deltaT, currentTime);
         currentTime += deltaT;
         stepCounter++;
     }
