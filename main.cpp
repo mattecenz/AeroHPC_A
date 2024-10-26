@@ -191,7 +191,7 @@ Real testSolver(Real deltaT, index_t dim) {
 
         measure(l2Time,
                 code_span(
-                    l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                        l2Norm = computeL2Norm<STANDARD>(model, currentTime);
                 )
         );
 
@@ -204,7 +204,6 @@ Real testSolver(Real deltaT, index_t dim) {
 
     return l2Norm;
 }
-
 
 
 int main() {
@@ -224,10 +223,10 @@ int main() {
 
 
     // wrt dim
-    for (size_t i=0; i<dims.size(); ++i){
+    for (size_t i = 0; i < dims.size(); ++i) {
         Real deltaT = deltaTs[0]; // first
         index_t dim = dims[i];
-        testSolver(deltaT, dim);
+        error.push_back(testSolver(deltaT, dim));
     }
 
 
@@ -235,11 +234,13 @@ int main() {
     // for (size_t i=0; i<dims.size(); ++i){
     //     Real deltaT = deltaT[i];
     //     index_t dim = dims[i];
-    //     testSolver(deltaT, dim);
+    //     error.push_back(testSolver(deltaT, dim));
     // }
 
-    for (size_t i=0; i<error.size(); ++i) std::cout << "err: " << error[i] << std::endl;
     std::ofstream csvFile("output.csv");
+    csvFile << "Err" << std::endl;
+    for (float i : error) csvFile << i << std::endl;
+
 
     return 0;
 }
