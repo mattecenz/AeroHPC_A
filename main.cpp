@@ -99,6 +99,7 @@ Real testSolver(Real deltaT, index_t dim) {
         // But the only tricky part is that we will need to calculate also x=0 in the rk
         */
 
+        // apply on face with x constant
         for (index_t j = -1; j < grid.ny + 1; j++)
             for (index_t k = -1; k < grid.nz + 1; k++) {
                 Real y = static_cast<Real>(j) * model.dy;
@@ -119,7 +120,7 @@ Real testSolver(Real deltaT, index_t dim) {
                 }
             }
 
-        // Iterate over face y=0 (with ghost points)
+        // apply on face with y constant
         for (index_t i = -1; i < grid.nx + 1; i++)
             for (index_t k = -1; k < grid.nz + 1; k++) {
                 Real x = static_cast<Real>(i) * model.dx;
@@ -140,7 +141,7 @@ Real testSolver(Real deltaT, index_t dim) {
                 }
             }
 
-        // Iterate over face z=0 (with ghost points)
+        // apply on face with z constant
         for (index_t i = -1; i < grid.nx + 1; i++)
             for (index_t j = -1; j < grid.ny + 1; j++) {
                 Real x = static_cast<Real>(i) * model.dx;
