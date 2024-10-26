@@ -57,10 +57,6 @@ Real testSolver(Real deltaT, index_t dim) {
     Model<STANDARD> model(spacing, sg, Re, initialVel, initialPres);
     cout << "Model created, grid initialized" << endl;
 
-    // Time iterations
-    Real currentTime = 0.0;
-    int stepCounter = 0;
-
     // Define test boundary condition
     BoundaryCondition<STANDARD>::Mapper testBCMapper = [&model](StaggeredGrid<STANDARD> &grid,
                                                                               const Function &fun, Real currentTime) {
@@ -178,6 +174,10 @@ Real testSolver(Real deltaT, index_t dim) {
     Model<STANDARD> Y3(model);
     cout << "Buffers created" << endl;
 
+
+    // Time iterations
+    Real currentTime = 0.0;
+    int stepCounter = 0;
     Real l2Norm = 0.0;
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
