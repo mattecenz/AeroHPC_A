@@ -6,6 +6,7 @@
 #include "BoundaryCondition.hpp"
 #include "RungeKutta.hpp"
 #include "VTKConverter.hpp"
+#include "Chronometer.hpp"
 
 void testSolver() {
 
@@ -14,10 +15,10 @@ void testSolver() {
     // define T & deltaT  & Re
     const Real T = 1.;
     const Real deltaT = 0.001;
-    const Real Re = 4700.0;
+    const Real Re = 10e6;
 
     // Define dim as side dimension of the grid (just for simplicity)
-    const index_t dim = 50;
+    const index_t dim = 100;
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -34,7 +35,7 @@ void testSolver() {
 
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
-        return {0,0,0};
+        return {0, 0, 0};
     };
 
     // Define initial pressure function
@@ -181,17 +182,23 @@ void testSolver() {
 
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
-        rungeKutta(model, Y2, Y3, deltaT, currentTime);
-
-        currentTime += deltaT;
-        stepCounter++;
-
-        model.applyBCs(); // for T= currTime + dt
-
+        measure(rkTime,
+                code_span(
+                        rungeKutta(model, Y2, Y3, deltaT, currentTime);
+                        currentTime += deltaT;
+                        stepCounter++;
+                        model.applyBCs(); // for T= currTime + dt
+                )
+        );
         /* TODO ??At this point we should have the solution on all the domain at time = currTime + dt??
              (so we can compare with exact solution at time = currTime + dt) */
-        Real l2Norm = computeL2Norm<STANDARD>(model, currentTime);
-        printf("%5d) t %0.4f l2 %f\n", stepCounter, currentTime, l2Norm);
+        measure(l2Time,
+                code_span(
+                    Real l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                )
+        );
+
+        printf("%5d) ts %0.4f | l2 %2.7f | rkT %2.5f | l2T %2.5f\n", stepCounter, currentTime, l2Norm, rkTime, l2Time);
     }
 
     // Output of last iteration
