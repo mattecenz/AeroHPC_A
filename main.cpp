@@ -62,8 +62,8 @@ Real testSolver(Real deltaT, index_t dim) {
     int stepCounter = 0;
 
     // Define test boundary condition
-    BoundaryCondition<STANDARD>::Mapper testBCMapper = [&currentTime, &model](StaggeredGrid<STANDARD> &grid,
-                                                                              const Function &fun, Real time) {
+    BoundaryCondition<STANDARD>::Mapper testBCMapper = [&model](StaggeredGrid<STANDARD> &grid,
+                                                                              const Function &fun, Real currentTime) {
 
         const Real sdx = model.sdx;
         const Real sdy = model.sdy;
