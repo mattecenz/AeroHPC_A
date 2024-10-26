@@ -50,7 +50,7 @@ public:
 
     // Copy constructor, used in the RK method
     // Leaves the grid empty since it will be overwritten anyway
-    Model(Model &m) : grid((m.grid)), spacing(m.spacing), reynolds(m.reynolds), staggered_spacing{m.staggered_spacing} {}
+    Model(Model &m) : grid((m.grid)), spacing(m.spacing), reynolds(m.reynolds), staggered_spacing{m.staggered_spacing}, _bcs(m._bcs) {}
 
     /**
      * Add a boundary condition to the list of the model
@@ -61,7 +61,7 @@ public:
      * Apply all the boundary conditions of the model,
      * Be aware that the insertion order of the conditions can affect the result of the application
      */
-    void applyBCs() { for (BoundaryCondition<A> *bc: _bcs) bc->apply(grid); }
+    void applyBCs(Real time) { for (BoundaryCondition<A> *bc: _bcs) bc->apply(grid, time); }
 
     /**
       * Model space grid

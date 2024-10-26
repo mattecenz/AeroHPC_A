@@ -14,7 +14,7 @@ public:
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef std::function<void(StaggeredGrid<A> &, const Function &)> Mapper;
+    typedef std::function<void(StaggeredGrid<A> &, const Function &, Real time)> Mapper;
 
 
     BoundaryCondition() = delete;
@@ -27,7 +27,7 @@ public:
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(StaggeredGrid<A> &grid) const { _mapper(grid, _function); }
+    void apply(StaggeredGrid<A> &grid, Real time) const { _mapper(grid, _function, time); }
 
 private:
     /**

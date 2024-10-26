@@ -63,7 +63,7 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Define test boundary condition
     BoundaryCondition<STANDARD>::Mapper testBCMapper = [&currentTime, &model](StaggeredGrid<STANDARD> &grid,
-                                                                              const Function &fun) {
+                                                                              const Function &fun, Real time) {
 
         const Real sdx = model.sdx;
         const Real sdy = model.sdy;
@@ -177,8 +177,6 @@ Real testSolver(Real deltaT, index_t dim) {
     Model<STANDARD> Y3(model);
     cout << "Buffers created" << endl;
 
-    model.applyBCs(); // for T=0
-
     Real l2Norm = 0.0;
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
@@ -187,11 +185,9 @@ Real testSolver(Real deltaT, index_t dim) {
                         rungeKutta(model, Y2, Y3, deltaT, currentTime);
                         currentTime += deltaT;
                         stepCounter++;
-                        model.applyBCs(); // for T= currTime + dt
                 )
         );
-        /* TODO ??At this point we should have the solution on all the domain at time = currTime + dt??
-             (so we can compare with exact solution at time = currTime + dt) */
+
         measure(l2Time,
                 code_span(
                     l2Norm = computeL2Norm<STANDARD>(model, currentTime);

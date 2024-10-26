@@ -15,9 +15,7 @@ struct RKConst {
     static constexpr Real alpha1 = 17.0 / 60.0;
     static constexpr Real alpha2 = 5.0 / 12.0;
     static constexpr Real alpha3 = 3.0 / 4.0;
-#ifdef ForcingT
     static constexpr Real alpha4 = 2.0 / 3.0;
-#endif
 };
 
 //RHS function
@@ -46,16 +44,18 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
 
     //grid -> Y1
     //kappa -> weighted_deltat 
-    std::array<Real, 4> kappa{
+    std::array<Real, 5> kappa{
             RKConst::alpha0 * deltat,
             RKConst::alpha1 * deltat,
             RKConst::alpha2 * deltat,
             RKConst::alpha3 * deltat,
+            RKConst::alpha4 * deltat
     };
 
-#ifdef ForcingT
-    Real kappa4 = RKConst::alpha4 * deltat;
+    model.applyBCs(time);
 
+
+#ifdef ForcingT
     ForcingTerm ft(model.reynolds, time);
 #endif
 
@@ -88,6 +88,8 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
             }
         }
     }
+
+    Y2.applyBCs(time + kappa[0]);
 
 #ifdef ForcingT
     ForcingTerm ft2(model.reynolds, time + kappa[0]);
@@ -146,8 +148,10 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
     }
 
 
+    Y3.applyBCs(time + kappa[4]);
+
 #ifdef ForcingT
-    ft.set_time(time + kappa4);
+    ft.set_time(time + kappa[4]);
 #endif
 
     //u(n+1)    
@@ -201,6 +205,8 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
             }
         }
     }
+
+    model.applyBCs(time + deltat);
 
 }
 
