@@ -2,7 +2,7 @@
 #define FORCING_TERM_HPP
 
 #include <array>
-#include <cmath>  
+#include <cmath>
 #include <StaggeredGrid.hpp>
 
 using namespace std;
@@ -12,29 +12,27 @@ class ForcingTerm {
 public:
 
     // Constructor 
-    ForcingTerm(Real Re, double time = 0.0);
+    ForcingTerm(Real Re, Real time);
 
     //setters
-    void set_time(double time);
-    void set_Re(Real Re);
+    void set_time(Real time);
 
     //getters
-    Real get_Re() const;
-    double get_time() const;
+    Real get_time() const;
 
     //Time update
-    void update_time(double extraTime);
+    void update_time(Real extraTime);
 
     // Method to compute the forcing term at a given point in space and time
-    double compute(double x, double y, double z, Component c) const;
+    Vector compute(Real x, Real y, Real z) const;
 
     // Hfunctions to compute the forcing term in each direction.
-    double computeGx(double x, double y, double z, double t, Real Re) const;
-    double computeGy(double x, double y, double z, double t, Real Re) const;
-    double computeGz(double x, double y, double z, double t, Real Re) const;
+    Real computeGx(Real x, Real y, Real z) const;
+    Real computeGy(Real x, Real y, Real z) const;
+    Real computeGz(Real x, Real y, Real z) const;
 
 private:
-    double time;
+    Real time;
     Real Re;
 };
 

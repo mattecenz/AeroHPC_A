@@ -16,7 +16,7 @@ constexpr std::string getTypeName() {
     if constexpr (std::is_same<T, double>::value) return "double";
     else if constexpr (std::is_same<T, float>::value) return "float";
     else if constexpr (std::is_same<T, int>::value) return "int";
-    else static_assert(false, "Unknown data type");
+    //else static_assert(false, "Unknown data type");
 }
 // ----------------------------------------------------------------------------- //
 

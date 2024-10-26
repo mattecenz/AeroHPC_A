@@ -10,100 +10,142 @@
 using namespace utils;
 
 
-struct RKConstants {
-    static constexpr double alpha1 = 64.0 / 120.0;
-    static constexpr double alpha2 = 50.0 / 120.0;
-    static constexpr double alpha3 = 34.0 / 120.0;
-    static constexpr double alpha4 = 90.0 / 120.0;
-    static constexpr double alpha5 = 2.0 / 3.0;
+struct RKConst {
+    static constexpr Real alpha0 = 8.0 / 15.0;
+    static constexpr Real alpha1 = 17.0 / 60.0;
+    static constexpr Real alpha2 = 5.0 / 12.0;
+    static constexpr Real alpha3 = 3.0 / 4.0;
+#ifdef ForcingT
+    static constexpr Real alpha4 = 2.0 / 3.0;
+#endif
 };
 
 //RHS function
 template<Addressing_T A>
-inline Real rhs(Model<A> &model, Component c,
-                index_t i, index_t j, index_t k,
-                double Kappa, Real Re
-#ifdef ForcingT
-                , ForcingTerm &forcingterm, double time
-#endif
-) {
+inline Vector rhs(Model<A> &model, index_t i, index_t j, index_t k) {
 
-#ifdef ForcingT
-    forcingterm.update_time(time);
-#endif
+    Real nu = (1 / model.reynolds);
 
-    return Kappa * (
-            -(conv(model, c, i, j, k)) + (1 / Re) * lap(model, c, i, j, k)
-            #ifdef ForcingT
-            + forcingterm.compute(i, j, k, c)
-#endif
-    );
+    Vector convs{
+            conv(model, U, i, j, k),
+            conv(model, V, i, j, k),
+            conv(model, W, i, j, k)
+    };
+    Vector laps{
+            lap(model, U, i, j, k),
+            lap(model, V, i, j, k),
+            lap(model, W, i, j, k)
+    };
+
+    return {
+            (-convs[0] + nu * laps[0]),
+            (-convs[1] + nu * laps[1]),
+            (-convs[2] + nu * laps[2])
+    };
 }
 
 //Runge-Kutta method
-void rungeKutta(Real Re, Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3, double deltat, double time) {
+void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3, Real deltat, Real time) {
+
+    Real sdx = model.dx/2;
+    Real sdy = model.dy/2;
+    Real sdz = model.dz/2;
 
     //grid -> Y1
     //kappa -> weighted_deltat 
-    std::array<double, 5> kappa{
-            RKConstants::alpha1 * deltat,
-            RKConstants::alpha2 * deltat,
-            RKConstants::alpha3 * deltat,
-            RKConstants::alpha4 * deltat,
-            RKConstants::alpha5 * deltat
+    std::array<Real, 4> kappa{
+            RKConst::alpha0 * deltat,
+            RKConst::alpha1 * deltat,
+            RKConst::alpha2 * deltat,
+            RKConst::alpha3 * deltat,
     };
 
 #ifdef ForcingT
-    ForcingTerm forcingterm(Re);
+    Real kappa4 = RKConst::alpha4 * deltat;
+
+    ForcingTerm ft(model.reynolds, time);
 #endif
 
     //Y2.
     for (index_t i = 0; i < model.grid.nx; ++i) {
         for (index_t j = 0; j < model.grid.ny; ++j) {
             for (index_t k = 0; k < model.grid.nz; ++k) {
+                Vector r = rhs(model, i, j, k);
 
 #ifdef ForcingT
-                Y2.grid(U, i, j, k) = model.grid(U, i, j, k) +
-                                                 rhs(model, U, i, j, k, kappa[0], Re, forcingterm, time);
-                Y2.grid(V, i, j, k) = model.grid(V, i, j, k) +
-                                                 rhs(model, V, i, j, k, kappa[0], Re, forcingterm, time);
-                Y2.grid(W, i, j, k) = model.grid(W, i, j, k) +
-                                                 rhs(model, W, i, j, k, kappa[0], Re, forcingterm, time);
+                Real px = static_cast<Real>(i) * model.dx;
+                Real py = static_cast<Real>(j) * model.dy;
+                Real pz = static_cast<Real>(k) * model.dz;
+
+
+                Vector force{
+                        ft.computeGx(px + sdx, py, pz), //Gx
+                        ft.computeGy(px, py + sdy, pz), //Gy
+                        ft.computeGz(px, py, pz + sdz) //Gz
+                };
+
+                Y2.grid(U, i, j, k) = model.grid(U, i, j, k) + kappa[0] * (r[0] + force[0]);
+                Y2.grid(V, i, j, k) = model.grid(V, i, j, k) + kappa[0] * (r[1] + force[1]);
+                Y2.grid(W, i, j, k) = model.grid(W, i, j, k) + kappa[0] * (r[2] + force[2]);
 #else
-                Y2.grid(U, i, j, k) = model.grid(U, i, j, k) + rhs(model, U, i, j, k, kappa[0], Re);
-                Y2.grid(V, i, j, k) = model.grid(V, i, j, k) + rhs(model, V, i, j, k, kappa[0], Re);
-                Y2.grid(W, i, j, k) = model.grid(W, i, j, k) + rhs(model, W, i, j, k, kappa[0], Re);
+                Y2.grid(U, i, j, k) = model.grid(U, i, j, k) + kappa[0] * r[0];
+                Y2.grid(V, i, j, k) = model.grid(V, i, j, k) + kappa[0] * r[1];
+                Y2.grid(W, i, j, k) = model.grid(W, i, j, k) + kappa[0] * r[2];
 #endif
 
             }
         }
     }
+
+#ifdef ForcingT
+    ForcingTerm ft2(model.reynolds, time + kappa[0]);
+#endif
 
     //Y3.
     for (index_t i = 0; i < model.grid.nx; ++i) {
         for (index_t j = 0; j < model.grid.ny; ++j) {
             for (index_t k = 0; k < model.grid.nz; ++k) {
+                Vector r = rhs(model, i, j, k);
+                Vector r2 = rhs(Y2, i, j, k);
 
 #ifdef ForcingT
-                Y3.grid(U, i, j, k) = Y2.grid(U, i, j, k) +
-                                                 rhs(Y2, U, i, j, k, kappa[1], Re, forcingterm,
-                                                     (time + kappa[0])) -
-                                                 rhs(model, U, i, j, k, kappa[2], Re, forcingterm, time);
+
+                Real px = static_cast<Real>(i) * model.dx;
+                Real py = static_cast<Real>(j) * model.dy;
+                Real pz = static_cast<Real>(k) * model.dz;
+
+                Vector force{
+                        ft.computeGx(px + sdx, py, pz),
+                        ft.computeGy(px, py + sdy, pz),
+                        ft.computeGz(px, py, pz + sdz)
+                };
+
+                Vector force2{
+                        ft2.computeGx(px + sdx, py, pz),
+                        ft2.computeGy(px, py + sdy, pz),
+                        ft2.computeGz(px, py, pz + sdz)
+                };
+
+
+                Y3.grid(U, i, j, k) = Y2.grid(U, i, j, k)
+                                        - kappa[1] * (r[0] + force[0])
+                                        + kappa[2] * (r2[0] + force2[0]);
                 Y3.grid(V, i, j, k) = Y2.grid(V, i, j, k) +
-                                                 rhs(Y2, V, i, j, k, kappa[1], Re, forcingterm,
-                                                     (time + kappa[0])) -
-                                                 rhs(model, V, i, j, k, kappa[2], Re, forcingterm, time);
+                                        - kappa[1] * (r[1] + force[1])
+                                        + kappa[2] * (r2[1] + force2[1]);
                 Y3.grid(W, i, j, k) = Y2.grid(W, i, j, k) +
-                                                 rhs(Y2, W, i, j, k, kappa[1], Re, forcingterm,
-                                                     (time + kappa[0])) -
-                                                 rhs(model, W, i, j, k, kappa[2], Re, forcingterm, time);
+                                        - kappa[1] * (r[2] + force[2])
+                                        + kappa[2] * (r2[2] + force2[2]);
 #else
-                Y3.grid(U, i, j, k) = Y2.grid(U, i, j, k) + rhs(Y2, U, i, j, k, kappa[1], Re) -
-                                            rhs(model, U, i, j, k, kappa[2], Re);
-                Y3.grid(V, i, j, k) = Y2.grid(V, i, j, k) + rhs(Y2, V, i, j, k, kappa[1], Re) -
-                                            rhs(model, V, i, j, k, kappa[2], Re);
-                Y3.grid(W, i, j, k) = Y2.grid(W, i, j, k) + rhs(Y2, W, i, j, k, kappa[1], Re) -
-                                            rhs(model, W, i, j, k, kappa[2], Re);
+                Y3.grid(U, i, j, k) = Y2.grid(U, i, j, k)
+                                        - kappa[1] * r[0]
+                                        + kappa[2] * r2[0];
+                Y3.grid(V, i, j, k) = Y2.grid(V, i, j, k) +
+                                        - kappa[1] * r[1]
+                                        + kappa[2] * r2[1];
+                Y3.grid(W, i, j, k) = Y2.grid(W, i, j, k) +
+                                        - kappa[1] * r[2]
+                                        + kappa[2] * r2[2];
 #endif
 
 
@@ -111,34 +153,56 @@ void rungeKutta(Real Re, Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STAN
         }
     }
 
+
+#ifdef ForcingT
+    ft.set_time(time + kappa4);
+#endif
+
     //u(n+1)    
     for (index_t i = 0; i < model.grid.nx; ++i) {
         for (index_t j = 0; j < model.grid.ny; ++j) {
             for (index_t k = 0; k < model.grid.nz; ++k) {
+                Vector r = rhs(Y2, i, j, k);
+                Vector r2 = rhs(Y3, i, j, k);
 
 #ifdef ForcingT
-                model.grid(U, i, j, k) =
-                        Y3.grid(U, i, j, k) +
-                        rhs(Y3, U, i, j, k, kappa[3], Re, forcingterm, (time + kappa[4])) -
-                        rhs(Y2, U, i, j, k, kappa[1], Re, forcingterm, (time + kappa[0]));
-                model.grid(V, i, j, k) =
-                        Y3.grid(V, i, j, k) +
-                        rhs(Y3, V, i, j, k, kappa[3], Re, forcingterm, (time + kappa[4])) -
-                        rhs(Y2, V, i, j, k, kappa[1], Re, forcingterm, (time + kappa[0]));
-                model.grid(W, i, j, k) =
-                        Y3.grid(W, i, j, k) +
-                        rhs(Y3, W, i, j, k, kappa[3], Re, forcingterm, (time + kappa[4])) -
-                        rhs(Y2, W, i, j, k, kappa[1], Re, forcingterm, (time + kappa[0]));
+                Real px = static_cast<Real>(i) * model.dx;
+                Real py = static_cast<Real>(j) * model.dy;
+                Real pz = static_cast<Real>(k) * model.dz;
+
+                // Be careful because fts are now inverted
+                Vector force{
+                        ft2.computeGx(px + sdx, py, pz),
+                        ft2.computeGy(px, py + sdy, pz),
+                        ft2.computeGz(px, py, pz + sdz)
+                };
+
+                Vector force2{
+                        ft.computeGx(px + sdx, py, pz),
+                        ft.computeGy(px, py + sdy, pz),
+                        ft.computeGz(px, py, pz + sdz)
+                };
+
+
+                model.grid(U, i, j, k) = Y3.grid(U, i, j, k)
+                                      - kappa[2] * (r[0] + force[0])
+                                      + kappa[3] * (r2[0] + force2[0]);
+                model.grid(V, i, j, k) = Y3.grid(V, i, j, k) +
+                                      - kappa[2] * (r[1] + force[1])
+                                      + kappa[3] * (r2[1] + force2[1]);
+                model.grid(W, i, j, k) = Y3.grid(W, i, j, k) +
+                                      - kappa[2] * (r[2] + force[2])
+                                      + kappa[3] * (r2[2] + force2[2]);
 #else
-                model_out.grid(U, i, j, k) =
-                        Y3.grid(U, i, j, k) + rhs(Y3, U, i, j, k, kappa[3], Re) -
-                        rhs(Y2, U, i, j, k, kappa[1], Re);
-                model_out.grid(V, i, j, k) =
-                        Y3.grid(V, i, j, k) + rhs(Y3, V, i, j, k, kappa[3], Re) -
-                        rhs(Y2, V, i, j, k, kappa[1], Re);
-                model_out.grid(W, i, j, k) =
-                        Y3.grid(W, i, j, k) + rhs(Y3, W, i, j, k, kappa[3], Re) -
-                        rhs(Y2, W, i, j, k, kappa[1], Re);
+                model.grid(U, i, j, k) = Y3.grid(U, i, j, k)
+                                        - kappa[2] * r[0]
+                                        + kappa[3] * r2[0];
+                model.grid(V, i, j, k) = Y3.grid(V, i, j, k) +
+                                        - kappa[2] * r[1]
+                                        + kappa[3] * r2[1];
+                model.grid(W, i, j, k) = Y3.grid(W, i, j, k) +
+                                        - kappa[2] * r[2]
+                                        + kappa[3] * r2[2];
 #endif
 
 
