@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include "L2NormCalculator.hpp"
 #include "StaggeredGrid.hpp"
 #include "GhostedSG.hpp"
@@ -8,17 +9,17 @@
 #include "VTKConverter.hpp"
 #include "Chronometer.hpp"
 
-void testSolver() {
+Real testSolver(Real deltaT, index_t dim) {
 
     std::cout << "Running the solver" << std::endl;
 
     // define T & deltaT  & Re
-    const Real T = 1.;
-    const Real deltaT = 0.001;
+    const Real T = 0.1;
+    // const Real deltaT = 0.001;
     const Real Re = 10e6;
 
     // Define dim as side dimension of the grid (just for simplicity)
-    const index_t dim = 100;
+    // const index_t dim = 50;
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -48,8 +49,6 @@ void testSolver() {
     Vector spacing = {sx, sy, sz};
 
     // define the mesh:
-    // instantiate from ghosted stagg grid
-    // hint: second method, num of nodes in each direction, number of ghosts=1
     GhostedSG<STANDARD> sg({nx, ny, nz}, 1);
     cout << "Grid created" << std::endl;
 
@@ -180,6 +179,7 @@ void testSolver() {
 
     model.applyBCs(); // for T=0
 
+    Real l2Norm = 0.0;
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         measure(rkTime,
@@ -194,7 +194,7 @@ void testSolver() {
              (so we can compare with exact solution at time = currTime + dt) */
         measure(l2Time,
                 code_span(
-                    Real l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                    l2Norm = computeL2Norm<STANDARD>(model, currentTime);
                 )
         );
 
@@ -202,12 +202,47 @@ void testSolver() {
     }
 
     // Output of last iteration
-    VTKFile file = VTKConverter::exportModel(model, "testsolver output of last time iteration");
-    file.writeFile("testsolver.vtk");
+    // VTKFile file = VTKConverter::exportModel(model, "testsolver output of last time iteration");
+    // file.writeFile("testsolver.vtk");
+
+    return l2Norm;
 }
 
+
+
 int main() {
-    // try the solver
-    testSolver();
+
+    // dividing the timestep size to half
+    std::vector<Real> deltaTs = {0.0001, 0.0005, 0.00025};
+    std::vector<index_t> dims = {4, 8, 16, 32, 64};
+
+    std::vector<Real> error;
+
+    // wrt deltaT
+    // for (size_t i=0; i<deltaTs.size(); ++i){
+    //     Real deltaT = deltaTs[i];
+    //     index_t dim = dims[0];
+    //     error.push_back(testSolver(deltaT, dim));
+    // }
+
+
+    // wrt dim
+    for (size_t i=0; i<dims.size(); ++i){
+        Real deltaT = deltaTs[0]; // first
+        index_t dim = dims[i];
+        testSolver(deltaT, dim);
+    }
+
+
+    // // wrt both
+    // for (size_t i=0; i<dims.size(); ++i){
+    //     Real deltaT = deltaT[i];
+    //     index_t dim = dims[i];
+    //     testSolver(deltaT, dim);
+    // }
+
+    for (size_t i=0; i<error.size(); ++i) std::cout << "err: " << error[i] << std::endl;
+    std::ofstream csvFile("output.csv");
+
     return 0;
 }
