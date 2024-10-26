@@ -67,9 +67,9 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
 #endif
 
     //Y2.
-    for (index_t i = 0; i < model.grid.nx; ++i) {
-        for (index_t j = 0; j < model.grid.ny; ++j) {
-            for (index_t k = 0; k < model.grid.nz; ++k) {
+    for (index_t i = 1; i < model.grid.nx-1; ++i) {
+        for (index_t j = 1; j < model.grid.ny-1; ++j) {
+            for (index_t k = 1; k < model.grid.nz-1; ++k) {
                 Vector r = rhs(model, i, j, k);
 
 #ifdef ForcingT
@@ -102,9 +102,9 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
 #endif
 
     //Y3.
-    for (index_t i = 0; i < model.grid.nx; ++i) {
-        for (index_t j = 0; j < model.grid.ny; ++j) {
-            for (index_t k = 0; k < model.grid.nz; ++k) {
+    for (index_t i = 1; i < model.grid.nx-1; ++i) {
+        for (index_t j = 1; j < model.grid.ny-1; ++j) {
+            for (index_t k = 1; k < model.grid.nz-1; ++k) {
                 Vector r = rhs(model, i, j, k);
                 Vector r2 = rhs(Y2, i, j, k);
 
@@ -159,9 +159,9 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
 #endif
 
     //u(n+1)    
-    for (index_t i = 0; i < model.grid.nx; ++i) {
-        for (index_t j = 0; j < model.grid.ny; ++j) {
-            for (index_t k = 0; k < model.grid.nz; ++k) {
+    for (index_t i = 1; i < model.grid.nx-1; ++i) {
+        for (index_t j = 1; j < model.grid.ny-1; ++j) {
+            for (index_t k = 1; k < model.grid.nz-1; ++k) {
                 Vector r = rhs(Y2, i, j, k);
                 Vector r2 = rhs(Y3, i, j, k);
 

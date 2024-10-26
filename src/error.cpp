@@ -44,7 +44,7 @@ Real computeL2Norm(const Model<A> &model, Real time) {
         }
     }
 
-    return std::sqrt(sum) / (model.dx * model.dy * model.dz);
+    return std::sqrt(sum * (model.dx * model.dy * model.dz));
 }
 
 // Explicit instantiation for the Addressing_T 
