@@ -26,22 +26,15 @@ inline Vector rhs(Model<A> &model, index_t i, index_t j, index_t k) {
 
     Real nu = (1 / model.reynolds);
 
-    Vector convs{
-            conv(model, U, i, j, k),
-            conv(model, V, i, j, k),
-            conv(model, W, i, j, k)
-    };
+    Vector convs = conv(model, i, j, k);
+
     Vector laps{
             lap(model, U, i, j, k),
             lap(model, V, i, j, k),
             lap(model, W, i, j, k)
     };
 
-    return {
-            (-convs[0] + nu * laps[0]),
-            (-convs[1] + nu * laps[1]),
-            (-convs[2] + nu * laps[2])
-    };
+    return - convs + nu * laps;
 }
 
 //Runge-Kutta method

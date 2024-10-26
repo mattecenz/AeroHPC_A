@@ -101,5 +101,8 @@ namespace utils {
     */
     template<Addressing_T A>
     inline Real conv(const Model<A> &model, Component c, int i, int j, int k);
+
+    template<Addressing_T A>
+    inline Vector conv(const Model<A> &model, int i, int j, int k);
 }
 #endif

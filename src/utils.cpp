@@ -101,4 +101,19 @@ namespace utils {
                 return 0;
         }
     }
+
+    template<>
+    Vector conv(const Model<STANDARD> &model, int i, int j, int k) {
+        return {
+            model.grid(U, i, j, k) * d_dx(model, U, i, j, k) +
+                       get_interpolation(model.grid, U, V, i, j, k) * d_dy(model, U, i, j, k) +
+                       get_interpolation(model.grid, U, W, i, j, k) * d_dz(model, U, i, j, k),
+            get_interpolation(model.grid, V, U, i, j, k) * d_dx(model, V, i, j, k) +
+                       model.grid(V, i, j, k) * d_dy(model, V, i, j, k) +
+                       get_interpolation(model.grid, V, W, i, j, k) * d_dz(model, V, i, j, k),
+            get_interpolation(model.grid, W, U, i, j, k) * d_dx(model, W, i, j, k) +
+                       get_interpolation(model.grid, W, V, i, j, k) * d_dy(model, W, i, j, k) +
+                       model.grid(W, i, j, k) * d_dz(model, W, i, j, k)
+        };
+    }
 }

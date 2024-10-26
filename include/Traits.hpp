@@ -24,6 +24,30 @@ enum Addressing_T {
 typedef std::array<Real, 3> Vector;
 
 /**
+ * Define mathematical methods for vectors
+ */
+#pragma inline
+
+Vector operator*(Real b, const Vector &a);
+
+#pragma inline
+
+Vector operator*(const Vector &a);
+
+#pragma inline
+
+Real operator*(const Vector &a, const Vector &b);
+
+#pragma inline
+
+Vector operator+(const Vector &a, const Vector &b);
+
+#pragma inline
+
+Vector operator-(const Vector &a);
+
+
+/**
  * Typedef shortening lambda definition of spatial function
  */
 typedef std::function<Real(Real x, Real y, Real z)> Function;
