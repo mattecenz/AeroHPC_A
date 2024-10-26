@@ -19,14 +19,14 @@ Real computeL2Norm(const Model<A> &model, Real time) {
             for (index_t k = 0; k < grid.nz; ++k) {
 
                 // Convert grid indices to real space coordinates
-                Real x = static_cast<Real>(i) * model.dx;
-                Real y = static_cast<Real>(j) * model.dy;
-                Real z = static_cast<Real>(k) * model.dz;
+                Real x = real(i) * model.dx;
+                Real y = real(j) * model.dy;
+                Real z = real(k) * model.dz;
 
                 // Calculate the exact solution for each component
-                Real exactU = ExactSolution<A>::u(x + sdx, y, z, time);
-                Real exactV = ExactSolution<A>::v(x, y + sdy, z, time);
-                Real exactW = ExactSolution<A>::w(x, y, z + sdz, time);
+                Real exactU = ExactSolution<A>::u(x + model.dx, y + sdy, z + sdz, time);
+                Real exactV = ExactSolution<A>::v(x + sdx, y + model.dy, z + sdz, time);
+                Real exactW = ExactSolution<A>::w(x + sdx, y + sdy, z + model.dz, time);
 
                 // Access the computed grid components
                 Real gridU = grid(Component::U, i, j, k);

@@ -7,6 +7,7 @@
  * Typedef for real values
  */
 typedef float Real;
+#define real(val) static_cast<Real>(val)
 
 typedef long index_t;
 
@@ -48,7 +49,12 @@ Vector operator-(const Vector &a);
 
 
 /**
- * Typedef shortening lambda definition of spatial function
+ * Typedef shortening lambda definition of spatial function, time dependent
+ */
+typedef std::function<Real(Real x, Real y, Real z, Real t)> TFunction;
+
+/**
+ * TY
  */
 typedef std::function<Real(Real x, Real y, Real z)> Function;
 

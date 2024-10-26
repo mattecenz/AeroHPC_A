@@ -14,7 +14,7 @@ public:
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef std::function<void(StaggeredGrid<A> &, const Function &, Real time)> Mapper;
+    typedef std::function<void(StaggeredGrid<A> &, const TFunction &, Real time)> Mapper;
 
 
     BoundaryCondition() = delete;
@@ -22,7 +22,7 @@ public:
     /**
      * Construct a boundary condition given the mapping function and the characteristic spatial function
      */
-    BoundaryCondition(const Mapper &mapper, Function function) : _mapper(mapper), _function(std::move(function)) {}
+    BoundaryCondition(const Mapper &mapper, TFunction function) : _mapper(mapper), _function(std::move(function)) {}
 
     /**
      * Apply the boundary condition onto the given grid
@@ -38,7 +38,7 @@ private:
     /**
      * The BC characteristic spatial function
      */
-    const Function _function;
+    const TFunction _function;
 };
 
 #endif //AEROHPC_A_BOUNDARYCONDITION_H

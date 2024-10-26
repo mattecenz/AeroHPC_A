@@ -59,7 +59,7 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Define test boundary condition
     BoundaryCondition<STANDARD>::Mapper testBCMapper = [&model](StaggeredGrid<STANDARD> &grid,
-                                                                              const Function &fun, Real currentTime) {
+                                                                const TFunction &fun, Real currentTime) {
 
         const Real sdx = model.sdx;
         const Real sdy = model.sdy;
@@ -83,8 +83,8 @@ Real testSolver(Real deltaT, index_t dim) {
         for (index_t j = -1; j < grid.ny + 1; j++){
             for (index_t k = -1; k < grid.nz + 1; k++) {
                 Real x = -1                   * model.dx;
-                Real y = static_cast<Real>(j) * model.dy;
-                Real z = static_cast<Real>(k) * model.dz;
+                Real y = real(j) * model.dy;
+                Real z = real(k) * model.dz;
 
                 grid(U, -1, j, k) = 2 * ExactSolution<STANDARD>::u(0., y, z, currentTime) - grid(U, 0, j,k);
                 // These 2 are fine because we do not care about it
@@ -95,72 +95,88 @@ Real testSolver(Real deltaT, index_t dim) {
         // But the only tricky part is that we will need to calculate also x=0 in the rk
         */
 
+        using Sol = ExactSolution<STANDARD>;
+
         // apply on face with x constant
-        for (index_t j = -1; j < grid.ny + 1; j++)
-            for (index_t k = -1; k < grid.nz + 1; k++) {
-                Real y = static_cast<Real>(j) * model.dy;
-                Real z = static_cast<Real>(k) * model.dz;
-#pragma unroll
-                for (index_t i = -1; i < 1; i++) {
-                    Real x = static_cast<Real>(i) * model.dx;
-                    grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
-                    grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                    grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-                }
-#pragma unroll
-                for (index_t i = grid.nx - 1; i < grid.nx + 1; i++) {
-                    Real x = static_cast<Real>(i) * model.dx;
-                    grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
-                    grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                    grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-                }
+        for (index_t j = 0; j < grid.ny; j++)
+            for (index_t k = 0; k < grid.nz; k++) {
+                Real y = real(j) * model.dy;
+                Real z = real(k) * model.dz;
+
+                Real x = 0;
+                // On x = 0 for ghost point we have exact for U, other approximate
+                grid(U, -1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
+                grid(V, -1, j, k) = 2 * Sol::v(x, y + model.dy, z + sdz, currentTime)
+                                    - grid(V, 0, j, k);
+                grid(W, -1, j, k) = 2 * Sol::w(x, y + sdy, z + model.dz, currentTime)
+                                    - grid(W, 0, j, k);
+
+
+                x = real(grid.nx) * model.dx;
+                // On x = phy_dim for domain point we have exact for U
+                grid(U, grid.nx - 1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
+                // For ghost point we have useless U, other approximate
+                grid(U, grid.nx, j, k) = 0;
+                grid(V, grid.nx, j, k) = 2 * Sol::v(x, y + model.dy, z + sdz, currentTime)
+                                         - grid(V, grid.nx - 1, j, k);
+                grid(W, grid.nx, j, k) = 2 * Sol::w(x, y + sdy, z + model.dz, currentTime)
+                                         - grid(W, grid.nx - 1, j, k);
             }
 
         // apply on face with y constant
-        for (index_t i = -1; i < grid.nx + 1; i++)
-            for (index_t k = -1; k < grid.nz + 1; k++) {
-                Real x = static_cast<Real>(i) * model.dx;
-                Real z = static_cast<Real>(k) * model.dz;
-#pragma unroll
-                for (index_t j = -1; j < 1; j++) {
-                    Real y = static_cast<Real>(j) * model.dy;
-                    grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
-                    grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                    grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-                }
-#pragma unroll
-                for (index_t j = grid.ny - 1; j < grid.ny + 1; j++) {
-                    Real y = static_cast<Real>(j) * model.dy;
-                    grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
-                    grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                    grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-                }
+        for (index_t i = 0; i < grid.nx ; i++)
+            for (index_t k = 0; k < grid.nz; k++) {
+                Real x = real(i) * model.dx;
+                Real z = real(k) * model.dz;
+
+                Real y = 0;
+                // On y = 0 for ghost point we hae exact for V, other approximate
+                grid(U, i, -1, k) = 2 * Sol::u(x + model.dx, y, z + sdz, currentTime)
+                                    - grid(U, i, 0, k);
+                grid(V, i, -1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
+                grid(W, i, -1, k) = 2 * Sol::w(x + sdx, y, z + model.dz, currentTime)
+                                    - grid(W, i, 0, k);
+
+                y = real(grid.ny) * model.dx;
+                // On y = phy_dim for domain point we have exact for V
+                grid(V, i, grid.ny - 1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
+                // For ghost points we have useless V, other approximate
+                grid(U, i, grid.ny, k) = 2 * Sol::u(x + model.dx, y, z + sdz, currentTime)
+                                         - grid(U, i, grid.ny - 1, k);
+                grid(V, i, grid.ny, k) = 0;
+                grid(W, i, grid.ny, k) = 2 * Sol::w(x + sdx, y, z + model.dz, currentTime)
+                                         - grid(W, i, grid.ny - 1, k);
             }
 
         // apply on face with z constant
-        for (index_t i = -1; i < grid.nx + 1; i++)
-            for (index_t j = -1; j < grid.ny + 1; j++) {
-                Real x = static_cast<Real>(i) * model.dx;
-                Real y = static_cast<Real>(j) * model.dy;
-#pragma unroll
-                for (index_t k = -1; k < 1; k++) {
-                    Real z = static_cast<Real>(k) * model.dz;
-                    grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
-                    grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                    grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-                }
-#pragma unroll
-                for (index_t k = grid.nz - 1; k < grid.nz + 1; k++) {
-                    Real z = static_cast<Real>(k) * model.dz;
-                    grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
-                    grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                    grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-                }
+        for (index_t i = 0; i < grid.nx; i++)
+            for (index_t j = 0; j < grid.ny; j++) {
+                Real x = real(i) * model.dx;
+                Real y = real(j) * model.dy;
+
+                Real z = 0;
+                // On z = 0 for ghost point we have exact for W, other approximate
+                grid(U, i, j, -1) = 2 * Sol::u(x + model.dx, y + sdy, z, currentTime)
+                                    - grid(U, i, j, 0);
+                grid(V, i, j, -1) = 2 * Sol::v(x + sdx, y + model.dy, z, currentTime)
+                                    - grid(V, i, j, 0);
+                grid(W, i, j, -1) = Sol::w(x + sdx, y + sdy, z, currentTime);
+
+                z = real(grid.nz) * model.dz;
+                // On z = phy_dim for domain point we have exact for W
+                grid(W, i, j, grid.nz - 1) = Sol::w(x + sdx, y + sdy, z, currentTime);
+                // For ghost points we gave useless W, other interpolate
+                grid(U, i, j, grid.nz) = 2 * Sol::u(x + model.dx, y + sdy, z, currentTime)
+                                         - grid(U, i, j, grid.nz - 1);
+                grid(V, i, j, grid.nz) = 2 * Sol::v(x + sdx, y + model.dy, z, currentTime)
+                                         - grid(V, i, j, grid.nz - 1);
+                grid(W, i, j, grid.nz) = 0;
+
             }
     };
 
     // Define test BC function
-    Function zero = [](Real x, Real y, Real z) {
+    TFunction zero = [](Real x, Real y, Real z, Real t) {
         return 0;
     };
 
@@ -175,10 +191,13 @@ Real testSolver(Real deltaT, index_t dim) {
     cout << "Buffers created" << endl;
 
 
+
     // Time iterations
     Real currentTime = 0.0;
     int stepCounter = 0;
     Real l2Norm = 0.0;
+
+    model.applyBCs(currentTime);
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         measure(rkTime,
@@ -239,7 +258,7 @@ int main() {
 
     std::ofstream csvFile("output.csv");
     csvFile << "Err" << std::endl;
-    for (float i : error) csvFile << i << std::endl;
+    for (float i: error) csvFile << i << std::endl;
 
 
     return 0;

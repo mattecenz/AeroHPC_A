@@ -39,9 +39,9 @@ namespace VTKConverter {
         StaggeredGrid<STANDARD> grid = model.grid;
 
         VTKFile file({
-                             static_cast<Real>(grid.nx) * model.dx,
-                             static_cast<Real>(grid.ny) * model.dy,
-                             static_cast<Real>(grid.nz) * model.dz,
+                             real(grid.nx) * model.dx,
+                             real(grid.ny) * model.dy,
+                             real(grid.nz) * model.dz,
                      }, {
                              static_cast<unsigned long>(grid.nx),
                              static_cast<unsigned long>(grid.ny),
