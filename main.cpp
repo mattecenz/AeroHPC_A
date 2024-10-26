@@ -62,11 +62,12 @@ void testSolver() {
     int stepCounter = 0;
 
     // Define test boundary condition
-    BoundaryCondition<STANDARD>::Mapper testBCMapper = [&currentTime, &model](StaggeredGrid<STANDARD> &grid, const Function &fun) {
+    BoundaryCondition<STANDARD>::Mapper testBCMapper = [&currentTime, &model](StaggeredGrid<STANDARD> &grid,
+                                                                              const Function &fun) {
 
-        const Real sdx = model.dx/2;
-        const Real sdy = model.dy/2;
-        const Real sdz = model.dz/2;
+        const Real sdx = model.sdx;
+        const Real sdy = model.sdy;
+        const Real sdz = model.sdz;
 
         // Yes but when I have x=0 I need to do two things:
         // 1) set only the ghosted x points by interpolating
@@ -98,74 +99,67 @@ void testSolver() {
         // But the only tricky part is that we will need to calculate also x=0 in the rk
         */
 
-        for (index_t i = -1; i < 1; i++)
-            for (index_t j = -1; j < grid.ny + 1; j++)
-                for (index_t k = -1; k < grid.nz + 1; k++) {
+        for (index_t j = -1; j < grid.ny + 1; j++)
+            for (index_t k = -1; k < grid.nz + 1; k++) {
+                Real y = static_cast<Real>(j) * model.dy;
+                Real z = static_cast<Real>(k) * model.dz;
+#pragma unroll
+                for (index_t i = -1; i < 1; i++) {
                     Real x = static_cast<Real>(i) * model.dx;
-                    Real y = static_cast<Real>(j) * model.dy;
-                    Real z = static_cast<Real>(k) * model.dz;
-
                     grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
                     grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
                     grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
                 }
-        // Iterate over face x = grid.nx-1 (with ghost points)
-        for (index_t i = grid.nx - 1; i < grid.nx + 1; i++)
-            for (index_t j = -1; j < grid.ny + 1; j++)
-                for (index_t k = -1; k < grid.nz + 1; k++) {
+#pragma unroll
+                for (index_t i = grid.nx - 1; i < grid.nx + 1; i++) {
                     Real x = static_cast<Real>(i) * model.dx;
-                    Real y = static_cast<Real>(j) * model.dy;
-                    Real z = static_cast<Real>(k) * model.dz;
                     grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
                     grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
                     grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
                 }
+            }
 
         // Iterate over face y=0 (with ghost points)
         for (index_t i = -1; i < grid.nx + 1; i++)
-            for (index_t j = -1; j < 1; j++)
-                for (index_t k = -1; k < grid.nz + 1; k++) {
-                    Real x = static_cast<Real>(i) * model.dx;
+            for (index_t k = -1; k < grid.nz + 1; k++) {
+                Real x = static_cast<Real>(i) * model.dx;
+                Real z = static_cast<Real>(k) * model.dz;
+#pragma unroll
+                for (index_t j = -1; j < 1; j++) {
                     Real y = static_cast<Real>(j) * model.dy;
-                    Real z = static_cast<Real>(k) * model.dz;
                     grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
                     grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
                     grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
                 }
-        // Iterate over face y = grid.ny-1 (with ghost points)
-        for (index_t i = -1; i < grid.nx + 1; i++)
-            for (index_t j = grid.ny - 1; j < grid.ny + 1; j++)
-                for (index_t k = -1; k < grid.nz + 1; k++) {
-                    Real x = static_cast<Real>(i) * model.dx;
+#pragma unroll
+                for (index_t j = grid.ny - 1; j < grid.ny + 1; j++) {
                     Real y = static_cast<Real>(j) * model.dy;
-                    Real z = static_cast<Real>(k) * model.dz;
                     grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
                     grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
                     grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
                 }
+            }
 
         // Iterate over face z=0 (with ghost points)
         for (index_t i = -1; i < grid.nx + 1; i++)
-            for (index_t j = -1; j < grid.ny + 1; j++)
+            for (index_t j = -1; j < grid.ny + 1; j++) {
+                Real x = static_cast<Real>(i) * model.dx;
+                Real y = static_cast<Real>(j) * model.dy;
+#pragma unroll
                 for (index_t k = -1; k < 1; k++) {
-                    Real x = static_cast<Real>(i) * model.dx;
-                    Real y = static_cast<Real>(j) * model.dy;
                     Real z = static_cast<Real>(k) * model.dz;
                     grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
                     grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
                     grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
                 }
-        // Iterate over face z = grid.nz-1 (with ghost points)
-        for (index_t i = -1; i < grid.nx + 1; i++)
-            for (index_t j = -1; j < grid.ny + 1; j++)
+#pragma unroll
                 for (index_t k = grid.nz - 1; k < grid.nz + 1; k++) {
-                    Real x = static_cast<Real>(i) * model.dx;
-                    Real y = static_cast<Real>(j) * model.dy;
                     Real z = static_cast<Real>(k) * model.dz;
                     grid(U, i, j, k) = ExactSolution<STANDARD>::u(x + sdx, y, z, currentTime);
                     grid(V, i, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
                     grid(W, i, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
                 }
+            }
     };
 
     // Define test BC function

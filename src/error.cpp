@@ -5,9 +5,9 @@ template<Addressing_T A>
 Real computeL2Norm(const Model<A> &model, Real time) {
     Real sum = 0.0;
 
-    Real sdx = model.dx/2;
-    Real sdy = model.dy/2;
-    Real sdz = model.dz/2;
+    Real sdx = model.sdx;
+    Real sdy = model.sdy;
+    Real sdz = model.sdz;
 
     // Access the grid from the model
     // maybe change this later

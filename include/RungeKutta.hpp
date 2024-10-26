@@ -47,9 +47,9 @@ inline Vector rhs(Model<A> &model, index_t i, index_t j, index_t k) {
 //Runge-Kutta method
 void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3, Real deltat, Real time) {
 
-    Real sdx = model.dx/2;
-    Real sdy = model.dy/2;
-    Real sdz = model.dz/2;
+    Real sdx = model.sdx;
+    Real sdy = model.sdy;
+    Real sdz = model.sdz;
 
     //grid -> Y1
     //kappa -> weighted_deltat 
@@ -76,7 +76,6 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
                 Real px = static_cast<Real>(i) * model.dx;
                 Real py = static_cast<Real>(j) * model.dy;
                 Real pz = static_cast<Real>(k) * model.dz;
-
 
                 Vector force{
                         ft.computeGx(px + sdx, py, pz), //Gx

@@ -38,15 +38,19 @@ public:
      *  - Inlet velocity function
      */
     Model(const Vector &spacing, StaggeredGrid<A> &grid, Real reynolds,
-          const VectorFunction &initial_velocity, const Function &initial_pressure) : grid(grid),
-                                                                                      reynolds(reynolds),
-                                                                                      spacing(spacing) {
+          const VectorFunction &initial_velocity, const Function &initial_pressure)
+            : grid(grid),
+              reynolds(reynolds),
+              spacing(spacing),
+              staggered_spacing{spacing[0] / 2,
+                                spacing[1] / 2,
+                                spacing[2] / 2} {
         initGrid(initial_velocity, initial_pressure);
     }
 
     // Copy constructor, used in the RK method
     // Leaves the grid empty since it will be overwritten anyway
-    Model(Model &m) : grid((m.grid)), spacing(m.spacing), reynolds(m.reynolds) {}
+    Model(Model &m) : grid((m.grid)), spacing(m.spacing), reynolds(m.reynolds), staggered_spacing{m.staggered_spacing} {}
 
     /**
      * Add a boundary condition to the list of the model
@@ -83,6 +87,26 @@ public:
      * Alias for z-axes spacing
      */
     const Real &dz = spacing[2];
+
+    /**
+     * Node spacing
+     */
+    const Vector staggered_spacing;
+
+    /**
+     * Alias for x-axes spacing
+     */
+    const Real &sdx = staggered_spacing[0];
+
+    /**
+     * Alias for y-axes spacing
+     */
+    const Real &sdy = staggered_spacing[1];
+
+    /**
+     * Alias for z-axes spacing
+     */
+    const Real &sdz = staggered_spacing[2];
 
     /**
      * Reynolds number
