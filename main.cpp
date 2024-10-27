@@ -16,7 +16,7 @@ Real testSolver(Real deltaT, index_t dim) {
     // define T & deltaT  & Re
     const Real T = 0.1;
     // const Real deltaT = 0.001;
-    const Real Re = 10e6;
+    const Real Re = 4700.;
 
     // Define dim as side dimension of the grid (just for simplicity)
     // const index_t dim = 50;
@@ -30,9 +30,9 @@ Real testSolver(Real deltaT, index_t dim) {
     const Real phy_dim = 1.0;
 
     // Define physical size of the problem for each axis
-    const Real sx = phy_dim / nx;
-    const Real sy = phy_dim / ny;
-    const Real sz = phy_dim / nz;
+    const Real sx = phy_dim / (nx-1);
+    const Real sy = phy_dim / (ny-1);
+    const Real sz = phy_dim / (nz-1);
 
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
@@ -65,113 +65,179 @@ Real testSolver(Real deltaT, index_t dim) {
         const Real sdy = model.sdy;
         const Real sdz = model.sdz;
 
-        // Yes but when I have x=0 I need to do two things:
-        // 1) set only the ghosted x points by interpolating
-        // 2) set the face yz to the corresponding values
-
-        // To understand what happens we can visualize it
-        //       ---x---p---x---p---x              -> x
-        // Index:  -1   0   0   1   1
-        //              ^
-        //           boundary
-
-        // We want x[0] to be calculated (as that is inside our mesh so needs to be passed)
-        // Because we do not know it unless we can approximate it as an int
-
-        // We can do everything in a for loop for the x variable
-        /*
-        for (index_t j = -1; j < grid.ny + 1; j++){
-            for (index_t k = -1; k < grid.nz + 1; k++) {
-                Real x = -1                   * model.dx;
-                Real y = real(j) * model.dy;
-                Real z = real(k) * model.dz;
-
-                grid(U, -1, j, k) = 2 * ExactSolution<STANDARD>::u(0., y, z, currentTime) - grid(U, 0, j,k);
-                // These 2 are fine because we do not care about it
-                grid(V, 0, j, k) = ExactSolution<STANDARD>::v(x, y + sdy, z, currentTime);
-                grid(W, 0, j, k) = ExactSolution<STANDARD>::w(x, y, z + sdz, currentTime);
-            }
-        }
-        // But the only tricky part is that we will need to calculate also x=0 in the rk
-        */
-
         using Sol = ExactSolution<STANDARD>;
 
-        // apply on face with x constant
-        for (index_t j = 0; j < grid.ny; j++)
-            for (index_t k = 0; k < grid.nz; k++) {
-                Real y = real(j) * model.dy;
-                Real z = real(k) * model.dz;
+        // Since I am tired that nobody has a picture of the problem I will create it
+        // And this will be used (with my convention on B.C), because everyone has something in mind
+        // but it seems that everyone has a different idea about it
 
-                Real x = 0;
-                // On x = 0 for ghost point we have exact for U, other approximate
-                grid(U, -1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
-                grid(V, -1, j, k) = 2 * Sol::v(x, y + model.dy, z + sdz, currentTime)
-                                    - grid(V, 0, j, k);
-                grid(W, -1, j, k) = 2 * Sol::w(x, y + sdy, z + model.dz, currentTime)
-                                    - grid(W, 0, j, k);
+        // This is what we are using now (along one direction, the others are the same)
+        //          ---x---p---x---p---x              -> x
+        // Index:     -1   0   0   1   1
+        //                 ^
+        //              boundary
+        // Spatial:  -px   0   px  dx  dx+px
 
+        // And the boundary will be put there, if someone changes it I will personally force remove the commit
+        // Then at the end we will have (Assuming we will arrive to 1)
+        //          ---x---p---x---p---x              -> x
+        // Index:     -1   0   0   1   1
+        //                         ^
+        //                      boundary
+        // Spatial:          1-px  1   1+px
 
-                x = real(grid.nx) * model.dx;
-                // On x = phy_dim for domain point we have exact for U
-                grid(U, grid.nx - 1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
-                // For ghost point we have useless U, other approximate
-                grid(U, grid.nx, j, k) = 0;
-                grid(V, grid.nx, j, k) = 2 * Sol::v(x, y + model.dy, z + sdz, currentTime)
-                                         - grid(V, grid.nx - 1, j, k);
-                grid(W, grid.nx, j, k) = 2 * Sol::w(x, y + sdy, z + model.dz, currentTime)
-                                         - grid(W, grid.nx - 1, j, k);
+        // The other directions are similar
+        // Which means: THE BOUNDARY IS ON THE PRESSURE. WHY? BECAUSE ITS BETTER FULL STOP.
+
+        // Then these will be our B.C.s
+        // We have to be careful, because we need to also set manually when y and z are = 0 or = grid.ny/nz
+        //  Iterate over the boundary of the face x=0
+        for(index_t k = 0; k < grid.nz; k++){
+            const Real z = real(k) * model.dz;
+
+            grid(U, 0, 0, k) = Sol::u(sdx, 0., z, currentTime);
+            grid(V, 0, 0, k) = Sol::v(0., sdy, z, currentTime);
+            grid(W, 0, 0, k) = Sol::w(0., 0., z+sdz, currentTime);
+
+            grid(U, 0, grid.ny-1, k) = Sol::u(sdx, 1., z, currentTime);
+            // The one on V is the ghost point of our face but it is on the border => useless
+            grid(V, 0, grid.ny-1, k) = Sol::v(0., 1.+sdy, z, currentTime);
+            grid(W, 0, grid.ny-1, k) = Sol::w(0., 1., z+sdz, currentTime);
+
+            //NB: grid(W, 0, grid.ny-1, grid.nz-1) is useless but better to leave it
+        }
+        // Now iterate over the y keeping the z fixed
+        // We can avoid some points as they were already calculated
+        for(index_t j = 1; j < grid.ny - 1; j++){
+            const Real y = real(j) * model.dy;
+
+            grid(U, 0, j, 0) = Sol::u(sdx, j, 0., currentTime);
+            grid(V, 0, j, 0) = Sol::v(0., j+sdy, 0., currentTime);
+            grid(W, 0, j, 0) = Sol::w(0., j, sdz, currentTime);
+
+            grid(U, 0, j, grid.nz-1) = Sol::u(sdx, j, 1., currentTime);
+            // Here the one on V is not useless
+            grid(V, 0, j, grid.nz-1) = Sol::v(0., j+sdy, 1., currentTime);
+            // But the one on W is
+            grid(W, 0, j, grid.nz-1) = Sol::w(0., j, 1.+sdz, currentTime);
+        }
+        // Do the same for y=0 and y=grid.ny-1
+        // Iterate over x
+        for(index_t i = 1; i < grid.nx-1; i++){
+            const Real x = real(i) * model.dx;
+
+            grid(U, i, 0, 0) = Sol::u(x+sdx, 0., 0., currentTime);
+            grid(V, i, 0, 0) = Sol::v(x, sdy, 0., currentTime);
+            grid(W, i, 0, 0) = Sol::w(x, 0., sdz, currentTime);
+
+            // Do the same for z=1.
+            grid(U, i, 0, grid.nz-1) = Sol::u(x+sdx, 0., 1., currentTime);
+            grid(V, i, 0, grid.nz-1) = Sol::v(x, sdy, 1., currentTime);
+            // The velocity on W is useless
+            grid(W, i, 0, grid.nz-1) = Sol::w(x, 0., 1+sdz, currentTime);
+
+            // Do the same now for the y=1.
+            grid(U, i, grid.ny-1, 0) = Sol::u(x+sdx, 1., 0., currentTime);
+            // Velocity on V is useless
+            grid(V, i, grid.ny-1, 0) = Sol::v(x, 1.+sdy, 0., currentTime);
+            grid(W, i, grid.ny-1, 0) = Sol::w(x, 1., sdz, currentTime);
+
+            // Do the same for z=1.
+            grid(U, i, grid.ny-1, grid.nz-1) = Sol::u(x+sdx, 1., 1., currentTime);
+            // here we need only the U
+            grid(V, i, grid.ny-1, grid.nz-1) = Sol::v(x, 1.+sdy, 1., currentTime);
+            grid(W, i, grid.ny-1, grid.nz-1) = Sol::w(x, 1., 1.+sdz, currentTime);
+        }
+        // Do the same for the face at x = 1.
+        for(index_t k = 0; k < grid.nz; k++){
+            const Real z = real(k) * model.dz;
+
+            // The U is not needed
+            grid(U, grid.nx-1, 0, k) = Sol::u(1.+sdx, 0., z, currentTime);
+            grid(V, grid.nx-1, 0, k) = Sol::v(1., sdy, z, currentTime);
+            grid(W, grid.nx-1, 0, k) = Sol::w(1., 0., z+sdz, currentTime);
+
+            grid(U, grid.nx-1, grid.ny-1, k) = Sol::u(1.+sdx, 1., z, currentTime);
+            grid(V, grid.nx-1, grid.ny-1, k) = Sol::v(1., 1.+sdy, z, currentTime);
+            // Here we need only w
+            grid(W, grid.nx-1, grid.ny-1, k) = Sol::w(1., 1., z+sdz, currentTime);
+        }
+        // Now iterate over the y keeping the z fixed
+        for(index_t j = 1; j < grid.ny - 1; j++){
+            const Real y = real(j) * model.dy;
+
+            // U is not needed
+            grid(U, grid.nx-1, j, 0) = Sol::u(1.+sdx, j, 0., currentTime);
+            grid(V, grid.nx-1, j, 0) = Sol::v(1., j+sdy, 0., currentTime);
+            grid(W, grid.nx-1, j, 0) = Sol::w(1., j, sdz, currentTime);
+
+            grid(U, grid.nx-1, j, grid.nz-1) = Sol::u(1.+sdx, j, 1., currentTime);
+            // Only V is needed
+            grid(V, grid.nx-1, j, grid.nz-1) = Sol::v(1., j+sdy, 1., currentTime);
+            grid(W, grid.nx-1, j, grid.nz-1) = Sol::w(1., j, 1.+sdz, currentTime);
+        }
+        // Do inside the faces now
+        for (index_t j = 1; j < grid.ny-1; j++)
+            for (index_t k = 1; k < grid.nz-1; k++) {
+                // This is correct
+                const Real y = real(j) * model.dy;
+                const Real z = real(k) * model.dz;
+
+                // On x = 0 OUR GHOST POINT IS AT -sdx !!!
+                // And to calculate that we need the exact solution in zero
+                // And our y and z real coordinates do not reside on the staggered grid
+                grid(U, -1, j, k) = 2*Sol::u(0., y, z, currentTime) - grid(U, 0, j, k);
+                // For the x and y components they are just the exact solutions on the staggered grid
+                // At x=0
+                // Also in this grid we do not need the B.C on the ghost points.
+                grid(V, 0, j, k) = Sol::v(0, y + sdy, z, currentTime);
+                grid(W, 0, j, k) = Sol::w(0, y, z + sdz, currentTime);
+
+                // In this way we can do also a funny thing, which is our ghost point for the x
+                // will correspond to the last point of the mesh (do not believe me ? idc but you should)
+
+                // Which means that we need to set our ghost point at just grid.nx-1
+
+                // This is our ghost point, correctly identified but the formula is wrong
+                grid(U, grid.nx - 1, j, k) = 2 * Sol::u(1., y, z, currentTime) - grid(U,grid.nx-2,j,k);
+                // Our boundary also again resides in the grid.nx - 1 staggered point
+                // And the ghost points are not needed in this point
+                grid(V, grid.nx - 1, j, k) = Sol::v(1., y + sdy, z, currentTime);
+                grid(W, grid.nx - 1, j, k) = Sol::w(1., y, z + sdz, currentTime);
+
+                // Small note: think about in which range of x should we iterate, that should be 
+                // [0, grid.nx-1)
             }
-
+        // The exact same shit does work also on the grid with y and z 
+        // (you do not believe me ? I am tired of drawing stuff so you can imagine it)
         // apply on face with y constant
-        for (index_t i = 0; i < grid.nx ; i++)
-            for (index_t k = 0; k < grid.nz; k++) {
-                Real x = real(i) * model.dx;
-                Real z = real(k) * model.dz;
+        for (index_t i = 1; i < grid.nx-1; i++){
+            for (index_t k = 1; k < grid.nz-1; k++) {
+                const Real x = real(i) * model.dx;
+                const Real z = real(k) * model.dz;
 
-                Real y = 0;
-                // On y = 0 for ghost point we hae exact for V, other approximate
-                grid(U, i, -1, k) = 2 * Sol::u(x + model.dx, y, z + sdz, currentTime)
-                                    - grid(U, i, 0, k);
-                grid(V, i, -1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
-                grid(W, i, -1, k) = 2 * Sol::w(x + sdx, y, z + model.dz, currentTime)
-                                    - grid(W, i, 0, k);
+                grid(U, i, 0, k) = Sol::u(x + sdx, 0, z, currentTime);
+                grid(V, i, -1, k) = 2*Sol::v(x, 0., z, currentTime) - grid(V, i, 0, k);
+                grid(W, i, 0, k) = Sol::w(x, 0, z + sdz, currentTime);
 
-                y = real(grid.ny) * model.dx;
-                // On y = phy_dim for domain point we have exact for V
-                grid(V, i, grid.ny - 1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
-                // For ghost points we have useless V, other approximate
-                grid(U, i, grid.ny, k) = 2 * Sol::u(x + model.dx, y, z + sdz, currentTime)
-                                         - grid(U, i, grid.ny - 1, k);
-                grid(V, i, grid.ny, k) = 0;
-                grid(W, i, grid.ny, k) = 2 * Sol::w(x + sdx, y, z + model.dz, currentTime)
-                                         - grid(W, i, grid.ny - 1, k);
+                grid(U, i, grid.ny - 1, k) = Sol::u(x + sdx, 1., z, currentTime);
+                grid(V, i, grid.ny - 1, k) = 2 * Sol::v(x, 1., z, currentTime) - grid(V,i,grid.ny-2,k);
+                grid(W, i, grid.ny - 1, k) = Sol::w(x, 1., z + sdz, currentTime);
             }
-
+        }
         // apply on face with z constant
-        for (index_t i = 0; i < grid.nx; i++)
-            for (index_t j = 0; j < grid.ny; j++) {
-                Real x = real(i) * model.dx;
-                Real y = real(j) * model.dy;
+        for (index_t i = 1; i < grid.nx-1; i++)
+            for (index_t j = 1; j < grid.ny-1; j++) {
+                const Real x = real(i) * model.dx;
+                const Real y = real(j) * model.dy;
 
-                Real z = 0;
-                // On z = 0 for ghost point we have exact for W, other approximate
-                grid(U, i, j, -1) = 2 * Sol::u(x + model.dx, y + sdy, z, currentTime)
-                                    - grid(U, i, j, 0);
-                grid(V, i, j, -1) = 2 * Sol::v(x + sdx, y + model.dy, z, currentTime)
-                                    - grid(V, i, j, 0);
-                grid(W, i, j, -1) = Sol::w(x + sdx, y + sdy, z, currentTime);
+                grid(U, i, j, 0) = Sol::u(x + sdx, y, 0., currentTime);
+                grid(V, i, j, 0) = Sol::v(x, y + sdy, 0., currentTime);
+                grid(W, i, j, -1) = 2*Sol::w(x, y, 0., currentTime) - grid(W, i, j, 0);
 
-                z = real(grid.nz) * model.dz;
-                // On z = phy_dim for domain point we have exact for W
-                grid(W, i, j, grid.nz - 1) = Sol::w(x + sdx, y + sdy, z, currentTime);
-                // For ghost points we gave useless W, other interpolate
-                grid(U, i, j, grid.nz) = 2 * Sol::u(x + model.dx, y + sdy, z, currentTime)
-                                         - grid(U, i, j, grid.nz - 1);
-                grid(V, i, j, grid.nz) = 2 * Sol::v(x + sdx, y + model.dy, z, currentTime)
-                                         - grid(V, i, j, grid.nz - 1);
-                grid(W, i, j, grid.nz) = 0;
-
+                grid(U, i, j, grid.nz - 1) = Sol::u(x + sdx, y, 1., currentTime);
+                grid(V, i, j, grid.nz - 1) = Sol::v(x, y + sdy, 1., currentTime);
+                grid(W, i, j, grid.nz - 1) = 2 * Sol::w(x, y, 1., currentTime) - grid(W,i,j,grid.nz-2);
             }
     };
 
@@ -189,8 +255,6 @@ Real testSolver(Real deltaT, index_t dim) {
     Model<STANDARD> Y2(model);
     Model<STANDARD> Y3(model);
     cout << "Buffers created" << endl;
-
-
 
     // Time iterations
     Real currentTime = 0.0;
@@ -214,6 +278,20 @@ Real testSolver(Real deltaT, index_t dim) {
                 )
         );
 
+        // if(stepCounter==979){
+        //     std::cout<<std::endl<<"Printing model at timestep: "<<stepCounter<<std::endl<<std::endl;
+        //     // Print the whole matrix why not
+        //     for(index_t i=-1;i<model.grid.nx+1;++i){
+        //         for(index_t j=-1;j<model.grid.ny+1;++j){
+        //             for(index_t k=-1;k<model.grid.nz+1;++k){
+        //                 std::cout<<"("<<U<<","<<i<<","<<j<<","<<k<<"): "<<model.grid(U,i,j,k)<<std::endl;
+        //                 std::cout<<"("<<V<<","<<i<<","<<j<<","<<k<<"): "<<model.grid(V,i,j,k)<<std::endl;
+        //                 std::cout<<"("<<W<<","<<i<<","<<j<<","<<k<<"): "<<model.grid(W,i,j,k)<<std::endl;
+        //             }
+        //         }
+        //     }
+        // }
+
         printf("%5d) ts %0.4f | l2 %2.7f | rkT %2.5f | l2T %2.5f\n", stepCounter, currentTime, l2Norm, rkTime, l2Time);
     }
 
@@ -228,8 +306,8 @@ Real testSolver(Real deltaT, index_t dim) {
 int main() {
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.0001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8, 16, 32, 64};
+    std::vector<Real> deltaTs = {0.0001, 0.0005, 0.00025, 0.000125};
+    std::vector<index_t> dims = {4, 8, 16, 32};
 
     std::vector<Real> error;
 
@@ -249,9 +327,9 @@ int main() {
     }
 
 
-    // // wrt both
+    // wrt both
     // for (size_t i=0; i<dims.size(); ++i){
-    //     Real deltaT = deltaT[i];
+    //     Real deltaT = deltaTs[i];
     //     index_t dim = dims[i];
     //     error.push_back(testSolver(deltaT, dim));
     // }

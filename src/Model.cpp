@@ -13,10 +13,10 @@ void Model<STANDARD>::initGrid(const VectorFunction &initial_velocity, const Fun
                 Real py = real(y) * dy;
                 Real pz = real(z) * dz;
 
-                grid(U, x, y, z) = initial_velocity(px + dx, py + sdy, pz + sdz)[0];
-                grid(V, x, y, z) = initial_velocity(px + sdx, py + dy, pz + sdz)[1];
-                grid(W, x, y, z) = initial_velocity(px + sdx, py + sdy, pz + dz)[2];
-                grid(P, x, y, z) = initial_pressure(px + sdx, py + sdy, pz + sdz);
+                grid(U, x, y, z) = initial_velocity(px + sdx, py, pz)[0];
+                grid(V, x, y, z) = initial_velocity(px, py + sdy, pz)[1];
+                grid(W, x, y, z) = initial_velocity(px, py, pz + sdz)[2];
+                grid(P, x, y, z) = initial_pressure(px, py, pz);
             }
         }
     }
