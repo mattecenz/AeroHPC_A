@@ -1,6 +1,5 @@
 #include "L2NormCalculator.hpp"
 #include <cmath> // For std::sqrt
-#include <iostream>
 
 template<Addressing_T A>
 Real computeL2Norm(const Model<A> &model, Real time) {
@@ -14,8 +13,6 @@ Real computeL2Norm(const Model<A> &model, Real time) {
     // maybe change this later
     const auto &grid = model.grid; // Access grid from model
 
-    std::cout<<time<<std::endl;
-
     // Loop through the entire grid
     for (index_t i = 0; i < grid.nx; ++i) {
         for (index_t j = 0; j < grid.ny; ++j) {
@@ -27,9 +24,9 @@ Real computeL2Norm(const Model<A> &model, Real time) {
                 Real z = real(k) * model.dz;
 
                 // Calculate the exact solution for each component
-                Real exactU = ExactSolution<A>::u(x + sdx, y, z, time);
-                Real exactV = ExactSolution<A>::v(x, y + sdy, z, time);
-                Real exactW = ExactSolution<A>::w(x, y, z + sdz, time);
+                Real exactU = ExactSolution<A>::u(x + model.dx, y + sdy, z + sdz, time);
+                Real exactV = ExactSolution<A>::v(x + sdx, y + model.dy, z + sdz, time);
+                Real exactW = ExactSolution<A>::w(x + sdx, y + sdy, z + model.dz, time);
 
                 // Access the computed grid components
                 Real gridU = grid(Component::U, i, j, k);
