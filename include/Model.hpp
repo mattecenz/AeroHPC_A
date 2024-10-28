@@ -48,10 +48,13 @@ public:
         initGrid(initial_velocity, initial_pressure);
     }
 
-    // Copy constructor, used in the RK method
-    // Leaves the grid empty since it will be overwritten anyway
-    Model(Model &m) : grid((m.grid)), spacing(m.spacing), reynolds(m.reynolds), staggered_spacing{m.staggered_spacing}, _bcs(m._bcs) {}
-
+    Model(const Vector &spacing, StaggeredGrid<A> &grid, Real reynolds)
+            : grid(grid),
+              reynolds(reynolds),
+              spacing(spacing),
+              staggered_spacing{spacing[0] / 2,
+                                spacing[1] / 2,
+                                spacing[2] / 2} {}
     /**
      * Add a boundary condition to the list of the model
      */

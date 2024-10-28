@@ -16,7 +16,7 @@ Real testSolver(Real deltaT, index_t dim) {
     // define T & deltaT  & Re
     const Real T = 0.1;
     // const Real deltaT = 0.001;
-    const Real Re = 10e6;
+    const Real Re = 4700;
 
     // Define dim as side dimension of the grid (just for simplicity)
     // const index_t dim = 50;
@@ -186,8 +186,12 @@ Real testSolver(Real deltaT, index_t dim) {
     cout << "Boundary condition set" << endl;
 
     // Define Buffers for RK method
-    Model<STANDARD> Y2(model);
-    Model<STANDARD> Y3(model);
+    GhostedSG<STANDARD> sgY2({nx, ny, nz}, 1);
+    GhostedSG<STANDARD> sgY3({nx, ny, nz}, 1);
+    Model<STANDARD> Y2(spacing, sgY2, Re);
+    Model<STANDARD> Y3(spacing, sg, Re);
+    Y2.addBC(inletBoundary);
+    Y3.addBC(inletBoundary);
     cout << "Buffers created" << endl;
 
 
@@ -257,8 +261,8 @@ int main() {
     // }
 
     std::ofstream csvFile("output.csv");
-    csvFile << "Err" << std::endl;
-    for (float i: error) csvFile << i << std::endl;
+    csvFile << "step,error" << std::endl;
+    for (int i =0; i<dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
 
 
     return 0;
