@@ -189,7 +189,7 @@ Real testSolver(Real deltaT, index_t dim) {
     GhostedSG<STANDARD> sgY2({nx, ny, nz}, 1);
     GhostedSG<STANDARD> sgY3({nx, ny, nz}, 1);
     Model<STANDARD> Y2(spacing, sgY2, Re);
-    Model<STANDARD> Y3(spacing, sg, Re);
+    Model<STANDARD> Y3(spacing, sgY3, Re);
     Y2.addBC(inletBoundary);
     Y3.addBC(inletBoundary);
     cout << "Buffers created" << endl;
