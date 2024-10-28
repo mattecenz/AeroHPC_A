@@ -2,16 +2,15 @@
 #define AEROHPC_A_VTKCONVERTER_H
 
 #include "VTKFile.hpp"
-#include "Model.hpp"
-#include "StaggeredGrid.hpp"
+#include "Grid.hpp"
 
 namespace VTKConverter{
 
     template <Addressing_T A>
-    VTKFile exportModel(Model<A>& model, std::string description = "");
+    VTKFile exportGrid(Grid<A>& grid, std::string description = "");
 
     template <Addressing_T A>
-    std::vector<DataSection *> exportGrid(StaggeredGrid<A>& grid);
+    std::vector<DataSection *> exportData(Grid<A>& grid);
 }
 
 #endif //AEROHPC_A_VTKCONVERTER_H

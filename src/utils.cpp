@@ -5,46 +5,55 @@ using namespace utils;
 namespace utils {
 
     template<>
-    Real d_dx(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return (model.grid(c, i + 1, j, k) - model.grid(c, i - 1, j, k)) / (2 * model.dx);
+    Real d_dx(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return (grid(c, i + 1, j, k) - grid(c, i - 1, j, k)) / (2 * grid.dx);
     }
 
     template<>
-    Real d_dy(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return (model.grid(c, i, j + 1, k) - model.grid(c, i, j - 1, k)) / (2 * model.dy);
+    Real d_dy(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return (grid(c, i, j + 1, k) - grid(c, i, j - 1, k)) / (2 * grid.dy);
     }
 
     template<>
-    Real d_dz(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return (model.grid(c, i, j, k + 1) - model.grid(c, i, j, k - 1)) / (2 * model.dz);
+    Real d_dz(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return (grid(c, i, j, k + 1) - grid(c, i, j, k - 1)) / (2 * grid.dz);
     }
 
     template<>
-    Real d2_dx2(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return (model.grid(c, i - 1, j, k) - 2 * model.grid(c, i, j, k) + model.grid(c, i + 1, j, k)) /
-               (model.dx * model.dx);
+    Real d2_dx2(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return (grid(c, i - 1, j, k) - 2 * grid(c, i, j, k) + grid(c, i + 1, j, k)) /
+               (grid.dx * grid.dx);
     }
 
     template<>
-    Real d2_dy2(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return (model.grid(c, i, j - 1, k) - 2 * model.grid(c, i, j, k) + model.grid(c, i, j + 1, k)) /
-               (model.dy * model.dy);
+    Real d2_dy2(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return (grid(c, i, j - 1, k) - 2 * grid(c, i, j, k) + grid(c, i, j + 1, k)) /
+               (grid.dy * grid.dy);
     }
 
     template<>
-    Real d2_dz2(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return (model.grid(c, i, j, k - 1) - 2 * model.grid(c, i, j, k) + model.grid(c, i, j, k + 1)) /
-               (model.dz * model.dz);
+    Real d2_dz2(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return (grid(c, i, j, k - 1) - 2 * grid(c, i, j, k) + grid(c, i, j, k + 1)) /
+               (grid.dz * grid.dz);
     }
 
     template<>
-    Real lap(const Model<STANDARD> &model, Component c, int i, int j, int k) {
-        return d2_dx2(model, c, i, j, k) + d2_dy2(model, c, i, j, k) + d2_dz2(model, c, i, j, k);
+    Real lap(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
+        return d2_dx2(grid, c, i, j, k) + d2_dy2(grid, c, i, j, k) + d2_dz2(grid, c, i, j, k);
+    }
+
+    template<>
+    Vector lap(const Grid<STANDARD> &grid, int i, int j, int k) {
+        return {
+                d2_dx2(grid, U, i, j, k) + d2_dy2(grid, U, i, j, k) + d2_dz2(grid, U, i, j, k),
+                d2_dx2(grid, V, i, j, k) + d2_dy2(grid, V, i, j, k) + d2_dz2(grid, V, i, j, k),
+                d2_dx2(grid, W, i, j, k) + d2_dy2(grid, W, i, j, k) + d2_dz2(grid, W, i, j, k)
+        };
     }
 
     template<>
     Real
-    get_interpolation(const StaggeredGrid<STANDARD> &grid, Component to, Component from, int i, int j,
+    get_interpolation(const Grid<STANDARD> &grid, Component to, Component from, int i, int j,
                       int k) {
         switch (to) {
             case Component::U:
@@ -83,37 +92,37 @@ namespace utils {
     }
 
     template<>
-    Real conv(const Model<STANDARD> &model, Component c, int i, int j, int k) {
+    Real conv(const Grid<STANDARD> &grid, Component c, int i, int j, int k) {
         switch (c) {
             case Component::U:
-                return model.grid(c, i, j, k) * d_dx(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::U, Component::V, i, j, k) * d_dy(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::U, Component::W, i, j, k) * d_dz(model, c, i, j, k);
+                return grid(c, i, j, k) * d_dx(grid, c, i, j, k) +
+                       get_interpolation(grid, Component::U, Component::V, i, j, k) * d_dy(grid, c, i, j, k) +
+                       get_interpolation(grid, Component::U, Component::W, i, j, k) * d_dz(grid, c, i, j, k);
             case Component::V:
-                return get_interpolation(model.grid, Component::V, Component::U, i, j, k) * d_dx(model, c, i, j, k) +
-                       model.grid(c, i, j, k) * d_dy(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::V, Component::W, i, j, k) * d_dz(model, c, i, j, k);
+                return get_interpolation(grid, Component::V, Component::U, i, j, k) * d_dx(grid, c, i, j, k) +
+                       grid(c, i, j, k) * d_dy(grid, c, i, j, k) +
+                       get_interpolation(grid, Component::V, Component::W, i, j, k) * d_dz(grid, c, i, j, k);
             case Component::W:
-                return get_interpolation(model.grid, Component::W, Component::U, i, j, k) * d_dx(model, c, i, j, k) +
-                       get_interpolation(model.grid, Component::W, Component::V, i, j, k) * d_dy(model, c, i, j, k) +
-                       model.grid(c, i, j, k) * d_dz(model, c, i, j, k);
+                return get_interpolation(grid, Component::W, Component::U, i, j, k) * d_dx(grid, c, i, j, k) +
+                       get_interpolation(grid, Component::W, Component::V, i, j, k) * d_dy(grid, c, i, j, k) +
+                       grid(c, i, j, k) * d_dz(grid, c, i, j, k);
             default:
                 return 0;
         }
     }
 
     template<>
-    Vector conv(const Model<STANDARD> &model, int i, int j, int k) {
+    Vector conv(const Grid<STANDARD> &grid, int i, int j, int k) {
         return {
-            model.grid(U, i, j, k) * d_dx(model, U, i, j, k) +
-                       get_interpolation(model.grid, U, V, i, j, k) * d_dy(model, U, i, j, k) +
-                       get_interpolation(model.grid, U, W, i, j, k) * d_dz(model, U, i, j, k),
-            get_interpolation(model.grid, V, U, i, j, k) * d_dx(model, V, i, j, k) +
-                       model.grid(V, i, j, k) * d_dy(model, V, i, j, k) +
-                       get_interpolation(model.grid, V, W, i, j, k) * d_dz(model, V, i, j, k),
-            get_interpolation(model.grid, W, U, i, j, k) * d_dx(model, W, i, j, k) +
-                       get_interpolation(model.grid, W, V, i, j, k) * d_dy(model, W, i, j, k) +
-                       model.grid(W, i, j, k) * d_dz(model, W, i, j, k)
+            grid(U, i, j, k) * d_dx(grid, U, i, j, k) +
+                       get_interpolation(grid, U, V, i, j, k) * d_dy(grid, U, i, j, k) +
+                       get_interpolation(grid, U, W, i, j, k) * d_dz(grid, U, i, j, k),
+            get_interpolation(grid, V, U, i, j, k) * d_dx(grid, V, i, j, k) +
+                       grid(V, i, j, k) * d_dy(grid, V, i, j, k) +
+                       get_interpolation(grid, V, W, i, j, k) * d_dz(grid, V, i, j, k),
+            get_interpolation(grid, W, U, i, j, k) * d_dx(grid, W, i, j, k) +
+                       get_interpolation(grid, W, V, i, j, k) * d_dy(grid, W, i, j, k) +
+                       grid(W, i, j, k) * d_dz(grid, W, i, j, k)
         };
     }
 }

@@ -3,7 +3,7 @@
 namespace VTKConverter {
 
     template<>
-    std::vector<DataSection *> exportGrid(StaggeredGrid<STANDARD> &grid) {
+    std::vector<DataSection *> exportData(Grid<STANDARD> &grid) {
 
         std::vector<std::vector<Real>> velocity;
         std::vector<std::vector<Real>> pressure;
@@ -35,19 +35,17 @@ namespace VTKConverter {
     }
 
     template<>
-    VTKFile exportModel(Model<STANDARD> &model, std::string description) {
-        StaggeredGrid<STANDARD> grid = model.grid;
-
+    VTKFile exportGrid(Grid<STANDARD> &grid, std::string description) {
         VTKFile file({
-                             real(grid.nx) * model.dx,
-                             real(grid.ny) * model.dy,
-                             real(grid.nz) * model.dz,
+                             real(grid.nx) * grid.dx,
+                             real(grid.ny) * grid.dy,
+                             real(grid.nz) * grid.dz,
                      }, {
                              static_cast<unsigned long>(grid.nx),
                              static_cast<unsigned long>(grid.ny),
                              static_cast<unsigned long>(grid.nz)
                      }, std::move(description));
-        file << exportGrid(model.grid);
+        file << exportData(grid);
 
         return file;
     }

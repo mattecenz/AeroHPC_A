@@ -1,16 +1,20 @@
 #ifndef AEROHPC_A_RUNGEKUTTA_H
 #define AEROHPC_A_RUNGEKUTTA_H
 
-#include <StaggeredGrid.hpp>
-#include <ForcingTerm.hpp>
-#include <chrono>
-#include <utils.hpp>
-#include <Model.hpp>
+#include "Grid.hpp"
+#include "ForcingTerm.hpp"
+#include "Boundaries.hpp"
+#include "utils.hpp"
 
-#define getPhys(i, j, k)  Real px = real(i) * model.dx;\
-                        Real py = real(j) * model.dy;\
-                        Real pz = real(k) * model.dz\
+#ifdef ForcingT
+#define getPhys(i, j, k)  Real px = real(i) * dx;   \
+                        Real py = real(j) * dy;     \
+                        Real pz = real(k) * dz
 
+#define getForce(ftt) {  ftt.computeGx(px + dx, py + sdy, pz + sdz),     \
+                        ftt.computeGy(px + sdx, py + dy, pz + sdz),      \
+                        ftt.computeGz(px + sdx, py + sdy, pz + dz)   }
+#endif
 
 using namespace utils;
 
@@ -25,27 +29,28 @@ struct RKConst {
 
 //RHS function
 template<Addressing_T A>
-inline Vector rhs(Model<A> &model, index_t i, index_t j, index_t k) {
-
-    Real nu = (1 / model.reynolds);
-
-    Vector convs = conv(model, i, j, k);
-
-    Vector laps{
-            lap(model, U, i, j, k),
-            lap(model, V, i, j, k),
-            lap(model, W, i, j, k)
-    };
-
-    return -convs + nu * laps;
+inline Vector rhs(Grid<A> &grid, Real nu, index_t i, index_t j, index_t k) {
+    return - conv(grid,i,j,k) + nu * lap(grid,i,j,k);
 }
 
 //Runge-Kutta method
-void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3, Real deltat, Real time) {
+void rungeKutta(Grid<STANDARD> &model, Grid<STANDARD> &Y2, Grid<STANDARD> &Y3,
+                Real reynolds, Real deltat, Real time,
+                Boundaries<STANDARD> &boundary_cond) {
+
+    Real nu = (real(1) / reynolds);
+
+    Real dx = model.dx;
+    Real dy = model.dy;
+    Real dz = model.dz;
 
     Real sdx = model.sdx;
     Real sdy = model.sdy;
     Real sdz = model.sdz;
+
+    index_t nx = model.nx;
+    index_t ny = model.ny;
+    index_t nz = model.nz;
 
     //grid -> Y1
     //kappa -> weighted_deltat 
@@ -58,35 +63,32 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
     };
 
 #ifdef ForcingT
-    ForcingTerm ft(model.reynolds, time);
+    ForcingTerm ft(reynolds, time);
 #endif
 
     //Y2.
-    for (index_t i = 0; i < model.grid.nx; ++i) {
-        for (index_t j = 0; j < model.grid.ny; ++j) {
-            for (index_t k = 0; k < model.grid.nz; ++k) {
-                Vector r = rhs(model, i, j, k);
+
+    for (index_t i = 0; i < nx; ++i) {
+        for (index_t j = 0; j < ny; ++j) {
+            for (index_t k = 0; k < nz; ++k) {
+                Vector r = rhs(model, nu, i, j, k);
 
 #ifdef ForcingT
                 getPhys(i, j, k);
 
-                Vector force{
-                        ft.computeGx(px + model.dx, py + sdy, pz + sdz), //Gx
-                        ft.computeGy(px + sdx, py + model.dy, pz + sdz), //Gy
-                        ft.computeGz(px + sdx, py + sdy, pz + model.dz) //Gz
-                };
+                Vector force = getForce(ft);
 
                 //TODO BRANCHED CODE IS THE DEVIL
-                if (i != model.grid.nx-1)
-                    Y2.grid(U, i, j, k) = model.grid(U, i, j, k) + kappa[0] * (r[0] + force[0]);
-                if (j != model.grid.ny-1)
-                    Y2.grid(V, i, j, k) = model.grid(V, i, j, k) + kappa[0] * (r[1] + force[1]);
-                if (k != model.grid.nz-1)
-                    Y2.grid(W, i, j, k) = model.grid(W, i, j, k) + kappa[0] * (r[2] + force[2]);
+                if (i != nx - 1)
+                    Y2(U, i, j, k) = model(U, i, j, k) + kappa[0] * (r[0] + force[0]);
+                if (j != ny - 1)
+                    Y2(V, i, j, k) = model(V, i, j, k) + kappa[0] * (r[1] + force[1]);
+                if (k != nz - 1)
+                    Y2(W, i, j, k) = model(W, i, j, k) + kappa[0] * (r[2] + force[2]);
 #else
-                Y2.grid(U, i, j, k) = model.grid(U, i, j, k) + kappa[0] * r[0];
-                Y2.grid(V, i, j, k) = model.grid(V, i, j, k) + kappa[0] * r[1];
-                Y2.grid(W, i, j, k) = model.grid(W, i, j, k) + kappa[0] * r[2];
+                Y2(U, i, j, k) = model(U, i, j, k) + kappa[0] * r[0];
+                Y2(V, i, j, k) = model(V, i, j, k) + kappa[0] * r[1];
+                Y2(W, i, j, k) = model(W, i, j, k) + kappa[0] * r[2];
 #endif
 
             }
@@ -94,56 +96,48 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
         }
     }
 
-    Y2.applyBCs(time + kappa[0]);
+    boundary_cond.apply(Y2, time + kappa[0]);
 
 #ifdef ForcingT
-    ForcingTerm ft2(model.reynolds, time + kappa[0]);
+    ForcingTerm ft2(reynolds, time + kappa[0]);
 #endif
 
     //Y3.
-    for (index_t i = 0; i < model.grid.nx; ++i) {
-        for (index_t j = 0; j < model.grid.ny; ++j) {
-            for (index_t k = 0; k < model.grid.nz; ++k) {
-                Vector r = rhs(model, i, j, k);
-                Vector r2 = rhs(Y2, i, j, k);
+
+    for (index_t i = 0; i < nx; ++i) {
+        for (index_t j = 0; j < ny; ++j) {
+            for (index_t k = 0; k < nz; ++k) {
+                Vector r = rhs(model, nu, i, j, k);
+                Vector r2 = rhs(Y2, nu, i, j, k);
 
 #ifdef ForcingT
 
                 getPhys(i, j, k);
 
-                Vector force{
-                        ft.computeGx(px + model.dx, py + sdy, pz + sdz), //Gx
-                        ft.computeGy(px + sdx, py + model.dy, pz + sdz), //Gy
-                        ft.computeGz(px + sdx, py + sdy, pz + model.dz) //Gz
-                };
-
-                Vector force2{
-                        ft2.computeGx(px + model.dx, py + sdy, pz + sdz), //Gx
-                        ft2.computeGy(px + sdx, py + model.dy, pz + sdz), //Gy
-                        ft2.computeGz(px + sdx, py + sdy, pz + model.dz) //Gz
-                };
+                Vector force = getForce(ft);
+                Vector force2 = getForce(ft2);
 
                 // TODO BRANCHED CODE IS THE DEVIL
-                if (i != model.grid.nx-1)
-                    Y3.grid(U, i, j, k) = Y2.grid(U, i, j, k)
+                if (i != nx - 1)
+                    Y3(U, i, j, k) = Y2(U, i, j, k)
                                           - kappa[1] * (r[0] + force[0])
                                           + kappa[2] * (r2[0] + force2[0]);
-                if (j != model.grid.ny-1)
-                    Y3.grid(V, i, j, k) = Y2.grid(V, i, j, k) +
+                if (j != ny - 1)
+                    Y3(V, i, j, k) = Y2(V, i, j, k) +
                                           -kappa[1] * (r[1] + force[1])
                                           + kappa[2] * (r2[1] + force2[1]);
-                if (k != model.grid.nz-1)
-                    Y3.grid(W, i, j, k) = Y2.grid(W, i, j, k) +
+                if (k != nz - 1)
+                    Y3(W, i, j, k) = Y2(W, i, j, k) +
                                           -kappa[1] * (r[2] + force[2])
                                           + kappa[2] * (r2[2] + force2[2]);
 #else
-                Y3.grid(U, i, j, k) = Y2.grid(U, i, j, k)
+                Y3(U, i, j, k) = Y2(U, i, j, k)
                                         - kappa[1] * r[0]
                                         + kappa[2] * r2[0];
-                Y3.grid(V, i, j, k) = Y2.grid(V, i, j, k) +
+                Y3(V, i, j, k) = Y2(V, i, j, k) +
                                         - kappa[1] * r[1]
                                         + kappa[2] * r2[1];
-                Y3.grid(W, i, j, k) = Y2.grid(W, i, j, k) +
+                Y3(W, i, j, k) = Y2(W, i, j, k) +
                                         - kappa[1] * r[2]
                                         + kappa[2] * r2[2];
 #endif
@@ -154,56 +148,48 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
     }
 
 
-    Y3.applyBCs(time + kappa[4]);
+    boundary_cond.apply(Y3, time + kappa[4]);
 
 #ifdef ForcingT
     ft.set_time(time + kappa[4]);
 #endif
 
-    //u(n+1)    
-    for (index_t i = 0; i < model.grid.nx; ++i) {
-        for (index_t j = 0; j < model.grid.ny; ++j) {
-            for (index_t k = 0; k < model.grid.nz; ++k) {
-                Vector r = rhs(Y2, i, j, k);
-                Vector r2 = rhs(Y3, i, j, k);
+    //u(n+1)
+
+    for (index_t i = 0; i < nx; ++i) {
+        for (index_t j = 0; j < ny; ++j) {
+            for (index_t k = 0; k < nz; ++k) {
+                Vector r = rhs(Y2, nu, i, j, k);
+                Vector r2 = rhs(Y3, nu, i, j, k);
 
 #ifdef ForcingT
                 getPhys(i, j, k);
 
                 // Be careful because fts are now inverted
-                Vector force{
-                        ft2.computeGx(px + model.dx, py + sdy, pz + sdz), //Gx
-                        ft2.computeGy(px + sdx, py + model.dy, pz + sdz), //Gy
-                        ft2.computeGz(px + sdx, py + sdy, pz + model.dz) //Gz
-                };
-
-                Vector force2{
-                        ft.computeGx(px + model.dx, py + sdy, pz + sdz), //Gx
-                        ft.computeGy(px + sdx, py + model.dy, pz + sdz), //Gy
-                        ft.computeGz(px + sdx, py + sdy, pz + model.dz) //Gz
-                };
+                Vector force = getForce(ft2);
+                Vector force2 = getForce(ft);
 
                 // TODO BRANCHED CODE IS THE DEVIL
-                if (i != model.grid.nx-1)
-                    model.grid(U, i, j, k) = Y3.grid(U, i, j, k)
+                if (i != nx - 1)
+                    model(U, i, j, k) = Y3(U, i, j, k)
                                              - kappa[2] * (r[0] + force[0])
                                              + kappa[3] * (r2[0] + force2[0]);
-                if (j != model.grid.ny-1)
-                    model.grid(V, i, j, k) = Y3.grid(V, i, j, k) +
+                if (j != ny - 1)
+                    model(V, i, j, k) = Y3(V, i, j, k) +
                                              -kappa[2] * (r[1] + force[1])
                                              + kappa[3] * (r2[1] + force2[1]);
-                if (k != model.grid.nz-1)
-                    model.grid(W, i, j, k) = Y3.grid(W, i, j, k) +
+                if (k != nz - 1)
+                    model(W, i, j, k) = Y3(W, i, j, k) +
                                              -kappa[2] * (r[2] + force[2])
                                              + kappa[3] * (r2[2] + force2[2]);
 #else
-                model.grid(U, i, j, k) = Y3.grid(U, i, j, k)
+                model(U, i, j, k) = Y3(U, i, j, k)
                                         - kappa[2] * r[0]
                                         + kappa[3] * r2[0];
-                model.grid(V, i, j, k) = Y3.grid(V, i, j, k) +
+                model(V, i, j, k) = Y3(V, i, j, k) +
                                         - kappa[2] * r[1]
                                         + kappa[3] * r2[1];
-                model.grid(W, i, j, k) = Y3.grid(W, i, j, k) +
+                model(W, i, j, k) = Y3(W, i, j, k) +
                                         - kappa[2] * r[2]
                                         + kappa[3] * r2[2];
 #endif
@@ -213,7 +199,7 @@ void rungeKutta(Model<STANDARD> &model, Model<STANDARD> &Y2, Model<STANDARD> &Y3
         }
     }
 
-    model.applyBCs(time + deltat);
+    boundary_cond.apply(model, time + deltat);
 
 }
 

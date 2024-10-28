@@ -6,8 +6,7 @@
 #ifndef AEROHPC_A_UTILS_H
 #define AEROHPC_A_UTILS_H
 
-#include <StaggeredGrid.hpp>
-#include <Model.hpp>
+#include "Grid.hpp"
 
 namespace utils {
     /**
@@ -18,7 +17,7 @@ namespace utils {
     @brief Computes the value of the first order derivative in a point along the x direction
     */
     template<Addressing_T A>
-    inline Real d_dx(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real d_dx(const Grid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -28,7 +27,7 @@ namespace utils {
     @brief Computes the value of the first order derivative in a point along the y direction
     */
     template<Addressing_T A>
-    inline Real d_dy(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real d_dy(const Grid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -38,7 +37,7 @@ namespace utils {
     @brief Computes the value of the first order derivative in a point along the z direction
     */
     template<Addressing_T A>
-    inline Real d_dz(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real d_dz(const Grid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -48,7 +47,7 @@ namespace utils {
     @brief Computes the value of the second order derivative in a point along the x direction
     */
     template<Addressing_T A>
-    inline Real d2_dx2(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real d2_dx2(const Grid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -58,7 +57,7 @@ namespace utils {
     @brief Computes the value of the second order derivative in a point along the y direction
     */
     template<Addressing_T A>
-    inline Real d2_dy2(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real d2_dy2(const Grid<A> &grid, Component c, int i, int j, int k);
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -68,7 +67,7 @@ namespace utils {
     @brief Computes the value of the second order derivative in a point along the z direction
     */
     template<Addressing_T A>
-    inline Real d2_dz2(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real d2_dz2(const Grid<A> &grid, Component c, int i, int j, int k);
 
 
     /**
@@ -79,7 +78,10 @@ namespace utils {
     @brief Computes the value of the laplacian in a point
     */
     template<Addressing_T A>
-    inline Real lap(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real lap(const Grid<A> &grid, Component c, int i, int j, int k);
+
+    template<Addressing_T A>
+    inline Vector lap(const Grid<A> &grid, int i, int j, int k);
 
     /**
     @param[in] grid Staggered grid
@@ -90,7 +92,7 @@ namespace utils {
     @brief Computes the interpolation of a component from the grid "from" to the grid "to" in the point i,j,k of the "to" grid
     */
     template<Addressing_T A>
-    inline Real get_interpolation(const StaggeredGrid<A> &grid, Component to, Component from, int i, int j, int k);
+    inline Real get_interpolation(const Grid<A> &grid, Component to, Component from, int i, int j, int k);
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -100,9 +102,9 @@ namespace utils {
     @brief Computes the value of convective term of the Navier-Stokes equation in a point
     */
     template<Addressing_T A>
-    inline Real conv(const Model<A> &model, Component c, int i, int j, int k);
+    inline Real conv(const Grid<A> &grid, Component c, int i, int j, int k);
 
     template<Addressing_T A>
-    inline Vector conv(const Model<A> &model, int i, int j, int k);
+    inline Vector conv(const Grid<A> &grid, int i, int j, int k);
 }
 #endif

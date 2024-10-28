@@ -1,8 +1,7 @@
 #ifndef AEROHPC_A_L2NORM_CALCULATOR_H
 #define AEROHPC_A_L2NORM_CALCULATOR_H
 
-#include "StaggeredGrid.hpp"
-#include "Model.hpp"
+#include "Grid.hpp"
 #include <cmath>
 #include <stdexcept>
 #include <array>
@@ -28,6 +27,6 @@ public:
 };
 
 template <Addressing_T A>
-Real computeL2Norm(const Model<A> &model, Real time);
+Real computeL2Norm(const Grid<A> &grid, Real time);
 
 #endif // AEROHPC_A_L2NORM_CALCULATOR_H

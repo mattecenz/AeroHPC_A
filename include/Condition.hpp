@@ -1,33 +1,32 @@
 #ifndef AEROHPC_A_BOUNDARYCONDITION_H
 #define AEROHPC_A_BOUNDARYCONDITION_H
 
-#include "Traits.hpp"
-#include "StaggeredGrid.hpp"
+#include "Grid.hpp"
 #include <functional>
 #include <utility>
 
 template<Addressing_T A>
-class BoundaryCondition {
+class Condition {
 
 public:
 
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef std::function<void(StaggeredGrid<A> &, const TFunction &, Real time)> Mapper;
+    typedef std::function<void(Grid<A> &, const TFunction &, Real time)> Mapper;
 
 
-    BoundaryCondition() = delete;
+    Condition() = delete;
 
     /**
      * Construct a boundary condition given the mapping function and the characteristic spatial function
      */
-    BoundaryCondition(const Mapper &mapper, TFunction function) : _mapper(mapper), _function(std::move(function)) {}
+    Condition(const Mapper &mapper, TFunction function) : _mapper(mapper), _function(std::move(function)) {}
 
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(StaggeredGrid<A> &grid, Real time) const { _mapper(grid, _function, time); }
+    void apply(Grid<A> &grid, Real time) const { _mapper(grid, _function, time); }
 
 private:
     /**

@@ -2,16 +2,15 @@
 #include <cmath> // For std::sqrt
 
 template<Addressing_T A>
-Real computeL2Norm(const Model<A> &model, Real time) {
+Real computeL2Norm(const Grid<A> &grid, Real time) {
     Real sum = 0.0;
 
-    Real sdx = model.sdx;
-    Real sdy = model.sdy;
-    Real sdz = model.sdz;
+    Real sdx = grid.sdx;
+    Real sdy = grid.sdy;
+    Real sdz = grid.sdz;
 
     // Access the grid from the model
     // maybe change this later
-    const auto &grid = model.grid; // Access grid from model
 
     // Loop through the entire grid
     for (index_t i = 0; i < grid.nx; ++i) {
@@ -19,14 +18,14 @@ Real computeL2Norm(const Model<A> &model, Real time) {
             for (index_t k = 0; k < grid.nz; ++k) {
 
                 // Convert grid indices to real space coordinates
-                Real x = real(i) * model.dx;
-                Real y = real(j) * model.dy;
-                Real z = real(k) * model.dz;
+                Real x = real(i) * grid.dx;
+                Real y = real(j) * grid.dy;
+                Real z = real(k) * grid.dz;
 
                 // Calculate the exact solution for each component
-                Real exactU = ExactSolution<A>::u(x + model.dx, y + sdy, z + sdz, time);
-                Real exactV = ExactSolution<A>::v(x + sdx, y + model.dy, z + sdz, time);
-                Real exactW = ExactSolution<A>::w(x + sdx, y + sdy, z + model.dz, time);
+                Real exactU = ExactSolution<A>::u(x + grid.dx, y + sdy, z + sdz, time);
+                Real exactV = ExactSolution<A>::v(x + sdx, y + grid.dy, z + sdz, time);
+                Real exactW = ExactSolution<A>::w(x + sdx, y + sdy, z + grid.dz, time);
 
                 // Access the computed grid components
                 Real gridU = grid(Component::U, i, j, k);
@@ -44,8 +43,8 @@ Real computeL2Norm(const Model<A> &model, Real time) {
         }
     }
 
-    return std::sqrt(sum * (model.dx * model.dy * model.dz));
+    return std::sqrt(sum * (grid.dx * grid.dy * grid.dz));
 }
 
 // Explicit instantiation for the Addressing_T 
-template Real computeL2Norm<STANDARD>(const Model<STANDARD> &model, Real time);
+template Real computeL2Norm<STANDARD>(const Grid<STANDARD> &grid, Real time);

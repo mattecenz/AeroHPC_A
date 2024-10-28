@@ -3,7 +3,7 @@
 
 #include <array>
 #include <cmath>
-#include <StaggeredGrid.hpp>
+#include "Grid.hpp"
 
 using namespace std;
 
