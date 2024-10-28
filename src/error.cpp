@@ -1,13 +1,16 @@
 #include "L2NormCalculator.hpp"
 #include <cmath> // For std::sqrt
 
-template <Addressing_T A>
-double computeL2Norm(const Model<A> &model, double time) {
-    double sum = 0.0;
+template<Addressing_T A>
+Real computeL2Norm(const Grid<A> &grid, Real time) {
+    Real sum = 0.0;
+
+    Real sdx = grid.sdx;
+    Real sdy = grid.sdy;
+    Real sdz = grid.sdz;
 
     // Access the grid from the model
     // maybe change this later
-    const auto &grid = model.grid; // Access grid from model
 
     // Loop through the entire grid
     for (index_t i = 0; i < grid.nx; ++i) {
@@ -15,25 +18,24 @@ double computeL2Norm(const Model<A> &model, double time) {
             for (index_t k = 0; k < grid.nz; ++k) {
 
                 // Convert grid indices to real space coordinates
-                // TODO check if adding dx/dy/dz is correct
-                double x = static_cast<double>(i) * model.dx + model.dx;
-                double y = static_cast<double>(j) * model.dy + model.dy;
-                double z = static_cast<double>(k) * model.dz + model.dz;
+                Real x = real(i) * grid.dx;
+                Real y = real(j) * grid.dy;
+                Real z = real(k) * grid.dz;
 
                 // Calculate the exact solution for each component
-                double exactU = ExactSolution<A>::u(x, y, z, time);
-                double exactV = ExactSolution<A>::v(x, y, z, time);
-                double exactW = ExactSolution<A>::w(x, y, z, time);
+                Real exactU = ExactSolution<A>::u(x + grid.dx, y + sdy, z + sdz, time);
+                Real exactV = ExactSolution<A>::v(x + sdx, y + grid.dy, z + sdz, time);
+                Real exactW = ExactSolution<A>::w(x + sdx, y + sdy, z + grid.dz, time);
 
                 // Access the computed grid components
-                double gridU = grid(Component::U, i, j, k);
-                double gridV = grid(Component::V, i, j, k);
-                double gridW = grid(Component::W, i, j, k);
+                Real gridU = grid(Component::U, i, j, k);
+                Real gridV = grid(Component::V, i, j, k);
+                Real gridW = grid(Component::W, i, j, k);
 
                 // Calculate the differences
-                double diffU = gridU - exactU;
-                double diffV = gridV - exactV;
-                double diffW = gridW - exactW;
+                Real diffU = gridU - exactU;
+                Real diffV = gridV - exactV;
+                Real diffW = gridW - exactW;
 
                 // Add the squares of the differences to sum
                 sum += (diffU * diffU) + (diffV * diffV) + (diffW * diffW);
@@ -41,8 +43,8 @@ double computeL2Norm(const Model<A> &model, double time) {
         }
     }
 
-    return std::sqrt(sum) / (model.dx * model.dy * model.dz);
+    return std::sqrt(sum * (grid.dx * grid.dy * grid.dz));
 }
 
 // Explicit instantiation for the Addressing_T 
-template double computeL2Norm<STANDARD>(const Model<STANDARD> &model, double time);
+template Real computeL2Norm<STANDARD>(const Grid<STANDARD> &grid, Real time);

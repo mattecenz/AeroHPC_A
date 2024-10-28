@@ -16,7 +16,7 @@ constexpr std::string getTypeName() {
     if constexpr (std::is_same<T, double>::value) return "double";
     else if constexpr (std::is_same<T, float>::value) return "float";
     else if constexpr (std::is_same<T, int>::value) return "int";
-    else static_assert(false, "Unknown data type");
+    //else static_assert(false, "Unknown data type");
 }
 // ----------------------------------------------------------------------------- //
 
@@ -296,9 +296,9 @@ public:
      */
     void setupDataset(Vector physical_dimension, std::array<size_t, 3> n) {
         _nodes = n;
-        _spacing = {physical_dimension[0] / static_cast<Real>(_nodes[0]),
-                    physical_dimension[1] / static_cast<Real>(_nodes[1]),
-                    physical_dimension[2] / static_cast<Real>(_nodes[2])};
+        _spacing = {physical_dimension[0] / real(_nodes[0]),
+                    physical_dimension[1] / real(_nodes[1]),
+                    physical_dimension[2] / real(_nodes[2])};
         _data_size = nodes[0] * nodes[1] * nodes[2];
 
         _valid_dataset = true;

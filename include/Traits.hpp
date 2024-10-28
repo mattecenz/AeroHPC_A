@@ -6,7 +6,8 @@
 /**
  * Typedef for real values
  */
-typedef float Real;
+typedef double Real;
+#define real(val) static_cast<Real>(val)
 
 typedef long index_t;
 
@@ -24,7 +25,36 @@ enum Addressing_T {
 typedef std::array<Real, 3> Vector;
 
 /**
- * Typedef shortening lambda definition of spatial function
+ * Define mathematical methods for vectors
+ */
+#pragma inline
+
+Vector operator*(Real b, const Vector &a);
+
+#pragma inline
+
+Vector operator*(const Vector &a);
+
+#pragma inline
+
+Real operator*(const Vector &a, const Vector &b);
+
+#pragma inline
+
+Vector operator+(const Vector &a, const Vector &b);
+
+#pragma inline
+
+Vector operator-(const Vector &a);
+
+
+/**
+ * Typedef shortening lambda definition of spatial function, time dependent
+ */
+typedef std::function<Real(Real x, Real y, Real z, Real t)> TFunction;
+
+/**
+ * TY
  */
 typedef std::function<Real(Real x, Real y, Real z)> Function;
 
