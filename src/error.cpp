@@ -4,7 +4,8 @@
 template<Addressing_T A>
 Real computeL2Norm(const Grid<A> &grid, Real time) {
     Real sum = 0.0;
-
+    Real sum_exact = 0.0;
+    
     Real sdx = grid.sdx;
     Real sdy = grid.sdy;
     Real sdz = grid.sdz;
@@ -39,11 +40,12 @@ Real computeL2Norm(const Grid<A> &grid, Real time) {
 
                 // Add the squares of the differences to sum
                 sum += (diffU * diffU) + (diffV * diffV) + (diffW * diffW);
+                sum_exact += (exactU * exactU) + (exactV * exactV) + (exactW * exactW);
             }
         }
     }
 
-    return std::sqrt(sum * (grid.dx * grid.dy * grid.dz));
+    return std::sqrt(sum * (grid.dx * grid.dy * grid.dz))/std::sqrt(sum_exact * (grid.dx * grid.dy * grid.dz));
 }
 
 // Explicit instantiation for the Addressing_T 
