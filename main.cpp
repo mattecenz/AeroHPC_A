@@ -10,7 +10,7 @@
 Real testSolver(Real deltaT, index_t dim) {
 
     // define T & deltaT  & Re
-    const Real T = 1;
+    const Real T = 0.1;
     // const Real deltaT = 0.001;
     const Real Re = 4700;
     // Define physical size of the problem (just for simplicity)
@@ -49,7 +49,7 @@ Real testSolver(Real deltaT, index_t dim) {
     // initialize the mesh
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
-        return {0, 0, 0};
+        return {ExactSolution<STANDARD>::u(x, y, z, 0), ExactSolution<STANDARD>::v(x, y, z, 0), ExactSolution<STANDARD>::w(x, y, z, 0)};
     };
 
     // Define initial pressure function
@@ -221,7 +221,7 @@ int main() {
     // wrt deltaT
     // for (size_t i=0; i<deltaTs.size(); ++i){
     //     Real deltaT = deltaTs[i];
-    //     index_t dim = dims[0];
+    //     index_t dim = dims[3];
     //     error.push_back(testSolver(deltaT, dim));
     // }
 
