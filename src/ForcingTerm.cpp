@@ -1,5 +1,7 @@
 #include "ForcingTerm.hpp"
 
+#define sqrp(val) val * val
+
 // Constructor implementation
 ForcingTerm::ForcingTerm(Real Re, Real time) : Re(Re), time(time){}
 
@@ -24,27 +26,27 @@ Vector ForcingTerm::compute(Real x, Real y, Real z) const {
 
 // Private method to compute Gx
 Real ForcingTerm::computeGx(Real x, Real y, Real z) const {
-    return -pow(sin(time), 2) * sin(x) * pow(sin(y), 2) * pow(sin(z), 2) * cos(x)
-           + pow(sin(time), 2) * sin(x) * pow(sin(z), 2) * cos(x) * pow(cos(y), 2)
-           + 2.0 * pow(sin(time), 2) * sin(x) * cos(x) * pow(cos(y), 2) * pow(cos(z), 2)
+    return -sqrp(sin(time)) * sin(x) * sqrp(sin(y)) * sqrp(sin(z)) * cos(x)
+           + sqrp(sin(time)) * sin(x) * sqrp(sin(z)) * cos(x) * sqrp(cos(y))
+           + 2.0 * sqrp(sin(time)) * sin(x) * cos(x) * sqrp(cos(y)) * sqrp(cos(z))
            + sin(x) * sin(z) * cos(time) * cos(y)
            - 3.0 * sin(time) * sin(x) * sin(z) * cos(y) / Re;
 }
 
 // Private method to compute Gy
 Real ForcingTerm::computeGy(Real x, Real y, Real z) const {
-    return -pow(sin(time), 2) * pow(sin(x), 2) * sin(y) * pow(sin(z), 2) * cos(y)
-           + pow(sin(time), 2) * sin(y) * pow(sin(z), 2) * pow(cos(x), 2) * cos(y)
-           + 2.0 * pow(sin(time), 2) * sin(y) * pow(cos(x), 2) * cos(y) * pow(cos(z), 2)
+    return -sqrp(sin(time)) * sqrp(sin(x)) * sin(y) * sqrp(sin(z)) * cos(y)
+           + sqrp(sin(time)) * sin(y) * sqrp(sin(z)) * sqrp(cos(x)) * cos(y)
+           + 2.0 * sqrp(sin(time)) * sin(y) * sqrp(cos(x)) * cos(y) * sqrp(cos(z))
            + sin(y) * sin(z) * cos(time) * cos(x)
            - 3.0 * sin(time) * sin(y) * sin(z) * cos(x) / Re;
 }
 
 // Private method to compute Gz
 Real ForcingTerm::computeGz(Real x, Real y, Real z) const {
-    return -2.0 * pow(sin(time), 2) * pow(sin(x), 2) * sin(z) * pow(cos(y), 2) * cos(z)
-           - 2.0 * pow(sin(time), 2) * pow(sin(y), 2) * sin(z) * pow(cos(x), 2) * cos(z)
-           - 4.0 * pow(sin(time), 2) * sin(z) * pow(cos(x), 2) * pow(cos(y), 2) * cos(z)
+    return -2.0 * sqrp(sin(time)) * sqrp(sin(x)) * sin(z) * sqrp(cos(y)) * cos(z)
+           - 2.0 * sqrp(sin(time)) * sqrp(sin(y)) * sin(z) * sqrp(cos(x)) * cos(z)
+           - 4.0 * sqrp(sin(time)) * sin(z) * sqrp(cos(x)) * sqrp(cos(y)) * cos(z)
            + 2.0 * cos(time) * cos(x) * cos(y) * cos(z)
            - 6.0 * sin(time) * cos(x) * cos(y) * cos(z) / Re;
 }
