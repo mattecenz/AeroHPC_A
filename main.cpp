@@ -10,13 +10,12 @@
 Real testSolver(Real deltaT, index_t dim) {
 
     // define T & deltaT  & Re
-    const Real T = 0.1;
-    // const Real deltaT = 0.001;
+    const Real T = 0.0001;
     const Real Re = 4700;
     // Define physical size of the problem (just for simplicity)
     const Real phy_dim = 1.0;
 
-    std::cout << "================== Running the TestSolver ==================" << std::endl;
+    std::cout << "═══════════════════════ Running the TestSolver ════════════════════════" << std::endl;
     cout << "  Final T: " << T << std::endl;
     cout << "       dT: " << deltaT << std::endl;
     cout << "   Re num: " << Re << endl;
@@ -36,12 +35,12 @@ Real testSolver(Real deltaT, index_t dim) {
     Vector spacing = {sx, sy, sz};
 
     // Define nodes
-    std::array<index_t,3> nodes = {nx,ny,nz};
+    std::array<index_t, 3> nodes = {nx, ny, nz};
 
     // define the mesh:
     Grid<STANDARD> model(nodes, spacing, 1);
 
-    cout << "----------------------- Grid created -----------------------" << std::endl;
+    cout << "──────────────────────────── Grid created ─────────────────────────────" << std::endl;
     cout << "  nodes: " << model.nx << " x " << model.ny << " x " << model.nz << std::endl;
     cout << " ghosts: " << model.gp << endl;
 
@@ -58,8 +57,10 @@ Real testSolver(Real deltaT, index_t dim) {
         return x + y + z;
     };
 
-    model.initGrid(initialVel, initialPres);
-    cout << "--------------------- Grid initialized ---------------------" << std::endl;
+    chrono_sect(initT,
+                model.initGrid(initialVel, initialPres);
+    );
+    printf("────────────────────────── Grid initialized ──────────── %.4es ──\n", initT);
 
 
     // Define test boundary condition
@@ -163,13 +164,13 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Add condition to boundaries
     boundaries.addCond(inletBoundary);
-    cout << "------------------ Boundary condition set ------------------" << endl;
+    cout << "─────────────────────── Boundary condition set ────────────────────────" << endl;
 
     // Define Buffers for RK method
     Grid<STANDARD> Y2(model.nodes, model.spacing, model.gp);
     Grid<STANDARD> Y3(model.nodes, model.spacing, model.gp);
 
-    cout << "--------------------- Buffers created ----------------------" << endl;
+    cout << "────────────────────────── Buffers created ────────────────────────────" << endl;
 
     // Time
     Real currentTime = 0.0;
@@ -179,33 +180,38 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Printing variables
     index_t iter = 0;
-    index_t printIt = 100; // prints every n iterations
+    index_t printIt = 10; // prints every n iterations
 
-
-    boundaries.apply(model, currentTime);
-    while (currentTime < T) {
-        // call RK (obtain model at currentTime + dt)
-        chrono_sect(rkTime,
-                    code_span(
-                            rungeKutta(model, Y1, Y2, Re, deltaT, currentTime, boundaries);
+    cout << "───────────────────────── Start computation ───────────────────────────" << endl;
+    chrono_sect(compT,
+                code_span(
+                        boundaries.apply(model, currentTime);
+                        while (currentTime < T) {
+                            // call RK (obtain model at currentTime + dt)
+                            chrono_sect(rkTime,
+                                        code_span(
+                                                rungeKutta(model, Y2, Y3, Re, deltaT, currentTime, boundaries);
                             currentTime += deltaT;
-                    )
-        );
+                            )
+                            );
 
-        chrono_sect(l2Time,
-                    code_span(
-                            l2Norm = computeL2Norm<STANDARD>(model, currentTime);
-                    )
-        );
 
-        if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
-            printf("%5ld) ts %0.4f | l2 %2.7f | rkT %2.5f | l2T %2.5f\n",
-                   iter, currentTime, l2Norm, rkTime, l2Time);
-
-        iter++;
-    }
-
-    cout << "==================== End of computation ====================" << endl << endl;
+                            if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
+                            {
+                                chrono_sect(l2Time,
+                                            code_span(
+                                                    l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                                )
+                                );
+                                printf("%5ld) ts %.4e │ l2 %.4e │ rkT %.4e │ l2T %.4e\n",
+                                       iter, currentTime, l2Norm, rkTime, l2Time);
+                            }
+                            iter++;
+                        }
+                        cout << " last iteration l2Norm: " << l2Norm << endl;
+                )
+    );
+    printf("═════════════════════════ End of computation ═══════════ %0.4es ══\n\n", compT);
     return l2Norm;
 }
 
@@ -213,7 +219,7 @@ Real testSolver(Real deltaT, index_t dim) {
 int main() {
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.0001, 0.0005, 0.00025};
+    std::vector<Real> deltaTs = {0.000001, 0.0005, 0.00025};
     std::vector<index_t> dims = {4, 8, 16, 32, 64};
 
     std::vector<Real> error;
