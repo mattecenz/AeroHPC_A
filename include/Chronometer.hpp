@@ -7,10 +7,10 @@
 
 #define measure_t float
 #define code_span(code) code
-#define measure(name, code_span)  measure_t name;                        \
-                    auto t##name = chronow();                           \
+#define chrono_sect(measure_name, code_span)  measure_t measure_name;                        \
+                    auto t##measure_name = chronow();                           \
                     code_span                                           \
-                    name = timeSpan(t##name,chronow()) / 1000000000.0
+                    measure_name = timeSpan(t##measure_name, chronow()) / 1000000000.0
 
 
 #endif //AEROHPC_A_CHRONOMETER_H

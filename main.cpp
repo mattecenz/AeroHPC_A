@@ -182,23 +182,23 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t printIt = 100; // prints every n iterations
 
 
-    boundaries.apply(model,currentTime);
+    boundaries.apply(model, currentTime);
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
-        measure(rkTime,
-                code_span(
-                        rungeKutta(model, Y2, Y3, Re, deltaT, currentTime, boundaries);
-                        currentTime += deltaT;
-                )
+        chrono_sect(rkTime,
+                    code_span(
+                            rungeKutta(model, Y1, Y2, Re, deltaT, currentTime, boundaries);
+                            currentTime += deltaT;
+                    )
         );
 
-        measure(l2Time,
-                code_span(
-                        l2Norm = computeL2Norm<STANDARD>(model, currentTime);
-                )
+        chrono_sect(l2Time,
+                    code_span(
+                            l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                    )
         );
 
-        if( !(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
+        if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
             printf("%5ld) ts %0.4f | l2 %2.7f | rkT %2.5f | l2T %2.5f\n",
                    iter, currentTime, l2Norm, rkTime, l2Time);
 
@@ -227,7 +227,7 @@ int main() {
 
 
     // wrt dim
-    for (long dim : dims) {
+    for (long dim: dims) {
         Real deltaT = deltaTs[0]; // first
         error.push_back(testSolver(deltaT, dim));
     }
@@ -242,7 +242,7 @@ int main() {
 
     std::ofstream csvFile("output.csv");
     csvFile << "step,error" << std::endl;
-    for (int i=0; i<dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
+    for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
 
 
     return 0;
