@@ -1,6 +1,6 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
 
 def plot_loglog_order_of_convergence(file_path):
     """
@@ -40,9 +40,13 @@ def plot_loglog_order_of_convergence(file_path):
     plt.title('Log-Log Plot of Order of Convergence')
     plt.grid(True, which="both", ls="--")
     plt.legend()
-    plt.show()
+    plt.savefig("conv.png")
 
 # Example usage
 # Ensure that 'output.csv' has a single column named 'error' with error values
-csv_file_path = 'output.csv'
+if len(sys.argv) < 2:
+    print("specify file path")
+    exit()
+
+csv_file_path = sys.argv[1]
 plot_loglog_order_of_convergence(csv_file_path)
