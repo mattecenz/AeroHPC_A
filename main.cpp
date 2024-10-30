@@ -6,20 +6,22 @@
 #include "RungeKutta.hpp"
 #include "VTKConverter.hpp"
 #include "Chronometer.hpp"
+#include "Logger.h"
 
 Real testSolver(Real deltaT, index_t dim) {
+    Logger log(100);
 
     // define T & deltaT  & Re
-    const Real T = 0.0001;
+    const Real T = 1;
     const Real Re = 4700;
     // Define physical size of the problem (just for simplicity)
     const Real phy_dim = 1.0;
 
-    std::cout << "═══════════════════════ Running the TestSolver ════════════════════════" << std::endl;
-    cout << "  Final T: " << T << std::endl;
-    cout << "       dT: " << deltaT << std::endl;
-    cout << "   Re num: " << Re << endl;
-    cout << "  Phy dim: " << phy_dim << " x " << phy_dim << " x " << phy_dim << std::endl;
+    log.openSection("Running the TestSolver");
+    log.printValue(5,"Final T", T);
+    log.printValue(5,"dT", deltaT);
+    log.printValue(5,"Re num", Re);
+    log.printValue(5,"Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -39,11 +41,9 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // define the mesh:
     Grid<STANDARD> model(nodes, spacing, 1);
-
-    cout << "──────────────────────────── Grid created ─────────────────────────────" << std::endl;
-    cout << "  nodes: " << model.nx << " x " << model.ny << " x " << model.nz << std::endl;
-    cout << " ghosts: " << model.gp << endl;
-
+    log.printTitle("Grid created");
+    log.printValue(5,"nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
+    log.printValue(5,"ghosts", model.gp);
 
     // initialize the mesh
     // Define initial velocity function
@@ -60,8 +60,7 @@ Real testSolver(Real deltaT, index_t dim) {
     chrono_sect(initT,
                 model.initGrid(initialVel, initialPres);
     );
-    printf("────────────────────────── Grid initialized ──────────── %.4es ──\n", initT);
-
+    log.printTitle("Grid initialized", initT);
 
     // Define test boundary condition
     Condition<STANDARD>::Mapper testBCMapper = [](Grid<STANDARD> &grid,
@@ -164,13 +163,13 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Add condition to boundaries
     boundaries.addCond(inletBoundary);
-    cout << "─────────────────────── Boundary condition set ────────────────────────" << endl;
+    log.printTitle("Boundary condition set");
 
     // Define Buffers for RK method
     Grid<STANDARD> Y2(model.nodes, model.spacing, model.gp);
     Grid<STANDARD> Y3(model.nodes, model.spacing, model.gp);
 
-    cout << "────────────────────────── Buffers created ────────────────────────────" << endl;
+    log.printTitle("Buffers created");
 
     // Time
     Real currentTime = 0.0;
@@ -180,9 +179,10 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Printing variables
     index_t iter = 0;
-    index_t printIt = 10; // prints every n iterations
+    index_t printIt = 100; // prints every n iterations
 
-    cout << "───────────────────────── Start computation ───────────────────────────" << endl;
+    log.printTitle("Start computation");
+    log.openTable({"Iter", "ts", "l2", "rkT", "l2T"});
     chrono_sect(compT,
                 code_span(
                         boundaries.apply(model, currentTime);
@@ -203,15 +203,16 @@ Real testSolver(Real deltaT, index_t dim) {
                                                     l2Norm = computeL2Norm<STANDARD>(model, currentTime);
                                 )
                                 );
-                                printf("%5ld) ts %.4e │ l2 %.4e │ rkT %.4e │ l2T %.4e\n",
-                                       iter, currentTime, l2Norm, rkTime, l2Time);
+                                log.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time});
                             }
                             iter++;
                         }
-                        cout << " last iteration l2Norm: " << l2Norm << endl;
                 )
     );
-    printf("═════════════════════════ End of computation ═══════════ %0.4es ══\n\n", compT);
+    log.closeTable();
+    log.printTitle("End of computation", compT);
+    log.closeSection()-;
+    log.empty();
     return l2Norm;
 }
 
@@ -219,7 +220,7 @@ Real testSolver(Real deltaT, index_t dim) {
 int main() {
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.000001, 0.0005, 0.00025};
+    std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
     std::vector<index_t> dims = {4, 8, 16, 32, 64};
 
     std::vector<Real> error;
