@@ -6,7 +6,7 @@
 #include "RungeKutta.hpp"
 #include "VTKConverter.hpp"
 #include "Chronometer.hpp"
-#include "Logger.h"
+#include "Logger.hpp"
 
 Real testSolver(Real deltaT, index_t dim) {
     Logger log(100);

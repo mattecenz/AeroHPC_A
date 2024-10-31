@@ -1,5 +1,5 @@
-#ifndef AEROHPC_A_LOGGER_H
-#define AEROHPC_A_LOGGER_H
+#ifndef AEROHPC_A_LOGGER_HPP
+#define AEROHPC_A_LOGGER_HPP
 
 #include <iostream>
 #include <string>
@@ -217,4 +217,4 @@ public:
     }
 };
 
-#endif //AEROHPC_A_LOGGER_H
+#endif //AEROHPC_A_LOGGER_HPP
