@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <iterator>
+#include <sstring>
 
 
 class Logger {
@@ -20,8 +21,15 @@ private:
     }
 
     static std::string repeat(const std::string &input, size_t num) {
-        std::ostringstream os;
+        std::stringstream os;
         std::fill_n(std::ostream_iterator<std::string>(os), num, input);
+        return os.str();
+    }
+
+    static std::string format(Real &value){
+        std::stringstream os;
+        os.precision(4);
+        os << std::scientific << value;
         return os.str();
     }
 
@@ -191,7 +199,7 @@ public:
             p = (colSize - 2 - 10) / 2;
             n = colSize - 2 - 10 - p;
 
-            tLine += "│" + repeat(" ", p + 1) + std::format("{:.4e}", value) + repeat(" ", n + 1);
+            tLine += "│" + repeat(" ", p + 1) + format(value) + repeat(" ", n + 1);
         }
         tLine += "│";
 
