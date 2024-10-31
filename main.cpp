@@ -3,258 +3,340 @@
 #include "L2NormCalculator.hpp"
 #include "Grid.hpp"
 #include "Boundaries.hpp"
-#include "RungeKutta.hpp"
 #include "VTKConverter.hpp"
 #include "Chronometer.hpp"
-#include "Logger.hpp"
+#include "Operators.hpp"
 
-Real testSolver(Real deltaT, index_t dim) {
-    Logger log(100);
 
-    // define T & deltaT  & Re
-    const Real T = 1;
-    const Real Re = 4700;
+
+
+
+class TestCaseIdentity : public VectorialFunction
+{
+public:
+    Real u(Real x, Real y, Real z) override
+    {
+        return std::sin(x) * std::cos(y) * std::sin(z);
+    }
+
+    Real v(Real x, Real y, Real z) override
+    {
+        return std::cos(x) * std::sin(y) * std::sin(z);
+    }
+
+    Real w(Real x, Real y, Real z) override
+    {
+        return 2 * std::cos(x) * std::cos(y) * std::cos(z);
+    }
+};
+
+
+class TestCaseLaplacian : public VectorialFunction
+{
+public:
+    Real u(Real x, Real y, Real z) override
+    {
+        return - 3 * std::sin(x) * std::cos(y) * std::sin(z);
+    }
+
+    Real v(Real x, Real y, Real z) override
+    {
+        return -3 * std::cos(x) * std::sin(y) * std::sin(z);
+    }
+
+    Real w(Real x, Real y, Real z) override
+    {
+        return -6 * std::cos(x) * std::cos(y) * std::cos(z);
+    }
+};
+
+
+class TestCaseConvection : public VectorialFunction
+{
+public:
+    Real u(Real x, Real y, Real z) override
+    {
+        Real f1 = std::sin(x) * std::cos(y) * std::sin(z);
+        Real f2 = std::cos(x) * std::sin(y) * std::sin(z);
+        Real f3 = 2 * std::cos(x) * std::cos(y) * std::cos(z);
+
+        Real df1_dx = std::cos(x) * std::cos(y) * std::sin(z);
+        Real df1_dy = -std::sin(x) * std::sin(y) * std::sin(z);
+        Real df1_dz = std::sin(x) * std::cos(y) * std::cos(z);
+
+        return f1 * df1_dx + f2 * df1_dy + f3 * df1_dz;
+    }
+
+    Real v(Real x, Real y, Real z) override
+    {
+        Real f1 = std::sin(x) * std::cos(y) * std::sin(z);
+        Real f2 = std::cos(x) * std::sin(y) * std::sin(z);
+        Real f3 = 2 * std::cos(x) * std::cos(y) * std::cos(z);
+
+        Real df2_dx = -std::sin(x) * std::sin(y) * std::sin(z);
+        Real df2_dy = std::cos(x) * std::cos(y) * std::sin(z);
+        Real df2_dz = std::cos(x) * std::sin(y) * std::cos(z);
+
+        return f1 * df2_dx + f2 * df2_dy + f3 * df2_dz;
+    }
+
+    Real w(Real x, Real y, Real z) override
+    {
+        Real f1 = std::sin(x) * std::cos(y) * std::sin(z);
+        Real f2 = std::cos(x) * std::sin(y) * std::sin(z);
+        Real f3 = 2 * std::cos(x) * std::cos(y) * std::cos(z);
+
+        Real df3_dx = -2 * std::sin(x) * std::cos(y) * std::cos(z);
+        Real df3_dy = -2 * std::cos(x) * std::sin(y) * std::cos(z);
+        Real df3_dz = -2 * std::cos(x) * std::cos(y) * std::sin(z);
+
+        return f1 * df3_dx + f2 * df3_dy + f3 * df3_dz;
+    }
+};
+
+
+class TestCaseComposed : public VectorialFunction
+{
+private:
+    const Real Re;
+
+public: 
+    TestCaseComposed(Real Re_) : Re(Re_) {}
+
+
+    Real u(Real x, Real y, Real z) override
+    {
+        Real f1 = std::sin(x) * std::cos(y) * std::sin(z);
+        Real f2 = std::cos(x) * std::sin(y) * std::sin(z);
+        Real f3 = 2 * std::cos(x) * std::cos(y) * std::cos(z);
+
+        Real df1_dx = std::cos(x) * std::cos(y) * std::sin(z);
+        Real df1_dy = -std::sin(x) * std::sin(y) * std::sin(z);
+        Real df1_dz = std::sin(x) * std::cos(y) * std::cos(z);
+
+        return f1 * df1_dx + f2 * df1_dy + f3 * df1_dz - (3 / Re) * f1;
+    }
+
+    Real v(Real x, Real y, Real z) override
+    {
+        Real f1 = std::sin(x) * std::cos(y) * std::sin(z);
+        Real f2 = std::cos(x) * std::sin(y) * std::sin(z);
+        Real f3 = 2 * std::cos(x) * std::cos(y) * std::cos(z);
+
+        Real df2_dx = -std::sin(x) * std::sin(y) * std::sin(z);
+        Real df2_dy = std::cos(x) * std::cos(y) * std::sin(z);
+        Real df2_dz = std::cos(x) * std::sin(y) * std::cos(z);
+
+        return f1 * df2_dx + f2 * df2_dy + f3 * df2_dz - (3 / Re) * f2;
+    }
+
+    Real w(Real x, Real y, Real z) override
+    {
+        Real f1 = std::sin(x) * std::cos(y) * std::sin(z);
+        Real f2 = std::cos(x) * std::sin(y) * std::sin(z);
+        Real f3 = 2 * std::cos(x) * std::cos(y) * std::cos(z);
+
+        Real df3_dx = -2 * std::sin(x) * std::cos(y) * std::cos(z);
+        Real df3_dy = -2 * std::cos(x) * std::sin(y) * std::cos(z);
+        Real df3_dz = -2 * std::cos(x) * std::cos(y) * std::sin(z);
+
+        return f1 * df3_dx + f2 * df3_dy + f3 * df3_dz - (3 / Re) * f3;
+    }
+    
+};
+
+
+
+
+template<class OP>
+void test_operator(VectorialFunction &function)
+{
+    const std::vector<size_t> N_values = {8, 16, 32, 64, 128};
+
+    // Reynolds number
+    const Real Re = 4700.0;
+
     // Define physical size of the problem (just for simplicity)
     const Real phy_dim = 1.0;
 
-    log.openSection("Running the TestSolver");
-    log.printValue(5, "Final T", T);
-    log.printValue(5, "dT", deltaT);
-    log.printValue(5, "Re num", Re);
-    log.printValue(5, "Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
+
+    for (const auto &N : N_values)
+    {
+        // Define dim as side dimension of the grid (just for simplicity)
+        const index_t dim = N;
+
+        // Define number of nodes for each axis
+        const index_t nx = dim;
+        const index_t ny = dim;
+        const index_t nz = dim;
+
+        // Define physical size of the problem for each axis
+        const Real sx = phy_dim / (nx - 1);
+        const Real sy = phy_dim / (ny - 1);
+        const Real sz = phy_dim / (nz - 1);
+
+
+        // Define initial velocity function
+        auto initialVel = [](Real x, Real y, Real z) -> Vector {
+            return {
+                std::sin(x) * std::cos(y) * std::sin(z),
+                std::cos(x) * std::sin(y) * std::sin(z),
+                2 * std::cos(x) * std::cos(y) * std::cos(z)
+            };
+        };
+
+        // Define initial pressure function
+        // For the moment it does not work so do not care about it
+        auto initialPres = [](Real x, Real y, Real z) -> Real {
+            return 2.0;
+        };
+        
+
+        // Define nodes
+        std::array<index_t, 3> nodes = {nx, ny, nz};
+
+        // Define spacing
+        Vector spacing = {sx, sy, sz};
+
+        // define the mesh:
+        // instantiate from ghosted stagg grid
+        // hint: second method, num of nodes in each direction, number of ghosts=1
+        Grid<STANDARD> sg(nodes, spacing, 1);
+        Grid<STANDARD> sg2(nodes, spacing, 1);
+
+        sg.initGrid(initialVel, initialPres);
+        set_boundary_values(sg, initialVel);
+
+
+        // Test operators
+        OP op(sg);
+        IdentityOperator<STANDARD> I(sg);
+
+        op.apply(sg2, sg);
+        I.apply(sg, sg2);
+
+
+        Real error = computeError(sg, function);
+        std::cout << "h = " << phy_dim / dim << "\tN = " << dim << std::endl;
+        std::cout << "\tError = " << error << std::endl;
+
+    }
+}
+
+
+
+
+
+int main() {
+    // try the solver
+
+    // Reynolds number
+    const Real Re = 4700.0;
+
+    // Define dim as side dimension of the grid (just for simplicity)
+    const index_t dim = 64;
 
     // Define number of nodes for each axis
     const index_t nx = dim;
     const index_t ny = dim;
     const index_t nz = dim;
 
+    // Define physical size of the problem (just for simplicity)
+    const Real phy_dim = 1.0;
+
     // Define physical size of the problem for each axis
-    const Real sx = phy_dim / real(nx);
-    const Real sy = phy_dim / real(ny);
-    const Real sz = phy_dim / real(nz);
+    const Real sx = phy_dim / (nx - 1);
+    const Real sy = phy_dim / (ny - 1);
+    const Real sz = phy_dim / (nz - 1);
 
-    // Define spacing
-    Vector spacing = {sx, sy, sz};
-
-    // Define nodes
-    std::array<index_t, 3> nodes = {nx, ny, nz};
-
-    // define the mesh:
-    Grid<STANDARD> model(nodes, spacing, 1);
-    log.printTitle("Grid created");
-    log.printValue(5, "nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
-    log.printValue(5, "ghosts", model.gp);
-
-    // initialize the mesh
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
-        return {ExactSolution<STANDARD>::u(x, y, z, 0), ExactSolution<STANDARD>::v(x, y, z, 0), ExactSolution<STANDARD>::w(x, y, z, 0)};
+        return {
+            std::sin(x) * std::cos(y) * std::sin(z),
+            std::cos(x) * std::sin(y) * std::sin(z),
+            2 * std::cos(x) * std::cos(y) * std::cos(z)
+        };
     };
 
     // Define initial pressure function
     // For the moment it does not work so do not care about it
     auto initialPres = [](Real x, Real y, Real z) -> Real {
-        return x + y + z;
+        return 2.0;
     };
 
-    chrono_sect(initT,
-                model.initGrid(initialVel, initialPres);
-    );
-    log.printTitle("Grid initialized", initT);
+    // Define nodes
+    std::array<index_t, 3> nodes = {nx, ny, nz};
 
-    // Define test boundary condition
-    Condition<STANDARD>::Mapper testBCMapper = [](Grid<STANDARD> &grid,
-                                                  const TFunction &fun, Real currentTime) {
+    // Define spacing
+    Vector spacing = {sx, sy, sz};
 
-        const Real sdx = grid.sdx;
-        const Real sdy = grid.sdy;
-        const Real sdz = grid.sdz;
+    // define the mesh:
+    // instantiate from ghosted stagg grid
+    // hint: second method, num of nodes in each direction, number of ghosts=1
+    Grid<STANDARD> sg(nodes, spacing, 1);
+    Grid<STANDARD> sg2(nodes, spacing, 1);
+    std::cout << "Grid created" << std::endl;
 
-        using Sol = ExactSolution<STANDARD>;
-
-        // apply on face with x constant
-        for (index_t j = 0; j < grid.ny; j++)
-            for (index_t k = 0; k < grid.nz; k++) {
-                Real y = real(j) * grid.dy;
-                Real z = real(k) * grid.dz;
-
-                Real x = 0;
-                // On x = 0 for ghost point we have exact for U, other approximate
-                grid(U, -1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
-                grid(V, -1, j, k) = 2 * Sol::v(x, y + grid.dy, z + sdz, currentTime)
-                                    - grid(V, 0, j, k);
-                grid(W, -1, j, k) = 2 * Sol::w(x, y + sdy, z + grid.dz, currentTime)
-                                    - grid(W, 0, j, k);
+    // build the model
+    // initialize the grid with initial values
+    //Model<STANDARD> model(spacing, sg, Re, initialVel, initialPres);
+    sg.initGrid(initialVel, initialPres);
+    set_boundary_values(sg, initialVel);
+    std::cout << "Model created, grid initialized" << std::endl;
 
 
-                x = real(grid.nx) * grid.dx;
-                // On x = phy_dim for domain point we have exact for U
-                grid(U, grid.nx - 1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
-                // For ghost point we have useless U, other approximate
-                grid(U, grid.nx, j, k) = 0;
-                grid(V, grid.nx, j, k) = 2 * Sol::v(x, y + grid.dy, z + sdz, currentTime)
-                                         - grid(V, grid.nx - 1, j, k);
-                grid(W, grid.nx, j, k) = 2 * Sol::w(x, y + sdy, z + grid.dz, currentTime)
-                                         - grid(W, grid.nx - 1, j, k);
-            }
+    // ******************************************TESTS************************************************
 
-        // apply on face with y constant
-        for (index_t i = 0; i < grid.nx; i++)
-            for (index_t k = 0; k < grid.nz; k++) {
-                Real x = real(i) * grid.dx;
-                Real z = real(k) * grid.dz;
+    // To test an operator we can simply pass it as a template parameter to test_operator as follows
+    // We have first to declare the real function to compare the operators
+    
+    // For the laplacian:
+    {
+        TestCaseLaplacian fun;
+        std::cout << std::endl << "Testing the Laplacian Operator:" << std::endl;
+        test_operator<LaplacianOperator<STANDARD>>(fun);
+    }
 
-                Real y = 0;
-                // On y = 0 for ghost point we hae exact for V, other approximate
-                grid(U, i, -1, k) = 2 * Sol::u(x + grid.dx, y, z + sdz, currentTime)
-                                    - grid(U, i, 0, k);
-                grid(V, i, -1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
-                grid(W, i, -1, k) = 2 * Sol::w(x + sdx, y, z + grid.dz, currentTime)
-                                    - grid(W, i, 0, k);
-
-                y = real(grid.ny) * grid.dx;
-                // On y = phy_dim for domain point we have exact for V
-                grid(V, i, grid.ny - 1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
-                // For ghost points we have useless V, other approximate
-                grid(U, i, grid.ny, k) = 2 * Sol::u(x + grid.dx, y, z + sdz, currentTime)
-                                         - grid(U, i, grid.ny - 1, k);
-                grid(V, i, grid.ny, k) = 0;
-                grid(W, i, grid.ny, k) = 2 * Sol::w(x + sdx, y, z + grid.dz, currentTime)
-                                         - grid(W, i, grid.ny - 1, k);
-            }
-
-        // apply on face with z constant
-        for (index_t i = 0; i < grid.nx; i++)
-            for (index_t j = 0; j < grid.ny; j++) {
-                Real x = real(i) * grid.dx;
-                Real y = real(j) * grid.dy;
-
-                Real z = 0;
-                // On z = 0 for ghost point we have exact for W, other approximate
-                grid(U, i, j, -1) = 2 * Sol::u(x + grid.dx, y + sdy, z, currentTime)
-                                    - grid(U, i, j, 0);
-                grid(V, i, j, -1) = 2 * Sol::v(x + sdx, y + grid.dy, z, currentTime)
-                                    - grid(V, i, j, 0);
-                grid(W, i, j, -1) = Sol::w(x + sdx, y + sdy, z, currentTime);
-
-                z = real(grid.nz) * grid.dz;
-                // On z = phy_dim for domain point we have exact for W
-                grid(W, i, j, grid.nz - 1) = Sol::w(x + sdx, y + sdy, z, currentTime);
-                // For ghost points we gave useless W, other interpolate
-                grid(U, i, j, grid.nz) = 2 * Sol::u(x + grid.dx, y + sdy, z, currentTime)
-                                         - grid(U, i, j, grid.nz - 1);
-                grid(V, i, j, grid.nz) = 2 * Sol::v(x + sdx, y + grid.dy, z, currentTime)
-                                         - grid(V, i, j, grid.nz - 1);
-                grid(W, i, j, grid.nz) = 0;
-
-            }
-    };
-
-    // Define test condition function
-    TFunction zero = [](Real x, Real y, Real z, Real t) {
-        return 0;
-    };
-
-    // Define test condition
-    Condition<STANDARD> inletBoundary(testBCMapper, zero);
-
-    // Define boundary conditions
-    Boundaries<STANDARD> boundaries;
-
-    // Add condition to boundaries
-    boundaries.addCond(inletBoundary);
-    log.printTitle("Boundary condition set");
-
-    // Define Buffers for RK method
-    Grid<STANDARD> Y2(model.nodes, model.spacing, model.gp);
-    Grid<STANDARD> Y3(model.nodes, model.spacing, model.gp);
-
-    log.printTitle("Buffers created");
-
-    // Time
-    Real currentTime = 0.0;
-
-    // last iteration l2Norm capture
-    Real l2Norm = 0.0;
-
-    // Performance variables
-    Real nNodes = model.nx * model.ny * model.nz;
-    Real perf;
-
-    // Printing variables
-    index_t iter = 0;
-    index_t printIt = 100; // prints every n iterations
-
-    log.printTitle("Start computation");
-    log.openTable({"Iter", "ts", "l2", "rkT", "l2T", "TxN"});
-    chrono_sect(compT,
-                code_span(
-                        boundaries.apply(model, currentTime);
-                        while (currentTime < T) {
-                            // call RK (obtain model at currentTime + dt)
-                            chrono_sect(rkTime,
-                                        code_span(
-                                                rungeKutta(model, Y2, Y3, Re, deltaT, currentTime, boundaries);
-                                                currentTime += deltaT;
-                                        )
-                            );
-
-
-                            if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
-                            {
-                                chrono_sect(l2Time,
-                                            code_span(
-                                                    l2Norm = computeL2Norm<STANDARD>(model, currentTime);
-                                            )
-                                );
-                                perf = rkTime / nNodes;
-                                log.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
-                            }
-                            iter++;
-                        }
-                )
-    );
-    log.closeTable();
-    log.printTitle("End of computation", compT);
-    log.closeSection();
-    log.empty();
-    return l2Norm;
-}
-
-
-int main() {
-
-    // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8, 16, 32, 64};
-
-    std::vector<Real> error;
-
-    // wrt deltaT
-    // for (size_t i=0; i<deltaTs.size(); ++i){
-    //     Real deltaT = deltaTs[i];
-    //     index_t dim = dims[3];
-    //     error.push_back(testSolver(deltaT, dim));
-    // }
-
-
-    // wrt dim
-    for (long dim: dims) {
-        Real deltaT = deltaTs[0]; // first
-        error.push_back(testSolver(deltaT, dim));
+    // For the convective term:
+    {
+        TestCaseConvection fun;
+        std::cout << std::endl << "Testing the Convective Operator:" << std::endl;
+        test_operator<ConvectiveOperator<STANDARD>>(fun);
     }
 
 
-    // // wrt both
-    // for (size_t i=0; i<dims.size(); ++i){
-    //     Real deltaT = deltaT[i];
-    //     index_t dim = dims[i];
-    //     error.push_back(testSolver(deltaT, dim));
-    // }
+    // Alternatively it is possible to combine two or more operators in one, but I still have
+    // to figure out how to generalize the testing functions
 
-    std::ofstream csvFile("output.csv");
-    csvFile << "step,error" << std::endl;
-    for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
+    LaplacianOperator<STANDARD> L(sg);
+    IdentityOperator<STANDARD> I(sg);
+    ConvectiveOperator<STANDARD> Unabla(sg);
+
+    OneStepOperator<STANDARD> op = Unabla + (1 / Re) * L;
+
+    // After defining the operator, just apply it on the grid
+    op.apply(sg2, sg);
+
+    // For now in order to measure the error we have to copy back the data from a grid to the other
+    // TODO: try to figure out how to apply directly the operator to the grid
+    I.apply(sg, sg2);
+
+    TestCaseComposed fun(Re);
+    //TestCaseIdentity fun;
+
+    //set_values(model, fun);
+    Real error = computeError(sg, fun);
+    std::cout << std::endl << "Achieved error L2 norm for the composed operator:" << std::endl;
+    std::cout << "Error = " << error << std::endl;
+    std::cout << "N = " << dim << std::endl;
+
+
+
+    // Output of last iteration
+    /*
+    VTKFile file = VTKConverter::exportModel(model, "testsolver output of last time iteration");
+    file.writeFile("testsolver.vtk");
+    */
 
 
     return 0;
