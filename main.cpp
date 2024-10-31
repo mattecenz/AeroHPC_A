@@ -18,10 +18,10 @@ Real testSolver(Real deltaT, index_t dim) {
     const Real phy_dim = 1.0;
 
     log.openSection("Running the TestSolver");
-    log.printValue(5,"Final T", T);
-    log.printValue(5,"dT", deltaT);
-    log.printValue(5,"Re num", Re);
-    log.printValue(5,"Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
+    log.printValue(5, "Final T", T);
+    log.printValue(5, "dT", deltaT);
+    log.printValue(5, "Re num", Re);
+    log.printValue(5, "Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -42,8 +42,8 @@ Real testSolver(Real deltaT, index_t dim) {
     // define the mesh:
     Grid<STANDARD> model(nodes, spacing, 1);
     log.printTitle("Grid created");
-    log.printValue(5,"nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
-    log.printValue(5,"ghosts", model.gp);
+    log.printValue(5, "nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
+    log.printValue(5, "ghosts", model.gp);
 
     // initialize the mesh
     // Define initial velocity function
@@ -177,12 +177,16 @@ Real testSolver(Real deltaT, index_t dim) {
     // last iteration l2Norm capture
     Real l2Norm = 0.0;
 
+    // Performance variables
+    Real nNodes = model.nx * model.ny * model.nz;
+    Real perf;
+
     // Printing variables
     index_t iter = 0;
     index_t printIt = 100; // prints every n iterations
 
     log.printTitle("Start computation");
-    log.openTable({"Iter", "ts", "l2", "rkT", "l2T"});
+    log.openTable({"Iter", "ts", "l2", "rkT", "l2T", "TxN"});
     chrono_sect(compT,
                 code_span(
                         boundaries.apply(model, currentTime);
@@ -191,8 +195,8 @@ Real testSolver(Real deltaT, index_t dim) {
                             chrono_sect(rkTime,
                                         code_span(
                                                 rungeKutta(model, Y2, Y3, Re, deltaT, currentTime, boundaries);
-                            currentTime += deltaT;
-                            )
+                                                currentTime += deltaT;
+                                        )
                             );
 
 
@@ -201,9 +205,10 @@ Real testSolver(Real deltaT, index_t dim) {
                                 chrono_sect(l2Time,
                                             code_span(
                                                     l2Norm = computeL2Norm<STANDARD>(model, currentTime);
-                                )
+                                            )
                                 );
-                                log.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time});
+                                perf = rkTime / nNodes;
+                                log.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
                             }
                             iter++;
                         }
@@ -211,7 +216,7 @@ Real testSolver(Real deltaT, index_t dim) {
     );
     log.closeTable();
     log.printTitle("End of computation", compT);
-    log.closeSection()-;
+    log.closeSection();
     log.empty();
     return l2Norm;
 }
