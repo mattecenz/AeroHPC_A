@@ -39,13 +39,7 @@ public:
         size_t prev = ((_bufsize - 2) - (title.length() + 2)) / 2;
         size_t next = (_bufsize - 2) - (title.length() + 2) - prev;
 
-        std::string prevS;
-        std::string postS;
-
-        prevS += repeat("═", prev);
-        postS += repeat("═", next);
-
-        out << "╔" << prevS << " " << title << " " << postS << "╗\n";
+        out << "╔" << repeat("═", prev) << " " << title << " " << repeat("═", next) << "╗\n";
 
         return *this;
     }
