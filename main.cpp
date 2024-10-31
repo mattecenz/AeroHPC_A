@@ -58,7 +58,7 @@ Real testSolver(Real deltaT, index_t dim) {
     chrono_sect(initT,
                 model.initGrid(initialVel, initialPres);
     );
-    log.printTitle("Grid initialized", initT);
+    logger.printTitle("Grid initialized", initT);
 
     // Define test boundary condition
     Condition<STANDARD>::Mapper testBCMapper = [](Grid<STANDARD> &grid,
