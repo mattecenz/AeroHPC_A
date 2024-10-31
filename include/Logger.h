@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <string>
+#include <iterator>
+
 
 class Logger {
 private:
@@ -17,9 +19,15 @@ private:
             string.resize(_bufsize - 2);
     }
 
+    static std::string repeat(const std::string &input, size_t num) {
+        std::ostringstream os;
+        std::fill_n(std::ostream_iterator<std::string>(os), num, input);
+        return os.str();
+    }
+
 
 public:
-    explicit Logger(size_t bufsize) : _bufsize(bufsize), sectOpen(false), tableOpen(false){}
+    explicit Logger(size_t bufsize) : _bufsize(bufsize), sectOpen(false), tableOpen(false) {}
 
     Logger &openSection(std::string title) {
         if (sectOpen) closeSection();
@@ -34,9 +42,8 @@ public:
         std::string prevS;
         std::string postS;
 
-        for (int i = 0; i < prev; i++) prevS += "═";
-        for (int i = 0; i < next; i++) postS += "═";
-
+        prevS += repeat("═", prev);
+        postS += repeat("═", next);
 
         out << "╔" << prevS << " " << title << " " << postS << "╗\n";
 
@@ -50,11 +57,7 @@ public:
 
         size_t sectSize = _bufsize - 2;
 
-        std::string prevs;
-
-        for (int i = 0; i < sectSize; i++) prevs += "═";
-
-        out << "╚" << prevs << "╝\n";
+        out << "╚" << repeat("═", sectSize) << "╝\n";
 
         return *this;
     }
@@ -65,14 +68,7 @@ public:
         size_t prev = ((_bufsize - 2) - (title.length() + 2)) / 2;
         size_t next = (_bufsize - 2) - (title.length() + 2) - prev;
 
-        std::string prevs;
-        std::string posts;
-
-        for (int i = 0; i < prev; i++) prevs += "─";
-        for (int i = 0; i < next; i++) posts += "─";
-
-
-        out << "║" << prevs << " " << title << " " << posts << "║\n";
+        out << "║" << repeat("─", prev) << " " << title << " " << repeat("─", next) << "║\n";
         return *this;
     }
 
@@ -82,14 +78,7 @@ public:
         size_t prev = ((_bufsize - 2) - (title.length() + 2)) / 2;
         size_t next = (_bufsize - 2) - (title.length() + 2) - prev - 10 - 2 - 2;
 
-        std::string prevs;
-        std::string posts;
-
-        for (int i = 0; i < prev; i++) prevs += "─";
-        for (int i = 0; i < next; i++) posts += "─";
-
-
-        out << "║" << prevs << " " << title << " " << posts << " ";
+        out << "║" << repeat("─", prev) << " " << title << " " << repeat("─", next) << " ";
         printf("%0.4e", value);
         out << " ──║\n";
         return *this;
@@ -100,15 +89,9 @@ public:
         size_t prev = ((_bufsize - 4) / formatRatio) - value_name.length();
         size_t next = ((_bufsize - 4)) - prev - value_name.length() - 2 - 10;
 
-        std::string prevS;
-        std::string nextS;
-
-        for (int i = 0; i < prev; i++) prevS += " ";
-        for (int i = 0; i < next; i++) nextS += " ";
-
-        out << "║ " << prevS << value_name << ": ";
+        out << "║ " << repeat(" ", prev) << value_name << ": ";
         printf("%0.4e", value);
-        out << nextS << " ║\n";
+        out << repeat(" ", next) << " ║\n";
 
         return *this;
     }
@@ -125,14 +108,7 @@ public:
         size_t prev = ((_bufsize - 4) / formatRatio) - value_name.length();
         size_t next = ((_bufsize - 4)) - prev - value_name.length() - 2 - valueSize;
 
-        std::string prevS;
-        std::string nextS;
-
-
-        for (int i = 0; i < prev; i++) prevS += " ";
-        for (int i = 0; i < next; i++) nextS += " ";
-
-        out << "║ " << prevS << value_name << ": " << value << nextS << " ║\n";
+        out << "║ " << repeat(" ", prev) << value_name << ": " << value << repeat(" ", next) << " ║\n";
 
         return *this;
     }
@@ -142,13 +118,7 @@ public:
         size_t prev = ((_bufsize - 4) / formatRatio) - value_name.length();
         size_t next = ((_bufsize - 4)) - prev - value_name.length() - 2 - str.length();
 
-        std::string prevS;
-        std::string nextS;
-
-        for (int i = 0; i < prev; i++) prevS += " ";
-        for (int i = 0; i < next; i++) nextS += " ";
-
-        out << "║ " << prevS << value_name << ": " << str << nextS << " ║\n";
+        out << "║ " << repeat(" ", prev) << value_name << ": " << str << repeat(" ", next) << " ║\n";
 
         return *this;
     }
@@ -167,27 +137,16 @@ public:
         size_t p = (colSize - 2 - colNames[0].size()) / 2;
         size_t n = colSize - 2 - colNames[0].size() - p;
 
-        for (int i = 0; i < colSize; i++) endTable += "─";
-        for (int i = 0; i < p; i++) tLine += "─";
-        tLine += " ";
-        tLine += colNames[0];
-        tLine += " ";
-        for (int i = 0; i < n; i++) tLine += "─";
+        endTable += repeat("─", colSize);
+        tLine += repeat("─", p) + " " + colNames[0] + " " + repeat("─", n);
         nchar += p + 2 + colNames[0].size() + n;
 
         for (int j = 1; j < colNames.size(); ++j) {
-            endTable += "┴";
-            tLine += "┬";
-
             p = (colSize - 2 - colNames[j].size()) / 2;
             n = colSize - 2 - colNames[j].size() - p;
 
-            for (int i = 0; i < colSize; i++) endTable += "─";
-            for (int i = 0; i < p; i++) tLine += "─";
-            tLine += " ";
-            tLine += colNames[j];
-            tLine += " ";
-            for (int i = 0; i < n; i++) tLine += "─";
+            endTable += "┴" + repeat("─", colSize);
+            tLine += "┬" + repeat("─", p) + " " + colNames[j] + " " + repeat("─", n);
             nchar += 1 + p + 2 + colNames[j].size() + n;
         }
 
@@ -199,15 +158,8 @@ public:
         size_t prev = ((_bufsize - 2) - nchar) / 2;
         size_t next = (_bufsize - 2) - nchar - prev;
 
-        std::string prevs;
-        std::string posts;
-
-        for (int i = 0; i < prev; i++) prevs += " ";
-        for (int i = 0; i < next; i++) posts += " ";
-
-
-        endTable = "║" + prevs + endTable + posts + "║\n";
-        out << "║" << prevs << tLine << posts << "║\n";
+        endTable = "║" + repeat(" ", prev) + endTable + repeat(" ", next) + "║\n";
+        out << "║" << repeat(" ", prev) << tLine << repeat(" ", next) << "║\n";
 
         return *this;
     }
@@ -231,50 +183,30 @@ public:
             copy /= 10;
         }
 
-        size_t colSize = ((_bufsize -4 - 1) / (values.size() + 1)) - 1;
+        size_t colSize = ((_bufsize - 4 - 1) / (values.size() + 1)) - 1;
 
-        std::string tLine = "│";
         size_t nchar = 1;
 
         size_t p = (colSize - 2 - idSize) / 2;
         size_t n = colSize - 2 - idSize - p;
-        for (int i = 0; i < p; i++) tLine += " ";
-        tLine += " ";
-        tLine += to_string(rowId);
-        tLine += " ";
-        for (int i = 0; i < n; i++) tLine += " ";
+
+        std::string tLine = "│" + repeat(" ", p) + " " + to_string(rowId) + " " + repeat(" ", n);
         nchar += p + 2 + idSize + n;
 
+        for (double value: values) {
+            p = (colSize - 2 - 10) / 2;
+            n = colSize - 2 - 10 - p;
+
+            tLine += "│" + repeat(" ", p + 1) + std::format("{:.4e}", value) + repeat(" ", n + 1);
+        }
+        tLine += "│";
 
         nchar += 1 + values.size() * (1 + colSize);
 
         size_t prev = ((_bufsize - 2) - nchar) / 2;
         size_t next = (_bufsize - 2) - nchar - prev;
 
-        std::string prevs = "║";
-        std::string posts;
-
-        for (int i = 0; i < prev; i++) prevs += " ";
-        for (int i = 0; i < next; i++) posts += " ";
-
-        out << prevs << tLine;
-        tLine = "";
-
-        for (double value: values) {
-            tLine += "│";
-            p = (colSize - 2 - 10) / 2;
-            n = colSize - 2 - 10 - p;
-            for (int i = 0; i < p; i++) tLine += " ";
-            tLine += " ";
-            out << tLine;
-            printf("%0.4e", value);
-            tLine = " ";
-            for (int i = 0; i < n; i++) tLine += " ";
-        }
-
-        tLine += "│";
-
-        out << tLine << posts << "║\n";
+        out << "║" << repeat(" ", prev) << tLine << repeat(" ", next) << "║\n";
 
         return *this;
     }
