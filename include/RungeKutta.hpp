@@ -31,19 +31,13 @@ struct RKConst {
 };
 
 ////RHS function
-//inline Vector rhs(const Grid &grid, const Real nu, const index_t i, const index_t j, const index_t k) {
-//    return -conv(grid, i, j, k) + nu * lap(grid, i, j, k);
-//}
-
-template<Component C>
-inline Real rhss(Grid &grid, const Real nu, const index_t i, const index_t j, const index_t k) {
-    return -conv<C>(grid, i, j, k) + nu * lap<C>(grid, i, j, k);
+#define rhs(C) inline Real rhs_##C(Grid &grid, const Real nu, const index_t i, const index_t j, const index_t k) { \
+    return -conv_##C(grid, i, j, k) + nu * lap_##C(grid, i, j, k); \
 }
 
-//
-//inline Real rhss_u(Grid &grid, const Real nu, const index_t i, const index_t j, const index_t k) {
-//    return -conv_u(grid, i, j, k) + nu * lap_u(grid, i, j, k);
-//}
+rhs(U)
+rhs(V)
+rhs(W)
 
 
 //Runge-Kutta method
@@ -93,10 +87,10 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r = rhss<U>(model, nu, i, j, k);
-                    rhs_buff(U, i, j, k) = (r + force);
+                    const Real r = rhs_U(model, nu, i, j, k);
+                    rhs_buff.U(i, j, k) = (r + force);
 
-                    model_buff(U, i, j, k) = model(U, i, j, k) + kappa[0] * (r + force);
+                    model_buff.U(i, j, k) = model.U(i, j, k) + kappa[0] * (r + force);
                 }
             }
         }
@@ -113,11 +107,11 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r = rhss<V>(model, nu, i, j, k);
-                    rhs_buff(V, i, j, k) = (r + force);
+                    const Real r = rhs_V(model, nu, i, j, k);
+                    rhs_buff.V(i, j, k) = (r + force);
 
                     //TODO BRANCHED CODE IS THE DEVIL
-                    model_buff(V, i, j, k) = model(V, i, j, k) + kappa[0] * (r + force);
+                    model_buff.V(i, j, k) = model.V(i, j, k) + kappa[0] * (r + force);
                 }
 
             }
@@ -135,11 +129,11 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r = rhss<W>(model, nu, i, j, k);
-                    rhs_buff(W, i, j, k) = (r + force);
+                    const Real r = rhs_W(model, nu, i, j, k);
+                    rhs_buff.W(i, j, k) = (r + force);
 
                     //TODO BRANCHED CODE IS THE DEVIL
-                    model_buff(W, i, j, k) = model(W, i, j, k) + kappa[0] * (r + force);
+                    model_buff.W(i, j, k) = model.W(i, j, k) + kappa[0] * (r + force);
                 }
             }
         }
@@ -167,14 +161,14 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r1 = rhs_buff(U, i, j, k);
-                    const Real r2 = rhss<U>(model_buff, nu, i, j, k);
+                    const Real r1 = rhs_buff.U(i, j, k);
+                    const Real r2 = rhs_U(model_buff, nu, i, j, k);
 
-                    rhs_buff(U, i, j, k) = (r2 + force2);
+                    rhs_buff.U(i, j, k) = (r2 + force2);
 
-                    model(U, i, j, k) = model_buff(U, i, j, k)
-                                        - kappa[1] * r1
-                                        + kappa[2] * (r2 + force2);
+                    model.U(i, j, k) = model_buff.U(i, j, k)
+                                       - kappa[1] * r1
+                                       + kappa[2] * (r2 + force2);
                 }
             }
         }
@@ -191,14 +185,14 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r1 = rhs_buff(V, i, j, k);
-                    const Real r2 = rhss<V>(model_buff, nu, i, j, k);
+                    const Real r1 = rhs_buff.V(i, j, k);
+                    const Real r2 = rhs_V(model_buff, nu, i, j, k);
 
-                    rhs_buff(V, i, j, k) = (r2 + force2);
+                    rhs_buff.V(i, j, k) = (r2 + force2);
 
-                    model(V, i, j, k) = model_buff(V, i, j, k)
-                                        - kappa[1] * r1
-                                        + kappa[2] * (r2 + force2);
+                    model.V(i, j, k) = model_buff.V(i, j, k)
+                                       - kappa[1] * r1
+                                       + kappa[2] * (r2 + force2);
                 }
             }
         }
@@ -215,14 +209,14 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r1 = rhs_buff(W, i, j, k);
-                    const Real r2 = rhss<W>(model_buff, nu, i, j, k);
+                    const Real r1 = rhs_buff.W(i, j, k);
+                    const Real r2 = rhs_W(model_buff, nu, i, j, k);
 
-                    rhs_buff(W, i, j, k) = (r2 + force2);
+                    rhs_buff.W(i, j, k) = (r2 + force2);
 
-                    model(W, i, j, k) = model_buff(W, i, j, k)
-                                        - kappa[1] * r1
-                                        + kappa[2] * (r2 + force2);
+                    model.W(i, j, k) = model_buff.W(i, j, k)
+                                       - kappa[1] * r1
+                                       + kappa[2] * (r2 + force2);
                 }
             }
         }
@@ -249,11 +243,11 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r = rhss<U>(model, nu, i, j, k);
+                    const Real r = rhs_U(model, nu, i, j, k);
 
-                    model_buff(U, i, j, k) = model(U, i, j, k)
-                                             - kappa[2] * rhs_buff(U, i, j, k)
-                                             + kappa[3] * (r + force);
+                    model_buff.U(i, j, k) = model.U(i, j, k)
+                                            - kappa[2] * rhs_buff.U(i, j, k)
+                                            + kappa[3] * (r + force);
                 }
             }
         }
@@ -270,11 +264,11 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r = rhss<V>(model, nu, i, j, k);
+                    const Real r = rhs_V(model, nu, i, j, k);
 
-                    model_buff(V, i, j, k) = model(V, i, j, k)
-                                             - kappa[2] * rhs_buff(V, i, j, k)
-                                             + kappa[3] * (r + force);
+                    model_buff.V(i, j, k) = model.V(i, j, k)
+                                            - kappa[2] * rhs_buff.V(i, j, k)
+                                            + kappa[3] * (r + force);
                 }
             }
         }
@@ -291,11 +285,11 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     constexpr Real force = 0;
 #endif
 
-                    const Real r = rhss<W>(model, nu, i, j, k);
+                    const Real r = rhs_W(model, nu, i, j, k);
 
-                    model_buff(W, i, j, k) = model(W, i, j, k)
-                                             - kappa[2] * rhs_buff(W, i, j, k)
-                                             + kappa[3] * (r + force);
+                    model_buff.W(i, j, k) = model.W(i, j, k)
+                                            - kappa[2] * rhs_buff.W(i, j, k)
+                                            + kappa[3] * (r + force);
                 }
             }
         }

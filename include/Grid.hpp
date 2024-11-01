@@ -7,18 +7,6 @@
 
 #include "Traits.hpp"
 
-/**
- * Components of the problem
- */
-enum Component {
-    U = 0, // x-axis velocity
-    V = 1, // y-axis velocity
-    W = 2, // z-axis velocity
-    P = 3, // pressure
-};
-
-constexpr int N_COMPONENTS = 4;
-
 class Grid {
     /**
      * Padding induced by ghost point
@@ -28,7 +16,10 @@ class Grid {
     /**
      * Nodes data
      */
-    std::array<__restrict_arr std::vector<Real>,4> _entries;
+    Real *u;
+    Real *v;
+    Real *w;
+    Real *p;
 
     /**
      * Number of nodes without ghost points
@@ -40,8 +31,21 @@ class Grid {
      */
     std::array<index_t, 3> _grid_nodes;
 
+    /**
+     * Calculate the indexing used into velocity and pressure arrays
+     */
+    index_t indexing(index_t x, index_t y, index_t z) const;
+
 public:
-    //Grid() = delete;
+
+    Grid() = delete;
+
+    ~Grid() {
+        delete[] u;
+        delete[] v;
+        delete[] w;
+        delete[] p;
+    }
 
     /**
      * Construct a staggered grid with ghost nodes,
@@ -49,37 +53,41 @@ public:
      * @param spacing dx, dy, dz info
      * @param ghosts number of ghost nodes
      */
-    Grid(const std::array<index_t, 3> &nodes, const std::array<Real, 3> &spacing, const index_t ghosts) : _nodes(nodes),
-        _gp(ghosts),
-        _grid_nodes({
-            nodes[0] + (2 * ghosts),
-            nodes[1] + (2 * ghosts),
-            nodes[2] + (2 * ghosts)
-        }),
-        spacing(spacing),
-        staggered_spacing{
-            spacing[0] / real(2),
-            spacing[1] / real(2),
-            spacing[2] / real(2)
-        } {
+    Grid(const std::array<index_t, 3> &nodes, const std::array<Real, 3> &spacing, const index_t ghosts)
+            : _nodes(nodes),
+              _gp(ghosts),
+              _grid_nodes({nodes[0] + (2 * ghosts),
+                           nodes[1] + (2 * ghosts),
+                           nodes[2] + (2 * ghosts)}),
+              spacing(spacing),
+              staggered_spacing{spacing[0] / real(2),
+                                spacing[1] / real(2),
+                                spacing[2] / real(2)} {
         auto dim = _grid_nodes[0] * _grid_nodes[1] * _grid_nodes[2];
-        for(auto &entry : _entries)
-         entry.resize(dim);
+        u = new Real[dim];
+        v = new Real[dim];
+        w = new Real[dim];
+        p = new Real[dim];
     }
-
-#pragma inline
 
     /**
      * Operator that accesses the memory using a 3D view of the object
      */
-    Real &operator()(Component c, index_t i, index_t j, index_t k);
+#define get_component(name, comp) \
+inline Real &name(index_t i, index_t j, index_t k){ \
+    return comp[indexing(i,j,k)]; \
+} \
+inline Real &name(index_t i, index_t j, index_t k) const { \
+    return comp[indexing(i,j,k)]; \
+}
 
-#pragma inline
+    get_component(U, u)
 
-    /**
-     * Operator that accesses 3D view for read-only operations
-     */
-    Real operator()(Component c, index_t i, index_t j, index_t k) const;
+    get_component(V, v)
+
+    get_component(W, w)
+
+    get_component(P, p)
 
     /**
      * Initialize the grid given the initial velocity and pressure function
@@ -87,7 +95,10 @@ public:
     void initGrid(const VectorFunction &initial_velocity, const Function &initial_pressure);
 
     void swap(Grid &other) noexcept {
-        std::swap(_entries, other._entries);
+        std::swap(u, other.u);
+        std::swap(v, other.v);
+        std::swap(w, other.w);
+        std::swap(p, other.p);
     }
 
     /**

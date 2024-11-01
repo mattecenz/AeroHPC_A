@@ -12,14 +12,14 @@ namespace VTKConverter {
                 for (index_t x = 0; x < grid.nx; ++x) {
                     velocity.emplace_back(
                             std::vector<Real>{
-                                    grid(U, x, y, z),
-                                    grid(V, x, y, z),
-                                    grid(W, x, y, z)
+                                    grid.U(x, y, z),
+                                    grid.V(x, y, z),
+                                    grid.W(x, y, z)
                             }
                     );
                     pressure.emplace_back(
                             std::vector<Real>{
-                                    grid(P, x, y, z)
+                                    grid.P(x, y, z)
                             }
                     );
                 }

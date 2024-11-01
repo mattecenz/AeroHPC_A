@@ -28,9 +28,9 @@ Real computeL2Norm(const Grid &grid, Real time) {
                 Real exactW = ExactSolution::w(x + sdx, y + sdy, z + grid.dz, time);
 
                 // Access the computed grid components
-                Real gridU = grid(Component::U, i, j, k);
-                Real gridV = grid(Component::V, i, j, k);
-                Real gridW = grid(Component::W, i, j, k);
+                Real gridU = grid.U(i, j, k);
+                Real gridV = grid.V(i, j, k);
+                Real gridW = grid.W(i, j, k);
 
                 // Calculate the differences
                 Real diffU = gridU - exactU;
