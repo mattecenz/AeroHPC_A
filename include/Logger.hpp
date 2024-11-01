@@ -6,128 +6,172 @@
 #include <iterator>
 #include <sstream>
 
+/**
+* Macro for retrieving symmetric spacing
+*/
+#define getPrevNext(name, strlen, size) \
+const size_t name##prev = (size - strlen) / 2;  \
+const size_t name##next = size - strlen - name##prev
+
 class Logger {
-private:
+    /**
+    * Symmetric padding size
+    */
+    size_t paddingS = 2;
+
+    /**
+    * Output stream of logger
+    */
     std::ostream &out = std::cout;
-    size_t _bufsize;
+
+    /**
+    * Horizontal size of the logger
+    */
+    size_t _buffSize;
+
+    /**
+    * If the logger has a section open
+    */
     bool sectOpen;
+
+    /**
+    * If the logger has a table open
+    */
     bool tableOpen;
+
+    /**
+    * Buffered footer of a table
+    */
     std::string endTable;
 
-    void sanitize(std::string &string) const {
-        if (string.length() + 2 > (_bufsize - 2))
-            string.resize(_bufsize - 2);
+    /**
+    * Check whether the input string is shorter than the given length,
+    * otherwise transforms it into a dotted format
+    */
+    static void sanitize(std::string string, const size_t length) {
+        if (string.length() > length) {
+            string.resize(length - 1);
+            string += ".";
+        }
     }
 
-    static std::string repeat(const std::string &input, size_t num) {
+    /**
+    * Returns a string composed by repeating num times the input string
+    * If the returned string is longer than the logger size then returns an empty string
+    */
+    std::string repeat(const std::string &input, const size_t num) {
+        const size_t _num = num * input.size() > _buffSize ? 0 : num;
         std::stringstream os;
-        std::fill_n(std::ostream_iterator<std::string>(os), num, input);
+        std::fill_n(std::ostream_iterator<std::string>(os), _num, input);
         return os.str();
     }
-
-    static std::string format(Real &value) {
-        std::stringstream os;
-        os.precision(4);
-        os << std::scientific << value;
-        return os.str();
-    }
-
-    void fail() {
-        out << "║" << repeat(" ", _bufsize - 2) << "╚" << repeat("─", 19) << "╗\n";
-        _bufsize += 20;
-    }
-
 
 public:
+    /**
+    * Construct a logger of at least 80 characters, with no section nor table opened
+    */
     explicit Logger(size_t bufsize) : sectOpen(false), tableOpen(false) {
-        if(bufsize < 80) _bufsize = 80;
-        else _bufsize = bufsize;
+        if (bufsize < 80) _buffSize = 80;
+        else _buffSize = bufsize;
     }
 
-    Logger &openSection(std::string title) {
+    /**
+    * Open a section and print a section header line with given title
+    */
+    Logger &openSection(const std::string &title) {
         if (sectOpen) closeSection();
 
         sectOpen = true;
 
-        sanitize(title);
+        sanitize(title, _buffSize - paddingS - paddingS);
 
-        size_t prev = ((_bufsize - 2) - (title.length() + 2)) / 2;
-        size_t next = (_bufsize - 2) - (title.length() + 2) - prev;
+        getPrevNext(sect, title.size(), _buffSize - paddingS - paddingS);
 
-        if (prev <= _bufsize && next <= _bufsize)
-            out << "╔" << repeat("═", prev) << " " << title << " " << repeat("═", next) << "╗\n";
-        else {
-            fail();
-            openSection(title);
-        }
+        out << "╔" << repeat("═", sectprev) << " " << title << " " << repeat("═", sectnext) << "╗\n";
+
         return *this;
     }
 
+    /**
+    * Close a section and print a section footer line
+    */
     Logger &closeSection() {
         if (!sectOpen) return *this;
 
         sectOpen = false;
 
-        size_t sectSize = _bufsize - 2;
+        size_t sectSize = _buffSize - 2;
 
-        if (sectSize <= _bufsize)
-            out << "╚" << repeat("═", sectSize) << "╝\n";
-        else {
-            fail();
-            closeSection();
-        }
+        out << "╚" << repeat("═", sectSize) << "╝\n";
+
         return *this;
     }
 
-    Logger &printTitle(std::string title) {
-        sanitize(title);
+    /**
+    * Print a title line with the given title
+    */
+    Logger &printTitle(const std::string &title) {
+        sanitize(title, _buffSize - paddingS - paddingS);
 
-        size_t prev = ((_bufsize - 2) - (title.length() + 2)) / 2;
-        size_t next = (_bufsize - 2) - (title.length() + 2) - prev;
+        getPrevNext(t, title.size(), _buffSize - paddingS - paddingS);
 
-        if (prev <= _bufsize && next <= _bufsize)
-            out << "║" << repeat("─", prev) << " " << title << " " << repeat("─", next) << "║\n";
-        else {
-            fail();
-            printTitle(title);
-        }
+        out << "║" << repeat("─", tprev) << " " << title << " " << repeat("─", tnext) << "║\n";
+
         return *this;
     }
 
-    Logger &printTitle(std::string title, Real value) {
-        sanitize(title);
+    /**
+    * Print a title line with the given title and value
+    */
+    Logger &printTitle(const std::string &title, const Real value, const long int precision = 4) {
+        //                        0.  precision  e+xx  spaces     lines
+        const size_t valueSpace = 2 + precision + 4 + paddingS + paddingS;
+        const size_t titleSpace = (((_buffSize - paddingS - paddingS) / 2) - valueSpace) * 2;
 
-        size_t prev = ((_bufsize - 2) - (title.length() + 2)) / 2;
-        size_t next = (_bufsize - 2) - (title.length() + 2) - prev - 10 - 2 - 2;
-        if (prev <= _bufsize && next <= _bufsize) {
-            out << "║" << repeat("─", prev) << " " << title << " " << repeat("─", next) << " ";
-            printf("%0.4e", value);
-            out << " ──║\n";
-        } else {
-            fail();
-            printTitle(title, value);
-        }
+        if (titleSpace <= 0) return *this;
+
+        sanitize(title, titleSpace);
+
+        getPrevNext(t, title.size(), _buffSize - paddingS - paddingS);
+
+        out << "║" << repeat("─", tprev) << " " << title << " " << repeat("─", tnext - valueSpace + 1) << " "
+                << std::setprecision(precision) << std::scientific << value << " ─║\n";
+
         return *this;
     }
 
-    Logger &printValue(int formatRatio, const std::string &value_name, Real value) {
+    /**
+    * Print a value information,
+    * formatRatio is the portion of line the info will be placed on,
+    * valueName is the information name,
+    * value is the information value,
+    * precision is the decimal size of the value
+    */
+    Logger &printValue(const long int formatRatio, const std::string &valueName, const Real value, const long int precision = 4) {
+        const size_t valueSpace = 2 + precision + 4 + paddingS;
+        const size_t titleSpace = (_buffSize - paddingS) / formatRatio - paddingS - 1;
 
-        size_t prev = ((_bufsize - 4) / formatRatio) - value_name.length();
-        size_t next = ((_bufsize - 4)) - prev - value_name.length() - 2 - 10;
+        if (titleSpace <= 0) return *this;
+        if ((_buffSize - paddingS) * (1 - 1 / formatRatio) < valueSpace) return *this;
 
-        if (prev <= _bufsize && next <= _bufsize) {
-            out << "║ " << repeat(" ", prev) << value_name << ": ";
-            printf("%0.4e", value);
-            out << repeat(" ", next) << " ║\n";
-        } else {
-            fail();
-            printValue(formatRatio, value_name, value);
-        }
+        sanitize(valueName, titleSpace);
+
+        getPrevNext(t, valueName.size(), (_buffSize - paddingS) / formatRatio);
+        const size_t vNext = (_buffSize - paddingS) - ((_buffSize - paddingS) / formatRatio) - valueSpace;
+
+        out << "║" << repeat(" ", tprev + tnext - 2) << valueName << ":  "
+                << std::setprecision(precision) << std::scientific << value << repeat(" ", vNext) << " ║\n";
+
         return *this;
     }
 
-    Logger &printValue(int formatRatio, const std::string &value_name, long int value) {
-
+    /**
+    * Print a value information,
+    * formatRatio is the portion of line the info will be placed on,
+    * valueName is the information name,
+    * value is the information value
+    */
+    Logger &printValue(const long int formatRatio, const std::string &valueName, const long int value) {
         long int copy = value;
         size_t valueSize = 1;
         while (copy / 10 > 0) {
@@ -135,91 +179,94 @@ public:
             copy /= 10;
         }
 
-        size_t prev = ((_bufsize - 4) / formatRatio) - value_name.length();
-        size_t next = ((_bufsize - 4)) - prev - value_name.length() - 2 - valueSize;
+        const size_t valueSpace = valueSize + paddingS;
+        const size_t titleSpace = (_buffSize - paddingS) / formatRatio - paddingS - 1;
 
-        if (prev <= _bufsize && next <= _bufsize)
-            out << "║ " << repeat(" ", prev) << value_name << ": " << value << repeat(" ", next) << " ║\n";
-        else {
-            fail();
-            printValue(formatRatio, value_name, value);
-        }
+        if (titleSpace <= 0) return *this;
+        if ((_buffSize - paddingS) * (1 - 1 / formatRatio) < valueSpace) return *this;
+
+        sanitize(valueName, titleSpace);
+
+        getPrevNext(t, valueName.size(), (_buffSize - paddingS) / formatRatio);
+        const size_t vNext = (_buffSize - paddingS) - ((_buffSize - paddingS) / formatRatio) - valueSpace;
+
+        out << "║" << repeat(" ", tprev + tnext - 2) << valueName << ":  "
+                << std::dec << value << repeat(" ", vNext) << " ║\n";
+
         return *this;
     }
 
-    Logger &printValue(int formatRatio, const std::string &value_name, const std::string &str) {
+    /**
+    * Print a value information,
+    * formatRatio is the portion of line the info will be placed on,
+    * valueName is the information name,
+    * str is the information string description
+    */
+    Logger &printValue(const int formatRatio, const std::string &valueName, const std::string &str) {
+        const size_t valueSpace = str.size() + paddingS;
+        const size_t titleSpace = (_buffSize - paddingS) / formatRatio - paddingS - 1;
 
-        size_t prev = ((_bufsize - 4) / formatRatio) - value_name.length();
-        size_t next = ((_bufsize - 4)) - prev - value_name.length() - 2 - str.length();
+        if (titleSpace <= 0) return *this;
+        if ((_buffSize - paddingS) * (1 - 1 / formatRatio) < valueSpace) return *this;
 
+        sanitize(valueName, titleSpace);
 
-        if (prev <= _bufsize && next <= _bufsize)
-            out << "║ " << repeat(" ", prev) << value_name << ": " << str << repeat(" ", next) << " ║\n";
-        else {
-            fail();
-            printValue(formatRatio, value_name, str);
-        }
+        getPrevNext(t, valueName.size(), (_buffSize - paddingS) / formatRatio);
+        const size_t vNext = (_buffSize - paddingS) - ((_buffSize - paddingS) / formatRatio) - valueSpace;
+
+        out << "║" << repeat(" ", tprev + tnext - 2) << valueName << ":  "
+                << str << repeat(" ", vNext) << " ║\n";
+
         return *this;
     }
 
-    Logger &openTable(const std::vector<std::string> &colNames) {
+    /**
+    * Open a table and print a table header given the column names,
+    * rowIdName is the name of the first column,
+    * colNames is a collection of column names
+    */
+    Logger &openTable(const std::string &rowIdName, const std::vector<std::string> &colNames) {
         if (tableOpen) closeTable();
 
-        size_t colSize = ((_bufsize - 4 - 1) / colNames.size()) - 1;
+        const size_t colSize = (_buffSize - paddingS - paddingS - 1) / (colNames.size() + 1)  - 1;
 
-        std::string tLine = "┌";
-        endTable = "└";
-        size_t nchar = 1;
+        std::stringstream tOpen;
+        std::stringstream tClose;
+        tOpen << "┌";
+        tClose << "└";
 
-        size_t p = (colSize - 2 - colNames[0].size()) / 2;
-        size_t n = colSize - 2 - colNames[0].size() - p;
+        sanitize(rowIdName, colSize - paddingS);
+        getPrevNext(n0, rowIdName.size(), colSize - paddingS);
 
-        if (p <= _bufsize && n <= _bufsize && colSize <= _bufsize) {
-            endTable += repeat("─", colSize);
-            tLine += repeat("─", p) + " " + colNames[0] + " " + repeat("─", n);
-        } else {
-            fail();
-            return openTable(colNames);
+        tOpen << repeat("─", n0prev) << " " << rowIdName << " " << repeat("─", n0next);
+        tClose << repeat("─", n0prev + 1 + rowIdName.size() + 1 + n0next);
+
+        for (int j = 0; j < colNames.size(); ++j) {
+            sanitize(colNames[j], colSize - paddingS);
+            getPrevNext(nj, colNames[j].size(), colSize - paddingS);
+
+            tOpen << "┬" << repeat("─", njprev) << " " << colNames[j] << " " << repeat("─", njnext);
+            tClose << "┴" << repeat("─", njprev + 1 + colNames[j].size() + 1 + njnext);
         }
+        tOpen << "┐";
+        tClose << "┘";
 
-        nchar += p + 2 + colNames[0].size() + n;
+        const size_t tableSize = (colSize + 1) * (colNames.size() + 1) + 1;
+        getPrevNext(t, tableSize, _buffSize - paddingS);
 
-        for (int j = 1; j < colNames.size(); ++j) {
-            p = (colSize - 2 - colNames[j].size()) / 2;
-            n = colSize - 2 - colNames[j].size() - p;
+        out << "║" << repeat(" ", tprev) << tOpen.str() << repeat(" ", tnext) + "║\n";
 
-            if (p <= _bufsize && n <= _bufsize && colSize <= _bufsize) {
-
-                endTable += "┴" + repeat("─", colSize);
-                tLine += "┬" + repeat("─", p) + " " + colNames[j] + " " + repeat("─", n);
-            } else {
-                fail();
-                return openTable(colNames);
-            }
-            nchar += 1 + p + 2 + colNames[j].size() + n;
-        }
-
-        tLine += "┐";
-        endTable += "┘";
-
-        nchar++;
-
-        size_t prev = ((_bufsize - 2) - nchar) / 2;
-        size_t next = (_bufsize - 2) - nchar - prev;
-
-        if (prev <= _bufsize && next <= _bufsize) {
-            endTable = "║" + repeat(" ", prev) + endTable + repeat(" ", next) + "║\n";
-            out << "║" << repeat(" ", prev) << tLine << repeat(" ", next) << "║\n";
-        } else {
-            fail();
-            return openTable(colNames);
-        }
-
+        std::stringstream endTableS;
+        endTableS << "║" << repeat(" ", tprev) << tClose.str() << repeat(" ", tnext) + "║\n";
+        endTable = endTableS.str();
 
         tableOpen = true;
         return *this;
     }
 
+    /**
+    * Close a table and print the table footer
+    */
     Logger &closeTable() {
         if (!tableOpen) return *this;
 
@@ -230,65 +277,64 @@ public:
         return *this;
     }
 
-    Logger &printTableValues(long int rowId, const std::vector<Real> &values) {
-
-        long int copy = rowId;
+    /**
+    * Print a table line,
+    * rowId is the first column value,
+    * values is a collection of values,
+    * precision is the decimal size of values
+    */
+    Logger &printTableValues(const long int rowId, const std::vector<Real> &values, const long int precision = 4) {
+        long int copyId = rowId;
         size_t idSize = 1;
-        while (copy / 10 > 0) {
+        while (copyId / 10 > 0) {
             idSize++;
-            copy /= 10;
+            copyId /= 10;
         }
 
-        size_t colSize = ((_bufsize - 4 - 1) / (values.size() + 1)) - 1;
+        const size_t colSize = (_buffSize - paddingS - paddingS - 1) / (values.size() + 1) - 1;
 
-        size_t nchar = 1;
+        size_t idSpace = idSize + paddingS;
+        const size_t valueSpace = 2 + precision + 4 + paddingS;
 
-        size_t p = (colSize - 2 - idSize) / 2;
-        size_t n = colSize - 2 - idSize - p;
+        if (idSpace > colSize) {
+            copyId = -1;
+            idSpace = 4;
+        } else copyId = rowId;
 
-        std::string tLine;
-        if (p <= _bufsize && n <= _bufsize && colSize <= _bufsize) {
-            tLine = "│" + repeat(" ", p) + " " + to_string(rowId) + " " + repeat(" ", n);
-        } else {
-            fail();
-            return printTableValues(rowId, values);
+        size_t tableSize = (colSize + 1) * (values.size() + 1) + 1;
+
+        std::stringstream tLine;
+        tLine << "│";
+
+        getPrevNext(id, idSpace, colSize);
+        getPrevNext(v, valueSpace, colSize);
+
+
+        tLine << repeat(" ", idprev + 1) << copyId << repeat(" ", idnext + 1);
+
+        for (int j = 0; j < values.size(); ++j) {
+            tLine << "│" << repeat(" ", vprev + 1) << std::setprecision(precision) << std::scientific << values[j] << repeat(" ", vnext + 1);
         }
+        tLine << "│";
 
-        nchar += p + 2 + idSize + n;
+        getPrevNext(t, tableSize, _buffSize - paddingS);
 
-        for (double value: values) {
-            p = (colSize - 2 - 10) / 2;
-            n = colSize - 2 - 10 - p;
-
-            if (p <= _bufsize && n <= _bufsize) {
-                tLine += "│" + repeat(" ", p + 1) + format(value) + repeat(" ", n + 1);
-            } else {
-                fail();
-                return printTableValues(rowId, values);
-            }
-        }
-        tLine += "│";
-
-        nchar += 1 + values.size() * (1 + colSize);
-
-        size_t prev = ((_bufsize - 2) - nchar) / 2;
-        size_t next = (_bufsize - 2) - nchar - prev;
-
-        if (prev <= _bufsize && next <= _bufsize)
-            out << "║" << repeat(" ", prev) << tLine << repeat(" ", next) << "║\n";
-        else {
-            fail();
-            return printTableValues(rowId, values);
-        }
+        out << "║" << repeat(" ", tprev) << tLine.str() << repeat(" ", tnext) + "║\n";
 
         return *this;
     }
 
-    Logger &spacer(){
-        out << "║" << repeat(" ", _bufsize - 2) << "║\n";
+    /**
+    * Print an empty line into a section
+    */
+    Logger &spacer() {
+        out << "║" << repeat(" ", _buffSize - 2) << "║\n";
         return *this;
     }
 
+    /**
+    * Print an empty line
+    */
     Logger &empty() {
         out << endl;
         return *this;
@@ -298,6 +344,6 @@ public:
 /**
  * Define global logger
  */
-Logger logger(100);
+inline Logger logger(100);
 
 #endif //AEROHPC_A_LOGGER_HPP

@@ -184,7 +184,7 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t printIt = 100; // prints every n iterations
 
     logger.printTitle("Start computation");
-    logger.openTable({"Iter", "ts", "l2", "rkT", "l2T", "TxN"});
+    logger.openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
     chrono_sect(compT,
                 code_span(
                         boundaries.apply(model, currentTime);
