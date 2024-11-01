@@ -6,6 +6,8 @@
 #include "Boundaries.hpp"
 #include "utils.hpp"
 
+using namespace std;
+
 #ifdef ForcingT
 #define getPhys(i, j, k)  Real px = real(i) * dx;   \
                         Real py = real(j) * dy;     \

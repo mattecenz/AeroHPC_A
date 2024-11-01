@@ -15,11 +15,13 @@ Real testSolver(Real deltaT, index_t dim) {
     // Define physical size of the problem (just for simplicity)
     const Real phy_dim = 1.0;
 
+#ifdef Logging
     logger.openSection("Running the TestSolver");
     logger.printValue(5, "Final T", T);
     logger.printValue(5, "dT", deltaT);
     logger.printValue(5, "Re num", Re);
     logger.printValue(5, "Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
+#endif
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -39,10 +41,12 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // define the mesh:
     Grid<STANDARD> model(nodes, spacing, 1);
+
+#ifdef Logging
     logger.printTitle("Grid created");
     logger.printValue(5, "nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
     logger.printValue(5, "ghosts", model.gp);
-
+#endif
     // initialize the mesh
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
@@ -55,10 +59,12 @@ Real testSolver(Real deltaT, index_t dim) {
         return x + y + z;
     };
 
+#ifdef Logging
     chrono_sect(initT,
                 model.initGrid(initialVel, initialPres);
     );
     logger.printTitle("Grid initialized", initT);
+#endif
 
     // Define test boundary condition
     Condition<STANDARD>::Mapper testBCMapper = [](Grid<STANDARD> &grid,
@@ -161,13 +167,18 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Add condition to boundaries
     boundaries.addCond(inletBoundary);
+
+#ifdef Logging
     logger.printTitle("Boundary condition set");
+#endif
 
     // Define Buffers for RK method
     Grid<STANDARD> Y2(model.nodes, model.spacing, model.gp);
     Grid<STANDARD> Y3(model.nodes, model.spacing, model.gp);
 
+#ifdef Logging
     logger.printTitle("Buffers created");
+#endif
 
     // Time
     Real currentTime = 0.0;
@@ -183,8 +194,10 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t iter = 0;
     index_t printIt = 100; // prints every n iterations
 
+#ifdef Logging
     logger.printTitle("Start computation");
     logger.openTable({"Iter", "ts", "l2", "rkT", "l2T", "TxN"});
+#endif
     chrono_sect(compT,
                 code_span(
                         boundaries.apply(model, currentTime);
@@ -197,7 +210,7 @@ Real testSolver(Real deltaT, index_t dim) {
                                         )
                             );
 
-
+                        #ifdef Logging
                             if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
                             {
                                 chrono_sect(l2Time,
@@ -208,14 +221,17 @@ Real testSolver(Real deltaT, index_t dim) {
                                 perf = rkTime / nNodes;
                                 logger.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
                             }
+                        #endif
                             iter++;
                         }
                 )
     );
+    #ifdef Logging
     logger.closeTable();
     logger.printTitle("End of computation", compT);
     logger.closeSection();
     logger.empty();
+    #endif
     return l2Norm;
 }
 
@@ -224,9 +240,12 @@ int main() {
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8, 16, 32, 64};
+    std::vector<index_t> dims = {4, 8, 16, 32};
 
     std::vector<Real> error;
+
+    // simple call
+    testSolver(deltaTs[0], dims[3]);
 
     // wrt deltaT
     // for (size_t i=0; i<deltaTs.size(); ++i){
@@ -237,23 +256,24 @@ int main() {
 
 
     // wrt dim
-    for (long dim: dims) {
-        Real deltaT = deltaTs[0]; // first
-        error.push_back(testSolver(deltaT, dim));
-    }
+    // for (long dim: dims) {
+    //     Real deltaT = deltaTs[0]; // first
+    //     error.push_back(testSolver(deltaT, dim));
+    // }
 
 
-    // // wrt both
+    // wrt both
     // for (size_t i=0; i<dims.size(); ++i){
     //     Real deltaT = deltaT[i];
     //     index_t dim = dims[i];
     //     error.push_back(testSolver(deltaT, dim));
     // }
 
-    std::ofstream csvFile("output.csv");
-    csvFile << "step,error" << std::endl;
-    for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
-
+    #ifdef Logging
+        std::ofstream csvFile("output.csv");
+        csvFile << "step,error" << std::endl;
+        for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
+    #endif
 
     return 0;
 }
