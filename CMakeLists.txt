@@ -25,4 +25,4 @@ add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 
 
 #Logging FLAG
-# add_definitions(-DForcingT)
+# add_definitions(-DLogging)

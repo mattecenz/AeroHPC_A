@@ -69,19 +69,20 @@ public:
         _entries.resize(dim);
     };
 
-#pragma inline
-
     /**
      * Operator that accesses the memory using a 3D view of the object
      */
-    Real &operator()(Component c, index_t i, index_t j, index_t k);
+    inline Real &operator()(Component c, index_t i, index_t j, index_t k){
+        return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
+    }
 
-#pragma inline
 
     /**
      * Operator that accesses 3D view for read-only operations
      */
-    const Real &operator()(Component c, index_t i, index_t j, index_t k) const;
+    inline const Real &operator()(Component c, index_t i, index_t j, index_t k) const {
+        return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
+    }
 
     /**
      * Initialize the grid given the initial velocity and pressure function

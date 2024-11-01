@@ -1,14 +1,14 @@
 #include "Grid.hpp"
 
-template<>
-Real &Grid<STANDARD>::operator()(Component c, index_t i, index_t j, index_t k) {
-    return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
-}
+// template<>
+// Real &Grid<STANDARD>::operator()(Component c, index_t i, index_t j, index_t k) {
+//     return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
+// }
 
-template<>
-const Real &Grid<STANDARD>::operator()(Component c, index_t i, index_t j, index_t k) const {
-    return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
-}
+// template<>
+// const Real &Grid<STANDARD>::operator()(Component c, index_t i, index_t j, index_t k) const {
+//     return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
+// }
 
 template<>
 void Grid<STANDARD>::initGrid(const VectorFunction &initial_velocity, const Function &initial_pressure) {
