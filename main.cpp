@@ -10,8 +10,8 @@
 
 Real testSolver(Real deltaT, index_t dim) {
     // define T & deltaT  & Re
-    const Real T = 1;
-    const Real Re = 4700;
+    const Real T = 0.1;
+    const Real Re = 4000;
     // Define physical size of the problem (just for simplicity)
     const Real phy_dim = 1.0;
 
