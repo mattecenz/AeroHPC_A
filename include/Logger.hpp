@@ -59,8 +59,8 @@ class Logger {
     * Returns a string composed by repeating num times the input string
     * If the returned string is longer than the logger size then returns an empty string
     */
-    std::string repeat(const std::string &input, const size_t num) {
-        const size_t _num = num * input.size() > _buffSize ? 0 : num;
+    std::string repeat(const std::string &input, const size_t num) const {
+        const size_t _num = num > _buffSize ? 0 : num;
         std::stringstream os;
         std::fill_n(std::ostream_iterator<std::string>(os), _num, input);
         return os.str();
