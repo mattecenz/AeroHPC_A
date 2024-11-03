@@ -1,13 +1,13 @@
 #include "Grid.hpp"
 
 template<>
-Real &Grid<STANDARD>::operator()(Component c, index_t i, index_t j, index_t k) {
-    return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
+Real &Grid<STANDARD>::operator()(const Component c, const index_t i, const index_t j, const index_t k) {
+    return _entries[c][((i + 1) + ((j + 1) + (k + 1) * (ny + 2 * 1)) * (ny + 2 * 1))];
 }
 
 template<>
-const Real &Grid<STANDARD>::operator()(Component c, index_t i, index_t j, index_t k) const {
-    return _entries[c + ((i + _gp) + ((j + _gp) + (k + _gp) * _grid_nodes[1]) * _grid_nodes[0]) * N_COMPONENTS];
+Real Grid<STANDARD>::operator()(const Component c, const index_t i, const index_t j, const index_t k) const  {
+    return _entries[c][((i + 1) + ((j + 1) + (k + 1) * (ny + 2 * 1)) * (ny + 2 * 1))];
 }
 
 template<>

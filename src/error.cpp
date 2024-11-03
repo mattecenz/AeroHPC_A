@@ -45,7 +45,7 @@ Real computeL2Norm(const Grid<A> &grid, Real time) {
         }
     }
 
-    return std::sqrt(sum * (grid.dx * grid.dy * grid.dz))/std::sqrt(sum_exact * (grid.dx * grid.dy * grid.dz));
+    return std::sqrt(sum * (grid.dx * grid.dy * grid.dz));///std::sqrt(sum_exact * (grid.dx * grid.dy * grid.dz));
 }
 
 // Explicit instantiation for the Addressing_T 

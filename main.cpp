@@ -10,10 +10,10 @@
 
 Real testSolver(Real deltaT, index_t dim) {
     // define T & deltaT  & Re
-    const Real T = 0.1;
-    const Real Re = 4000;
+    constexpr Real T = 1;
+    constexpr Real Re = 4000;
     // Define physical size of the problem (just for simplicity)
-    const Real phy_dim = 1.0;
+    constexpr Real phy_dim = 1.0;
 
     logger.openSection("Running the TestSolver");
     logger.printValue(5, "Final T", T);
@@ -62,7 +62,7 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Define test boundary condition
     Condition<STANDARD>::Mapper testBCMapper = [](Grid<STANDARD> &grid,
-                                                  const TFunction &fun, Real currentTime) {
+                                                  const TFunction &fun, const Real currentTime) {
 
         const Real sdx = grid.sdx;
         const Real sdy = grid.sdy;
@@ -149,8 +149,8 @@ Real testSolver(Real deltaT, index_t dim) {
     };
 
     // Define test condition function
-    TFunction zero = [](Real x, Real y, Real z, Real t) {
-        return 0;
+    TFunction zero = [](const Real x, const Real y, Real z, Real t) -> Real {
+        return 0.0;
     };
 
     // Define test condition
@@ -223,7 +223,7 @@ Real testSolver(Real deltaT, index_t dim) {
 int main() {
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
+    std::vector<Real> deltaTs = {0.01, 0.0005, 0.00025};
     std::vector<index_t> dims = {4, 8, 16, 32, 64};
 
     std::vector<Real> error;
