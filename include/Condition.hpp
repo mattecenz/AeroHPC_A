@@ -4,7 +4,6 @@
 #include "Grid.hpp"
 #include <utility>
 
-template<Addressing_T A>
 class Condition {
 
 public:
@@ -12,7 +11,7 @@ public:
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef void (*Mapper)(Grid<A> &, const TFunction &, Real);
+    typedef void (*Mapper)(Grid &, const TFunction &, Real);
 
 
     Condition() = delete;
@@ -25,7 +24,7 @@ public:
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(Grid<A> &grid, const Real time) const { _mapper(grid, _function, time); }
+    void apply(Grid &grid, const Real time) const { _mapper(grid, _function, time); }
 
 private:
     /**

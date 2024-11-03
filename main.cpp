@@ -38,7 +38,7 @@ Real testSolver(Real deltaT, index_t dim) {
     std::array<index_t, 3> nodes = {nx, ny, nz};
 
     // define the mesh:
-    Grid<STANDARD> model(nodes, spacing, 1);
+    Grid model(nodes, spacing, 1);
     logger.printTitle("Grid created");
     logger.printValue(5, "nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
     logger.printValue(5, "ghosts", model.gp);
@@ -46,7 +46,7 @@ Real testSolver(Real deltaT, index_t dim) {
     // initialize the mesh
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
-        return {ExactSolution<STANDARD>::u(x, y, z, 0), ExactSolution<STANDARD>::v(x, y, z, 0), ExactSolution<STANDARD>::w(x, y, z, 0)};
+        return {ExactSolution::u(x, y, z, 0), ExactSolution::v(x, y, z, 0), ExactSolution::w(x, y, z, 0)};
     };
 
     // Define initial pressure function
@@ -61,18 +61,19 @@ Real testSolver(Real deltaT, index_t dim) {
     logger.printTitle("Grid initialized", initT);
 
     // Define test boundary condition
-    Condition<STANDARD>::Mapper testBCMapper = [](Grid<STANDARD> &grid,
+    Condition::Mapper testBCMapper = [](Grid &grid,
                                                   const TFunction &fun, const Real currentTime) {
 
         const Real sdx = grid.sdx;
         const Real sdy = grid.sdy;
         const Real sdz = grid.sdz;
 
-        using Sol = ExactSolution<STANDARD>;
+        using Sol = ExactSolution;
 
         // apply on face with x constant
-        for (index_t j = 0; j < grid.ny; j++)
-            for (index_t k = 0; k < grid.nz; k++) {
+
+            for (index_t k = 0; k < grid.nz; k++)
+                for (index_t j = 0; j < grid.ny; j++){
                 Real y = real(j) * grid.dy;
                 Real z = real(k) * grid.dz;
 
@@ -97,8 +98,9 @@ Real testSolver(Real deltaT, index_t dim) {
             }
 
         // apply on face with y constant
-        for (index_t i = 0; i < grid.nx; i++)
-            for (index_t k = 0; k < grid.nz; k++) {
+
+            for (index_t k = 0; k < grid.nz; k++)
+                for (index_t i = 0; i < grid.nx; i++){
                 Real x = real(i) * grid.dx;
                 Real z = real(k) * grid.dz;
 
@@ -122,8 +124,9 @@ Real testSolver(Real deltaT, index_t dim) {
             }
 
         // apply on face with z constant
-        for (index_t i = 0; i < grid.nx; i++)
-            for (index_t j = 0; j < grid.ny; j++) {
+
+            for (index_t j = 0; j < grid.ny; j++)
+                for (index_t i = 0; i < grid.nx; i++){
                 Real x = real(i) * grid.dx;
                 Real y = real(j) * grid.dy;
 
@@ -154,18 +157,18 @@ Real testSolver(Real deltaT, index_t dim) {
     };
 
     // Define test condition
-    Condition<STANDARD> inletBoundary(testBCMapper, zero);
+    Condition inletBoundary(testBCMapper, zero);
 
     // Define boundary conditions
-    Boundaries<STANDARD> boundaries;
+    Boundaries boundaries;
 
     // Add condition to boundaries
     boundaries.addCond(inletBoundary);
     logger.printTitle("Boundary condition set");
 
     // Define Buffers for RK method
-    Grid<STANDARD> Y2(model.nodes, model.spacing, model.gp);
-    Grid<STANDARD> Y3(model.nodes, model.spacing, model.gp);
+    Grid modelBuff(model.nodes, model.spacing, model.gp);
+    Grid rhsBuff(model.nodes, model.spacing, model.gp);
 
     logger.printTitle("Buffers created");
 
@@ -192,7 +195,7 @@ Real testSolver(Real deltaT, index_t dim) {
                             // call RK (obtain model at currentTime + dt)
                             chrono_sect(rkTime,
                                         code_span(
-                                                rungeKutta(model, Y2, Y3, Re, deltaT, currentTime, boundaries);
+                                                rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, boundaries);
                                                 currentTime += deltaT;
                                         )
                             );
@@ -202,7 +205,7 @@ Real testSolver(Real deltaT, index_t dim) {
                             {
                                 chrono_sect(l2Time,
                                             code_span(
-                                                    l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                                                    l2Norm = computeL2Norm(model, currentTime);
                                             )
                                 );
                                 perf = rkTime / nNodes;

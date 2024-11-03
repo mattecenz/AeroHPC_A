@@ -10,7 +10,6 @@
 // constexpr Real h = 0.1;
 
 // Define the exact solution functions for the u, v, and w components
-template <Addressing_T A>
 class ExactSolution {
 public:
     static Real u(Real x, Real y, Real z, Real t) {
@@ -26,7 +25,6 @@ public:
     }
 };
 
-template <Addressing_T A>
-Real computeL2Norm(const Grid<A> &grid, Real time);
+Real computeL2Norm(const Grid &grid, Real time);
 
 #endif // AEROHPC_A_L2NORM_CALCULATOR_H

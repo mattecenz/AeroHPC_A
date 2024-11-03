@@ -19,8 +19,6 @@ enum Component {
 
 constexpr int N_COMPONENTS = 4;
 
-
-template<Addressing_T A>
 class Grid {
     /**
      * Padding induced by ghost point

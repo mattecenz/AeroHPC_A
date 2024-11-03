@@ -1,8 +1,7 @@
 #include "L2NormCalculator.hpp"
 #include <cmath> // For std::sqrt
 
-template<Addressing_T A>
-Real computeL2Norm(const Grid<A> &grid, Real time) {
+Real computeL2Norm(const Grid &grid, Real time) {
     Real sum = 0.0;
     Real sum_exact = 0.0;
     
@@ -24,9 +23,9 @@ Real computeL2Norm(const Grid<A> &grid, Real time) {
                 Real z = real(k) * grid.dz;
 
                 // Calculate the exact solution for each component
-                Real exactU = ExactSolution<A>::u(x + grid.dx, y + sdy, z + sdz, time);
-                Real exactV = ExactSolution<A>::v(x + sdx, y + grid.dy, z + sdz, time);
-                Real exactW = ExactSolution<A>::w(x + sdx, y + sdy, z + grid.dz, time);
+                Real exactU = ExactSolution::u(x + grid.dx, y + sdy, z + sdz, time);
+                Real exactV = ExactSolution::v(x + sdx, y + grid.dy, z + sdz, time);
+                Real exactW = ExactSolution::w(x + sdx, y + sdy, z + grid.dz, time);
 
                 // Access the computed grid components
                 Real gridU = grid(Component::U, i, j, k);
@@ -47,6 +46,3 @@ Real computeL2Norm(const Grid<A> &grid, Real time) {
 
     return std::sqrt(sum * (grid.dx * grid.dy * grid.dz));///std::sqrt(sum_exact * (grid.dx * grid.dy * grid.dz));
 }
-
-// Explicit instantiation for the Addressing_T 
-template Real computeL2Norm<STANDARD>(const Grid<STANDARD> &grid, Real time);

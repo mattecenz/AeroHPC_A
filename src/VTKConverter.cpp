@@ -2,8 +2,7 @@
 
 namespace VTKConverter {
 
-    template<>
-    std::vector<DataSection *> exportData(Grid<STANDARD> &grid) {
+    std::vector<DataSection *> exportData(Grid &grid) {
 
         std::vector<std::vector<Real>> velocity;
         std::vector<std::vector<Real>> pressure;
@@ -34,8 +33,7 @@ namespace VTKConverter {
         return out;
     }
 
-    template<>
-    VTKFile exportGrid(Grid<STANDARD> &grid, std::string description) {
+    VTKFile exportGrid(Grid &grid, std::string description) {
         VTKFile file({
                              real(grid.nx) * grid.dx,
                              real(grid.ny) * grid.dy,

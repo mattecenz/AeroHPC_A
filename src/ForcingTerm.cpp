@@ -23,7 +23,7 @@ Vector ForcingTerm::compute(Real x, Real y, Real z) const {
 }
 
 // Private method to compute Gx
-inline Real ForcingTerm::computeGx(Real x, Real y, Real z) const {
+Real ForcingTerm::computeGx(Real x, Real y, Real z) const {
     return (Re * (-2 * pow(sin(time), 2) * pow(sin(y), 2) * cos(x) 
                   - pow(sin(time), 2) * pow(sin(z), 2) * cos(x) 
                   + 2 * pow(sin(time), 2) * cos(x) 
@@ -32,7 +32,7 @@ inline Real ForcingTerm::computeGx(Real x, Real y, Real z) const {
 }
 
 // Private method to compute Gy
-inline Real ForcingTerm::computeGy(Real x, Real y, Real z) const {
+Real ForcingTerm::computeGy(Real x, Real y, Real z) const {
     return (Re * (-2 * pow(sin(time), 2) * pow(sin(x), 2) * cos(y) 
                   - pow(sin(time), 2) * pow(sin(z), 2) * cos(y) 
                   + 2 * pow(sin(time), 2) * cos(y) 
@@ -41,7 +41,7 @@ inline Real ForcingTerm::computeGy(Real x, Real y, Real z) const {
 }
 
 // Private method to compute Gz
-inline Real ForcingTerm::computeGz(Real x, Real y, Real z) const {
+Real ForcingTerm::computeGz(Real x, Real y, Real z) const {
     return 2 * (Re * (pow(sin(time), 2) * pow(sin(x), 2) * sin(z) 
                       + pow(sin(time), 2) * pow(sin(y), 2) * sin(z) 
                       - 2 * pow(sin(time), 2) * sin(z) 

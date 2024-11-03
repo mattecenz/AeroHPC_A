@@ -6,7 +6,7 @@
 /**
  * Typedef for real values
  */
-typedef double Real;
+typedef float Real;
 #define real(val) static_cast<Real>(val)
 
 typedef long index_t;
