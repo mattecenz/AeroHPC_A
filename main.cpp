@@ -254,6 +254,5 @@ int main() {
     csvFile << "step,error" << std::endl;
     for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
 
-
     return 0;
 }
