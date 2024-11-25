@@ -10,7 +10,7 @@
 
 Real testSolver(Real deltaT, index_t dim) {
     // define T & deltaT  & Re
-    const Real T = 1;
+    const Real T = 0.01;
     const Real Re = 4700;
     // Define physical size of the problem (just for simplicity)
     const Real phy_dim = 1.0;
@@ -215,7 +215,7 @@ Real testSolver(Real deltaT, index_t dim) {
                             {
                                 chrono_sect(l2Time,
                                             code_span(
-                                                    l2Norm = computeL2Norm<STANDARD>(model, currentTime);
+                                                    // l2Norm = computeL2Norm<STANDARD>(model, currentTime);
                                             )
                                 );
                                 perf = rkTime / nNodes;
@@ -240,12 +240,13 @@ int main() {
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8, 16, 32};
+    // std::vector<index_t> dims = {4, 8, 16, 32, 64, 128, 256};
+    std::vector<index_t> dims = {100};
 
     std::vector<Real> error;
 
     // simple call
-    testSolver(deltaTs[0], dims[3]);
+    // testSolver(deltaTs[0], dims[3]);
 
     // wrt deltaT
     // for (size_t i=0; i<deltaTs.size(); ++i){
@@ -256,10 +257,10 @@ int main() {
 
 
     // wrt dim
-    // for (long dim: dims) {
-    //     Real deltaT = deltaTs[0]; // first
-    //     error.push_back(testSolver(deltaT, dim));
-    // }
+    for (long dim: dims) {
+        Real deltaT = deltaTs[0]; // first
+        error.push_back(testSolver(deltaT, dim));
+    }
 
 
     // wrt both

@@ -1,0 +1,355 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 47.25     10.20    10.20 50000000     0.00     0.00  std::array<double, 3ul> utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int)
+ 18.30     14.15     3.95 3600000000     0.00     0.00  Grid<(Addressing_T)0>::operator()(Component, long, long, long) const
+ 10.79     16.48     2.33 300000000     0.00     0.00  double utils::get_interpolation<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, Component, int, int, int)
+  5.19     17.60     1.12 50000000     0.00     0.00  std::array<double, 3ul> utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int)
+  3.98     18.46     0.86 50000000     0.00     0.00  ForcingTerm::computeGz(double, double, double) const
+  3.71     19.26     0.80 50000000     0.00     0.00  ForcingTerm::computeGy(double, double, double) const
+  3.24     19.96     0.70 50000000     0.00     0.00  ForcingTerm::computeGx(double, double, double) const
+  3.01     20.61     0.65 188430000     0.00     0.00  Grid<(Addressing_T)0>::operator()(Component, long, long, long)
+  2.13     21.07     0.46       26    17.69   823.41  rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&)
+  1.07     21.30     0.23 50000000     0.00     0.00  operator*(double, std::array<double, 3ul> const&)
+  0.32     21.37     0.07                             ForcingTerm::compute(double, double, double) const
+  0.23     21.42     0.05                             double utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, int, int, int)
+  0.19     21.46     0.04 50000000     0.00     0.00  operator-(std::array<double, 3ul> const&)
+  0.19     21.50     0.04       31     1.29     2.43  std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_invoke(std::_Any_data const&, Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double&&)
+  0.14     21.53     0.03 50000000     0.00     0.00  operator+(std::array<double, 3ul> const&, std::array<double, 3ul> const&)
+  0.09     21.55     0.02  3000012     0.00     0.00  std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&)
+  0.05     21.56     0.01        1    10.00    30.00  Grid<(Addressing_T)0>::initGrid(std::function<std::array<double, 3ul> (double, double, double)> const&, std::function<double (double, double, double)> const&)
+  0.05     21.57     0.01                             ForcingTerm::update_time(double)
+  0.05     21.58     0.01                             double utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, int, int, int)
+  0.05     21.59     0.01                             operator*(std::array<double, 3ul> const&, std::array<double, 3ul> const&)
+  0.00     21.59     0.00  1000000     0.00     0.00  std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&)
+  0.00     21.59     0.00      110     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long)
+  0.00     21.59     0.00       71     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long)
+  0.00     21.59     0.00       20     0.00     0.00  ForcingTerm::ForcingTerm(double, double)
+  0.00     21.59     0.00       19     0.00     0.00  Logger::repeat(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long)
+  0.00     21.59     0.00       10     0.00     0.00  ForcingTerm::set_time(double)
+  0.00     21.59     0.00       10     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+  0.00     21.59     0.00        6     0.00     0.00  void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char*>(char*, char*, std::forward_iterator_tag)
+  0.00     21.59     0.00        3     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > __gnu_cxx::__to_xstring<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...)
+  0.00     21.59     0.00        3     0.00     0.00  std::_Function_handler<double (double, double, double, double), testSolver(double, long)::{lambda(double, double, double, double)#4}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+  0.00     21.59     0.00        3     0.00     0.00  std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+  0.00     21.59     0.00        3     0.00     0.00  std::vector<double, std::allocator<double> >::_M_default_append(unsigned long)
+  0.00     21.59     0.00        2     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)
+  0.00     21.59     0.00        1     0.00     0.00  _GLOBAL__sub_I__Z10rungeKuttaR4GridIL12Addressing_T0EES2_S2_dddR10BoundariesILS0_0EE
+  0.00     21.59     0.00        1     0.00     0.00  std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+  0.00     21.59     0.00        1     0.00     0.00  std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+  0.00     21.59     0.00        1     0.00     0.00  std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2021 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 0.05% of 21.59 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     99.3    0.00   21.44                 testSolver(double, long) [1]
+                0.46   20.95      26/26          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+                0.01    0.02       1/1           Grid<(Addressing_T)0>::initGrid(std::function<std::array<double, 3ul> (double, double, double)> const&, std::function<double (double, double, double)> const&) [17]
+                0.00    0.00       1/31          std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_invoke(std::_Any_data const&, Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double&&) [12]
+                0.00    0.00       1/3000012     std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [18]
+                0.00    0.00       6/6           void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char*>(char*, char*, std::forward_iterator_tag) [36]
+                0.00    0.00       4/10          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&) [35]
+                0.00    0.00       3/3           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > __gnu_cxx::__to_xstring<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [37]
+                0.00    0.00       3/3           std::_Function_handler<double (double, double, double, double), testSolver(double, long)::{lambda(double, double, double, double)#4}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [38]
+                0.00    0.00       3/3           std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [39]
+                0.00    0.00       3/3           std::vector<double, std::allocator<double> >::_M_default_append(unsigned long) [40]
+                0.00    0.00       1/1           std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [43]
+                0.00    0.00       1/1           std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [44]
+                0.00    0.00       1/19          Logger::repeat(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long) [33]
+-----------------------------------------------
+                0.46   20.95      26/26          testSolver(double, long) [1]
+[2]     99.2    0.46   20.95      26         rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+               10.20    1.48 50000000/50000000     std::array<double, 3ul> utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [3]
+                1.12    4.80 50000000/50000000     std::array<double, 3ul> utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [4]
+                0.86    0.00 50000000/50000000     ForcingTerm::computeGz(double, double, double) const [7]
+                0.80    0.00 50000000/50000000     ForcingTerm::computeGy(double, double, double) const [8]
+                0.70    0.00 50000000/50000000     ForcingTerm::computeGx(double, double, double) const [9]
+                0.61    0.00 178200000/188430000     Grid<(Addressing_T)0>::operator()(Component, long, long, long) [10]
+                0.23    0.00 50000000/50000000     operator*(double, std::array<double, 3ul> const&) [11]
+                0.04    0.03      30/31          std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_invoke(std::_Any_data const&, Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double&&) [12]
+                0.04    0.00 50000000/50000000     operator-(std::array<double, 3ul> const&) [15]
+                0.03    0.00 50000000/50000000     operator+(std::array<double, 3ul> const&, std::array<double, 3ul> const&) [16]
+                0.00    0.00      11/3000012     std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [18]
+                0.00    0.00      91/110         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long) [30]
+                0.00    0.00      30/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) [31]
+                0.00    0.00      20/20          ForcingTerm::ForcingTerm(double, double) [32]
+                0.00    0.00      18/19          Logger::repeat(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long) [33]
+                0.00    0.00      10/10          ForcingTerm::set_time(double) [34]
+                0.00    0.00       6/10          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&) [35]
+                0.00    0.00       2/2           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) [41]
+                0.00    0.00       1/1           std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&) [45]
+-----------------------------------------------
+               10.20    1.48 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[3]     54.1   10.20    1.48 50000000         std::array<double, 3ul> utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [3]
+                1.48    0.00 1350000000/3600000000     Grid<(Addressing_T)0>::operator()(Component, long, long, long) const [5]
+-----------------------------------------------
+                1.12    4.80 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[4]     27.4    1.12    4.80 50000000         std::array<double, 3ul> utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [4]
+                2.33    1.32 300000000/300000000     double utils::get_interpolation<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, Component, int, int, int) [6]
+                1.15    0.00 1050000000/3600000000     Grid<(Addressing_T)0>::operator()(Component, long, long, long) const [5]
+-----------------------------------------------
+                1.15    0.00 1050000000/3600000000     std::array<double, 3ul> utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [4]
+                1.32    0.00 1200000000/3600000000     double utils::get_interpolation<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, Component, int, int, int) [6]
+                1.48    0.00 1350000000/3600000000     std::array<double, 3ul> utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [3]
+[5]     18.3    3.95    0.00 3600000000         Grid<(Addressing_T)0>::operator()(Component, long, long, long) const [5]
+-----------------------------------------------
+                2.33    1.32 300000000/300000000     std::array<double, 3ul> utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [4]
+[6]     16.9    2.33    1.32 300000000         double utils::get_interpolation<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, Component, int, int, int) [6]
+                1.32    0.00 1200000000/3600000000     Grid<(Addressing_T)0>::operator()(Component, long, long, long) const [5]
+-----------------------------------------------
+                0.86    0.00 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[7]      4.0    0.86    0.00 50000000         ForcingTerm::computeGz(double, double, double) const [7]
+-----------------------------------------------
+                0.80    0.00 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[8]      3.7    0.80    0.00 50000000         ForcingTerm::computeGy(double, double, double) const [8]
+-----------------------------------------------
+                0.70    0.00 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[9]      3.2    0.70    0.00 50000000         ForcingTerm::computeGx(double, double, double) const [9]
+-----------------------------------------------
+                0.04    0.00 10230000/188430000     std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_invoke(std::_Any_data const&, Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double&&) [12]
+                0.61    0.00 178200000/188430000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[10]     3.0    0.65    0.00 188430000         Grid<(Addressing_T)0>::operator()(Component, long, long, long) [10]
+-----------------------------------------------
+                0.23    0.00 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[11]     1.1    0.23    0.00 50000000         operator*(double, std::array<double, 3ul> const&) [11]
+-----------------------------------------------
+                0.00    0.00       1/31          testSolver(double, long) [1]
+                0.04    0.03      30/31          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[12]     0.3    0.04    0.04      31         std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_invoke(std::_Any_data const&, Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double&&) [12]
+                0.04    0.00 10230000/188430000     Grid<(Addressing_T)0>::operator()(Component, long, long, long) [10]
+-----------------------------------------------
+                                                 <spontaneous>
+[13]     0.3    0.07    0.00                 ForcingTerm::compute(double, double, double) const [13]
+-----------------------------------------------
+                                                 <spontaneous>
+[14]     0.2    0.05    0.00                 double utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, int, int, int) [14]
+-----------------------------------------------
+                0.04    0.00 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[15]     0.2    0.04    0.00 50000000         operator-(std::array<double, 3ul> const&) [15]
+-----------------------------------------------
+                0.03    0.00 50000000/50000000     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[16]     0.1    0.03    0.00 50000000         operator+(std::array<double, 3ul> const&, std::array<double, 3ul> const&) [16]
+-----------------------------------------------
+                0.01    0.02       1/1           testSolver(double, long) [1]
+[17]     0.1    0.01    0.02       1         Grid<(Addressing_T)0>::initGrid(std::function<std::array<double, 3ul> (double, double, double)> const&, std::function<double (double, double, double)> const&) [17]
+                0.02    0.00 3000000/3000012     std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [18]
+                0.00    0.00 1000000/1000000     std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [29]
+-----------------------------------------------
+                0.00    0.00       1/3000012     testSolver(double, long) [1]
+                0.00    0.00      11/3000012     rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+                0.02    0.00 3000000/3000012     Grid<(Addressing_T)0>::initGrid(std::function<std::array<double, 3ul> (double, double, double)> const&, std::function<double (double, double, double)> const&) [17]
+[18]     0.1    0.02    0.00 3000012         std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [18]
+-----------------------------------------------
+                                                 <spontaneous>
+[19]     0.0    0.01    0.00                 ForcingTerm::update_time(double) [19]
+-----------------------------------------------
+                                                 <spontaneous>
+[20]     0.0    0.01    0.00                 double utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, int, int, int) [20]
+-----------------------------------------------
+                                                 <spontaneous>
+[21]     0.0    0.01    0.00                 operator*(std::array<double, 3ul> const&, std::array<double, 3ul> const&) [21]
+-----------------------------------------------
+                0.00    0.00 1000000/1000000     Grid<(Addressing_T)0>::initGrid(std::function<std::array<double, 3ul> (double, double, double)> const&, std::function<double (double, double, double)> const&) [17]
+[29]     0.0    0.00    0.00 1000000         std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [29]
+-----------------------------------------------
+                0.00    0.00      19/110         Logger::repeat(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long) [33]
+                0.00    0.00      91/110         rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[30]     0.0    0.00    0.00     110         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long) [30]
+                0.00    0.00      35/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) [31]
+-----------------------------------------------
+                0.00    0.00       2/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) [41]
+                0.00    0.00       4/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&) [35]
+                0.00    0.00      30/71          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+                0.00    0.00      35/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long) [30]
+[31]     0.0    0.00    0.00      71         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) [31]
+-----------------------------------------------
+                0.00    0.00      20/20          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[32]     0.0    0.00    0.00      20         ForcingTerm::ForcingTerm(double, double) [32]
+-----------------------------------------------
+                0.00    0.00       1/19          testSolver(double, long) [1]
+                0.00    0.00      18/19          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[33]     0.0    0.00    0.00      19         Logger::repeat(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long) [33]
+                0.00    0.00      19/110         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long) [30]
+-----------------------------------------------
+                0.00    0.00      10/10          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[34]     0.0    0.00    0.00      10         ForcingTerm::set_time(double) [34]
+-----------------------------------------------
+                0.00    0.00       4/10          testSolver(double, long) [1]
+                0.00    0.00       6/10          rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[35]     0.0    0.00    0.00      10         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&) [35]
+                0.00    0.00       4/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) [31]
+-----------------------------------------------
+                0.00    0.00       6/6           testSolver(double, long) [1]
+[36]     0.0    0.00    0.00       6         void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char*>(char*, char*, std::forward_iterator_tag) [36]
+-----------------------------------------------
+                0.00    0.00       3/3           testSolver(double, long) [1]
+[37]     0.0    0.00    0.00       3         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > __gnu_cxx::__to_xstring<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [37]
+-----------------------------------------------
+                0.00    0.00       3/3           testSolver(double, long) [1]
+[38]     0.0    0.00    0.00       3         std::_Function_handler<double (double, double, double, double), testSolver(double, long)::{lambda(double, double, double, double)#4}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [38]
+-----------------------------------------------
+                0.00    0.00       3/3           testSolver(double, long) [1]
+[39]     0.0    0.00    0.00       3         std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [39]
+-----------------------------------------------
+                0.00    0.00       3/3           testSolver(double, long) [1]
+[40]     0.0    0.00    0.00       3         std::vector<double, std::allocator<double> >::_M_default_append(unsigned long) [40]
+-----------------------------------------------
+                0.00    0.00       2/2           rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[41]     0.0    0.00    0.00       2         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long) [41]
+                0.00    0.00       2/71          std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long) [31]
+-----------------------------------------------
+                0.00    0.00       1/1           __libc_csu_init [88]
+[42]     0.0    0.00    0.00       1         _GLOBAL__sub_I__Z10rungeKuttaR4GridIL12Addressing_T0EES2_S2_dddR10BoundariesILS0_0EE [42]
+-----------------------------------------------
+                0.00    0.00       1/1           testSolver(double, long) [1]
+[43]     0.0    0.00    0.00       1         std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [43]
+-----------------------------------------------
+                0.00    0.00       1/1           testSolver(double, long) [1]
+[44]     0.0    0.00    0.00       1         std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [44]
+-----------------------------------------------
+                0.00    0.00       1/1           rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [2]
+[45]     0.0    0.00    0.00       1         std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&) [45]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2021 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [42] _GLOBAL__sub_I__Z10rungeKuttaR4GridIL12Addressing_T0EES2_S2_dddR10BoundariesILS0_0EE [37] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > __gnu_cxx::__to_xstring<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, char>(int (*)(char*, unsigned long, char const*, __va_list_tag*), unsigned long, char const*, ...) [40] std::vector<double, std::allocator<double> >::_M_default_append(unsigned long)
+   [2] rungeKutta(Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, Grid<(Addressing_T)0>&, double, double, double, Boundaries<(Addressing_T)0>&) [13] ForcingTerm::compute(double, double, double) const [30] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_replace(unsigned long, unsigned long, char const*, unsigned long)
+  [19] ForcingTerm::update_time(double) [9] ForcingTerm::computeGx(double, double, double) const [36] void std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_construct<char*>(char*, char*, std::forward_iterator_tag)
+  [34] ForcingTerm::set_time(double) [8] ForcingTerm::computeGy(double, double, double) const [41] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_append(char const*, unsigned long)
+  [32] ForcingTerm::ForcingTerm(double, double) [7] ForcingTerm::computeGz(double, double, double) const [31] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >::_M_mutate(unsigned long, unsigned long, char const*, unsigned long)
+  [17] Grid<(Addressing_T)0>::initGrid(std::function<std::array<double, 3ul> (double, double, double)> const&, std::function<double (double, double, double)> const&) [5] Grid<(Addressing_T)0>::operator()(Component, long, long, long) const [35] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+  [10] Grid<(Addressing_T)0>::operator()(Component, long, long, long) [43] std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [45] std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::operator+<char, std::char_traits<char>, std::allocator<char> >(char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >&&)
+   [6] double utils::get_interpolation<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, Component, int, int, int) [18] std::_Function_handler<std::array<double, 3ul> (double, double, double), testSolver(double, long)::{lambda(double, double, double)#1}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [21] operator*(std::array<double, 3ul> const&, std::array<double, 3ul> const&)
+   [3] std::array<double, 3ul> utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [44] std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [11] operator*(double, std::array<double, 3ul> const&)
+  [20] double utils::lap<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, int, int, int) [29] std::_Function_handler<double (double, double, double), testSolver(double, long)::{lambda(double, double, double)#2}>::_M_invoke(std::_Any_data const&, double&&, double&&, double&&) [15] operator-(std::array<double, 3ul> const&)
+   [4] std::array<double, 3ul> utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, int, int, int) [38] std::_Function_handler<double (double, double, double, double), testSolver(double, long)::{lambda(double, double, double, double)#4}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) [16] operator+(std::array<double, 3ul> const&, std::array<double, 3ul> const&)
+  [14] double utils::conv<(Addressing_T)0>(Grid<(Addressing_T)0> const&, Component, int, int, int) [39] std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation)
+  [33] Logger::repeat(std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, unsigned long) [12] std::_Function_handler<void (Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double), testSolver(double, long)::{lambda(Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double)#3}>::_M_invoke(std::_Any_data const&, Grid<(Addressing_T)0>&, std::function<double (double, double, double, double)> const&, double&&)
