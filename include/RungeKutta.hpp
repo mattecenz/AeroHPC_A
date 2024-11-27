@@ -36,7 +36,9 @@ struct RKConst {
 }
 
 rhs(U)
+
 rhs(V)
+
 rhs(W)
 
 
@@ -59,7 +61,6 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
     const index_t ny = model.ny;
     const index_t nz = model.nz;
 
-    //grid -> Y1
     //kappa -> weighted_deltat 
     std::array<const Real, 5> kappa{
             RKConst::alpha0 * deltat,
@@ -110,7 +111,6 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     const Real r = rhs_V(model, nu, i, j, k);
                     rhs_buff.V(i, j, k) = (r + force);
 
-                    //TODO BRANCHED CODE IS THE DEVIL
                     model_buff.V(i, j, k) = model.V(i, j, k) + kappa[0] * (r + force);
                 }
 
@@ -132,7 +132,6 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
                     const Real r = rhs_W(model, nu, i, j, k);
                     rhs_buff.W(i, j, k) = (r + force);
 
-                    //TODO BRANCHED CODE IS THE DEVIL
                     model_buff.W(i, j, k) = model.W(i, j, k) + kappa[0] * (r + force);
                 }
             }

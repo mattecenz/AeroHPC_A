@@ -55,9 +55,10 @@ Real testSolver(Real deltaT, index_t dim) {
         return x + y + z;
     };
 
-    chrono_sect(initT,
-                model.initGrid(initialVel, initialPres);
-    );
+    chrono_start(initT);
+    model.initGrid(initialVel, initialPres);
+    chrono_stop(initT);
+
     logger.printTitle("Grid initialized", initT);
 
     // Define test boundary condition
@@ -188,37 +189,34 @@ Real testSolver(Real deltaT, index_t dim) {
 
     logger.printTitle("Start computation");
     logger.openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
-    chrono_sect(compT,
-                code_span(
-                        boundaries.apply(model, currentTime);
-                        while (currentTime < T) {
-                            // call RK (obtain model at currentTime + dt)
-                            chrono_sect(rkTime,
-                                        code_span(
-                                                rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, boundaries);
-                                                currentTime += deltaT;
-                                        )
-                            );
+
+    chrono_start(compT);
+    boundaries.apply(model, currentTime);
+    while (currentTime < T) {
+        // call RK (obtain model at currentTime + dt)
+        chrono_start(rkTime);
+        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, boundaries);
+        currentTime += deltaT;
+        chrono_stop(rkTime);
 
 
-                            if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
-                            {
-                                chrono_sect(l2Time,
-                                            code_span(
-                                                    l2Norm = computeL2Norm(model, currentTime);
-                                            )
-                                );
-                                perf = rkTime / nNodes;
-                                logger.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
-                            }
-                            iter++;
-                        }
-                )
-    );
+        if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
+        {
+            chrono_start(l2Time);
+            l2Norm = computeL2Norm(model, currentTime);
+            chrono_stop(l2Time);
+            perf = rkTime / nNodes;
+            logger.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
+        }
+        iter++;
+    }
+    chrono_stop(compT);
+
     logger.closeTable();
     logger.printTitle("End of computation", compT);
     logger.closeSection();
     logger.empty();
+
     return l2Norm;
 }
 

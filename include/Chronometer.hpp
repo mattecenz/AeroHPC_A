@@ -6,11 +6,10 @@
 #define chronow() std::chrono::high_resolution_clock::now()
 
 #define measure_t float
-#define code_span(code) code
-#define chrono_sect(measure_name, code_span)  measure_t measure_name;                        \
-                    auto t##measure_name = chronow();                           \
-                    code_span                                           \
-                    measure_name = timeSpan(t##measure_name, chronow()) / 1000000000.0
+#define chrono_start(measure_name) \
+                    auto t##measure_name = chronow()
+#define chrono_stop(measure_name) \
+                    measure_t measure_name = timeSpan(t##measure_name, chronow()) / 1000000000.0
 
 
 #endif //AEROHPC_A_CHRONOMETER_H
