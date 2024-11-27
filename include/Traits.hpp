@@ -6,7 +6,7 @@
 /**
  * Typedef for real values
  */
-typedef double Real;
+typedef float Real;
 #define real(val) static_cast<Real>(val)
 
 typedef long index_t;
@@ -51,16 +51,16 @@ Vector operator-(const Vector &a);
 /**
  * Typedef shortening lambda definition of spatial function, time dependent
  */
-typedef std::function<Real(Real x, Real y, Real z, Real t)> TFunction;
+typedef Real (*TFunction)(Real x, Real y, Real z, Real t);
 
 /**
  * TY
  */
-typedef std::function<Real(Real x, Real y, Real z)> Function;
+typedef Real (*Function)(Real x, Real y, Real z);
 
 /**
  * Typedef shortening lambda definition of vector spatial function
  */
-typedef std::function<Vector(Real x, Real y, Real z)> VectorFunction;
+typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 
 #endif //AEROHPC_A_TRAITS_H

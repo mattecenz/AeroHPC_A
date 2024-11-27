@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <string>
 #include <fstream>
-#include <functional>
 #include "Traits.hpp"
 
 // Preprocessing macros useful to checks whether the data type is supported ---- //
@@ -164,11 +163,11 @@ public:
         }
 
         // pick the right reading and converting function based on class type and file-data-type
-        std::function<Value_Type()> valueReader;
+        Value_Type (*valueReader)(std::ifstream &);
         if (_type_name != temp) {
             if (temp == "double")
                 // in this case file has type double but class is float, it's ok, but it needs to be converted
-                valueReader = [&input]() {
+                valueReader = [](std::ifstream &input) {
                     double val;
                     input.read(reinterpret_cast<char *>(&val), sizeof(double));
                     swap_endian(val);
@@ -176,7 +175,7 @@ public:
                 };
             else
                 // this case is the opposite of the previous
-                valueReader = [&input]() {
+                valueReader = [](std::ifstream &input) {
                     float val;
                     input.read(reinterpret_cast<char *>(&val), sizeof(float));
                     swap_endian(val);
@@ -184,7 +183,7 @@ public:
                 };
         } else {
             // in this case the type of the file and class are the same, so no conversion
-            valueReader = [&input]() {
+            valueReader = [](std::ifstream &input) {
                 Value_Type val;
                 input.read(reinterpret_cast<char *>(&val), sizeof(Value_Type));
                 swap_endian(val);
@@ -201,7 +200,7 @@ public:
         for (size_t i = 0; i < data_size; ++i) {
             auto *t = new std::vector<Value_Type>();
             for (size_t j = 0; j < entry_size; ++j)
-                t->push_back(valueReader());
+                t->push_back(valueReader(input));
             _values.push_back(*t);
         }
 
@@ -557,7 +556,7 @@ private:
             long pos = input.tellg();
 
             //read section type
-            if (!getword(input,temp)) break;
+            if (!getword(input, temp)) break;
             toLower(temp);
 
             //back to pos

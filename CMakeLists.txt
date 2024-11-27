@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(AeroHPC_A)
 
 # C++ Standard
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 # Find the MPI compiler
 find_program(MPICXX_EXECUTABLE mpic++)
@@ -30,7 +30,10 @@ set(MAIN_FILE "main.cpp")
 # Target file name
 set(TARGET_FILE "AeroHPC_A")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto -Ofast -funroll-all-loops -fopenmp-simd -ffast-math ")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -mtune=native -fopenmp-simd -fopt-info-all\
+#         -funroll-loops  -flto  -flto=auto -fno-signed-zeros -fno-trapping-math -ffinite-math-only -ffast-math -fpermissive \
+#         -faggressive-loop-optimizations -funsafe-math-optimizations -ftree-vectorizer-verbose=2")
 
 add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 

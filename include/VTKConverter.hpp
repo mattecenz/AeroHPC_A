@@ -6,11 +6,9 @@
 
 namespace VTKConverter{
 
-    template <Addressing_T A>
-    VTKFile exportGrid(Grid<A>& grid, std::string description = "");
+    VTKFile exportGrid(Grid& grid, std::string description = "");
 
-    template <Addressing_T A>
-    std::vector<DataSection *> exportData(Grid<A>& grid);
+    std::vector<DataSection *> exportData(Grid& grid);
 }
 
 #endif //AEROHPC_A_VTKCONVERTER_H

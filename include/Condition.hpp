@@ -2,10 +2,8 @@
 #define AEROHPC_A_BOUNDARYCONDITION_H
 
 #include "Grid.hpp"
-#include <functional>
 #include <utility>
 
-template<Addressing_T A>
 class Condition {
 
 public:
@@ -13,7 +11,7 @@ public:
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef std::function<void(Grid<A> &, const TFunction &, Real time)> Mapper;
+    typedef void (*Mapper)(Grid &, const TFunction &, Real);
 
 
     Condition() = delete;
@@ -26,7 +24,7 @@ public:
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(Grid<A> &grid, Real time) const { _mapper(grid, _function, time); }
+    void apply(Grid &grid, const Real time) const { _mapper(grid, _function, time); }
 
 private:
     /**
