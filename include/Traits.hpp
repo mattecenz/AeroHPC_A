@@ -54,7 +54,7 @@ Vector operator-(const Vector &a);
 typedef Real (*TFunction)(Real x, Real y, Real z, Real t);
 
 /**
- * TY
+ * Typedef shortening lambda definition of spatial function, time independent
  */
 typedef Real (*Function)(Real x, Real y, Real z);
 
@@ -62,5 +62,10 @@ typedef Real (*Function)(Real x, Real y, Real z);
  * Typedef shortening lambda definition of vector spatial function
  */
 typedef Vector (*VectorFunction)(Real x, Real y, Real z);
+
+/**
+ * Typedef shortening lambda definition of wrapper data accesser
+ */
+typedef Real (*DataFunction)(index_t i, index_t j, index_t k);
 
 #endif //AEROHPC_A_TRAITS_H

@@ -7,35 +7,10 @@
 class Condition {
 
 public:
-
-    /**
-      * Typedef shortening lambda definition of mapping function
-      */
-    typedef void (*Mapper)(Grid & grid, const Real time, const std::vector<TFunction>& functions);
-
-
-    Condition() = delete;
-
-    /**
-     * Construct a boundary condition given the mapping function and the characteristic spatial function
-     */
-    Condition(const Mapper &mapper, const std::vector<TFunction>& functions) : _mapper(mapper), _functions(functions) {}
-
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(Grid &grid, const Real time) const { _mapper(grid,  time, _functions); }
-
-private:
-    /**
-     * The BC mapping function
-     */
-    const Mapper _mapper;
-
-    /**
-     * The BC characteristic spatial function
-     */
-    const std::vector<TFunction> _functions;
+    virtual void apply(Grid &grid, Real time) const = 0;
 };
 
 #endif //AEROHPC_A_BOUNDARYCONDITION_H
