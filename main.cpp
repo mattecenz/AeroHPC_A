@@ -44,7 +44,7 @@ Real testSolver(Real deltaT, index_t dim) {
     logger.printValue(5, "nodes", to_string(model.nx) + " x " + to_string(model.ny) + " x " + to_string(model.nz));
     logger.printValue(5, "ghosts", model.gp);
 
-    // initialize the mesh
+    /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////
     // Define initial velocity function
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
         return {ExactSolution::u(x, y, z, 0), ExactSolution::v(x, y, z, 0), ExactSolution::w(x, y, z, 0)};
@@ -268,20 +268,21 @@ Real testSolver(Real deltaT, index_t dim) {
     PhysicalCondition backCond(backFace, boundaryFunctions);
 
     /// Add boundary conditions to collection //////////////////////////////////////////////////////////////
-    Boundaries boundaries;
-    boundaries.addCond(northCond);
-    boundaries.addCond(southCond);
-    boundaries.addCond(eastCond);
-    boundaries.addCond(westCond);
-    boundaries.addCond(frontCond);
-    boundaries.addCond(backCond);
+    Boundaries boundaries({
+        &northCond,
+        &southCond,
+        &eastCond,
+        &westCond,
+        &frontCond,
+        &backCond
+    });
 
     logger.printTitle("Boundary condition set");
 
-    // Define Buffers for RK method
+    /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
+    // Buffers
     Grid modelBuff(model.nodes, model.spacing, model.gp);
     Grid rhsBuff(model.nodes, model.spacing, model.gp);
-
     logger.printTitle("Buffers created");
 
     // Time
@@ -298,6 +299,7 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t iter = 0;
     index_t printIt = 100; // prints every n iterations
 
+    /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     logger.printTitle("Start computation");
     logger.openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
 
