@@ -63,13 +63,17 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Define test boundary condition
     Condition::Mapper testBCMapper = [](Grid &grid,
-                                        const TFunction &fun, const Real currentTime) {
+                                        const Real currentTime,
+                                        const std::vector<TFunction> &functions) {
 
         const Real sdx = grid.sdx;
         const Real sdy = grid.sdy;
         const Real sdz = grid.sdz;
 
-        using Sol = ExactSolution;
+        TFunction exactU = functions[0];
+        TFunction exactV = functions[1];
+        TFunction exactW = functions[2];
+
 
         // apply on face with x constant
 
@@ -80,21 +84,21 @@ Real testSolver(Real deltaT, index_t dim) {
 
                 Real x = 0;
                 // On x = 0 for ghost point we have exact for U, other approximate
-                grid.U(-1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
-                grid.V(-1, j, k) = 2 * Sol::v(x, y + grid.dy, z + sdz, currentTime)
+                grid.U(-1, j, k) = exactU(x, y + sdy, z + sdz, currentTime);
+                grid.V(-1, j, k) = 2 * exactV(x, y + grid.dy, z + sdz, currentTime)
                                    - grid.V(0, j, k);
-                grid.W(-1, j, k) = 2 * Sol::w(x, y + sdy, z + grid.dz, currentTime)
+                grid.W(-1, j, k) = 2 * exactW(x, y + sdy, z + grid.dz, currentTime)
                                    - grid.W(0, j, k);
 
 
                 x = real(grid.nx) * grid.dx;
                 // On x = phy_dim for domain point we have exact for U
-                grid.U(grid.nx - 1, j, k) = Sol::u(x, y + sdy, z + sdz, currentTime);
+                grid.U(grid.nx - 1, j, k) = exactU(x, y + sdy, z + sdz, currentTime);
                 // For ghost point we have useless U, other approximate
                 grid.U(grid.nx, j, k) = 0;
-                grid.V(grid.nx, j, k) = 2 * Sol::v(x, y + grid.dy, z + sdz, currentTime)
+                grid.V(grid.nx, j, k) = 2 * exactV(x, y + grid.dy, z + sdz, currentTime)
                                         - grid.V(grid.nx - 1, j, k);
-                grid.W(grid.nx, j, k) = 2 * Sol::w(x, y + sdy, z + grid.dz, currentTime)
+                grid.W(grid.nx, j, k) = 2 * exactW(x, y + sdy, z + grid.dz, currentTime)
                                         - grid.W(grid.nx - 1, j, k);
             }
 
@@ -102,25 +106,30 @@ Real testSolver(Real deltaT, index_t dim) {
 
         for (index_t k = 0; k < grid.nz; k++)
             for (index_t i = 0; i < grid.nx; i++) {
+                index_t j = 0;
+
+
                 Real x = real(i) * grid.dx;
+                Real y = real(j) * grid.dy;
                 Real z = real(k) * grid.dz;
 
-                Real y = 0;
                 // On y = 0 for ghost point we hae exact for V, other approximate
-                grid.U(i, -1, k) = 2 * Sol::u(x + grid.dx, y, z + sdz, currentTime)
-                                   - grid.U(i, 0, k);
-                grid.V(i, -1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
-                grid.W(i, -1, k) = 2 * Sol::w(x + sdx, y, z + grid.dz, currentTime)
-                                   - grid.W(i, 0, k);
+                grid.U(i, -1, k) = 2 * exactU(x + grid.dx, y, z + sdz, currentTime)
+                                   - grid.U(i, j, k);
+                grid.V(i, -1, k) = exactV(x + sdx, y, z + sdz, currentTime);
+                grid.W(i, -1, k) = 2 * exactW(x + sdx, y, z + grid.dz, currentTime)
+                                   - grid.W(i, j, k);
 
-                y = real(grid.ny) * grid.dx;
+                j = grid.ny;
+                y = real(j) * grid.dx;
                 // On y = phy_dim for domain point we have exact for V
-                grid.V(i, grid.ny - 1, k) = Sol::v(x + sdx, y, z + sdz, currentTime);
+                grid.V(i, grid.ny - 1, k) = exactV(x + sdx, y, z + sdz, currentTime);
                 // For ghost points we have useless V, other approximate
-                grid.U(i, grid.ny, k) = 2 * Sol::u(x + grid.dx, y, z + sdz, currentTime)
+
+                grid.U(i, grid.ny, k) = 2 * exactU(x + grid.dx, y, z + sdz, currentTime)
                                         - grid.U(i, grid.ny - 1, k);
                 grid.V(i, grid.ny, k) = 0;
-                grid.W(i, grid.ny, k) = 2 * Sol::w(x + sdx, y, z + grid.dz, currentTime)
+                grid.W(i, grid.ny, k) = 2 * exactW(x + sdx, y, z + grid.dz, currentTime)
                                         - grid.W(i, grid.ny - 1, k);
             }
 
@@ -133,32 +142,27 @@ Real testSolver(Real deltaT, index_t dim) {
 
                 Real z = 0;
                 // On z = 0 for ghost point we have exact for W, other approximate
-                grid.U(i, j, -1) = 2 * Sol::u(x + grid.dx, y + sdy, z, currentTime)
+                grid.U(i, j, -1) = 2 * exactU(x + grid.dx, y + sdy, z, currentTime)
                                    - grid.U(i, j, 0);
-                grid.V(i, j, -1) = 2 * Sol::v(x + sdx, y + grid.dy, z, currentTime)
+                grid.V(i, j, -1) = 2 * exactV(x + sdx, y + grid.dy, z, currentTime)
                                    - grid.V(i, j, 0);
-                grid.W(i, j, -1) = Sol::w(x + sdx, y + sdy, z, currentTime);
+                grid.W(i, j, -1) = exactW(x + sdx, y + sdy, z, currentTime);
 
                 z = real(grid.nz) * grid.dz;
                 // On z = phy_dim for domain point we have exact for W
-                grid.W(i, j, grid.nz - 1) = Sol::w(x + sdx, y + sdy, z, currentTime);
+                grid.W(i, j, grid.nz - 1) = exactW(x + sdx, y + sdy, z, currentTime);
                 // For ghost points we gave useless W, other interpolate
-                grid.U(i, j, grid.nz) = 2 * Sol::u(x + grid.dx, y + sdy, z, currentTime)
+                grid.U(i, j, grid.nz) = 2 * exactU(x + grid.dx, y + sdy, z, currentTime)
                                         - grid.U(i, j, grid.nz - 1);
-                grid.V(i, j, grid.nz) = 2 * Sol::v(x + sdx, y + grid.dy, z, currentTime)
+                grid.V(i, j, grid.nz) = 2 * exactV(x + sdx, y + grid.dy, z, currentTime)
                                         - grid.V(i, j, grid.nz - 1);
                 grid.W(i, j, grid.nz) = 0;
 
             }
     };
 
-    // Define test condition function
-    TFunction zero = [](const Real x, const Real y, Real z, Real t) -> Real {
-        return 0.0;
-    };
-
     // Define test condition
-    Condition inletBoundary(testBCMapper, zero);
+    Condition inletBoundary(testBCMapper, std::vector{ExactSolution::u, ExactSolution::v, ExactSolution::w});
 
     // Define boundary conditions
     Boundaries boundaries;
