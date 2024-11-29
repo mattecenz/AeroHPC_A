@@ -4,7 +4,7 @@
 #include "GridData.hpp"
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
-#include "utils.hpp"
+#include "mathUtils.hpp"
 
 #ifdef ForcingT
 #define getPhys(i, j, k)  Real px = real(i) * dx;   \
@@ -16,11 +16,9 @@
 #define getForceV(ftt) ftt.computeGy(px + sdx, py + dy, pz + sdz)
 
 #define getForceW(ftt) ftt.computeGz(px + sdx, py + sdy, pz + dz)
-
 #endif
 
-using namespace utils;
-
+using namespace mathUtils;
 
 struct RKConst {
     static constexpr Real alpha0 = 8.0 / 15.0;
@@ -303,8 +301,6 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     model.swap(model_buff);
-
-
 }
 
 

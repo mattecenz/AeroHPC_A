@@ -1,7 +1,7 @@
 #include "GridData.hpp"
 
-index_t GridData::indexing(const index_t i, const index_t j, const index_t k) const{
-    return ((i + 1) + ((j + 1) + (k + 1) * (structure.ny + 2 * 1)) * (structure.nx + 2 * 1));
+index_t GridData::indexing(const index_t i, const index_t j, const index_t k) const {
+    return ((i + structure.gp) + ((j + structure.gp) + (k + structure.gp) * (structure.gy)) * (structure.gx));
 }
 
 void GridData::initData(const VectorFunction &initial_velocity, const Function &initial_pressure) {

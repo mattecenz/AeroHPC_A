@@ -5,7 +5,7 @@
 #include "Conditions.hpp"
 #include "RungeKutta.hpp"
 #include "VTKConverter.hpp"
-#include "Chronometer.hpp"
+#include "chronoUtils.hpp"
 #include "Logger.hpp"
 #include "GridStructure.hpp"
 
@@ -27,13 +27,13 @@ Real testSolver(Real deltaT, index_t dim) {
     const index_t nx = dim;
     const index_t ny = dim;
     const index_t nz = dim;
-    Idx3 nodes = {nx,ny,nz};
+    Idx3 nodes = {nx, ny, nz};
 
     // Define global displacement of the grid
     const index_t gx = 0;
     const index_t gy = 0;
     const index_t gz = 0;
-    Idx3 displacement = {gx,gy,gz};
+    Idx3 displacement = {gx, gy, gz};
 
     // Define physical size of the problem for each axis
     const Real sx = phy_dim / real(nx);
@@ -274,14 +274,12 @@ Real testSolver(Real deltaT, index_t dim) {
     PhysicalCondition backCond(backFace, boundaryFunctions);
 
     /// Add boundary conditions to collection //////////////////////////////////////////////////////////////
-    Boundaries boundaries({
-                                  &northCond,
-                                  &southCond,
-                                  &eastCond,
-                                  &westCond,
-                                  &frontCond,
-                                  &backCond
-                          });
+    Boundaries boundaries({&northCond,
+                           &southCond,
+                           &eastCond,
+                           &westCond,
+                           &frontCond,
+                           &backCond});
 
     logger.printTitle("Boundary condition set");
 

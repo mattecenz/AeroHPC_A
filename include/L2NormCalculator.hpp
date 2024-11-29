@@ -6,9 +6,6 @@
 #include <stdexcept>
 #include <array>
 
-// let's assume the spacing factor is h in all dimensions:
-// constexpr Real h = 0.1;
-
 // Define the exact solution functions for the u, v, and w components
 class ExactSolution {
 public:

@@ -1,14 +1,14 @@
 /**
-@file utils.h
+@file mathUtils.hpp
 @brief Math utilities
 */
 
-#ifndef AEROHPC_A_UTILS_H
-#define AEROHPC_A_UTILS_H
+#ifndef AEROHPC_A_MATHUTILS_H
+#define AEROHPC_A_MATHUTILS_H
 
 #include "GridData.hpp"
 
-namespace utils {
+namespace mathUtils {
     /**
     @param[in] model Model containing both the staggered grid and the spacing
     @param[in] c Component whose derivative has to be computed
@@ -212,4 +212,4 @@ namespace utils {
     conv(W)
 
 }
-#endif
+#endif //AEROHPC_A_MATHUTILS_H

@@ -11,29 +11,25 @@ class ForcingTerm {
 
 public:
 
-    // Constructor 
-    ForcingTerm(Real Re, Real time);
+    ForcingTerm(Real Re, Real time) : Re(Re), time(time){}
 
-    //setters
-    void set_time(Real time);
+    void set_time(Real currentTime){
+        time = currentTime;
+    }
 
-    //getters
-    Real get_time() const;
+    void update_time(Real extraTime){
+        time += extraTime;
+    }
 
-    //Time update
-    void update_time(Real extraTime);
+    Real get_time() const { return time; };
 
-    // Method to compute the forcing term at a given point in space and time
-    Vector compute(Real x, Real y, Real z) const;
-
-    // Hfunctions to compute the forcing term in each direction.
     Real computeGx(Real x, Real y, Real z) const;
     Real computeGy(Real x, Real y, Real z) const;
     Real computeGz(Real x, Real y, Real z) const;
 
 private:
     Real time;
-    Real Re;
+    const Real Re;
 };
 
 #endif // FORCING_TERM_HPP

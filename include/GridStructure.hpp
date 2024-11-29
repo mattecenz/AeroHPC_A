@@ -24,13 +24,24 @@ public:
     const index_t gp;
 
     /**
-     * Number of nodes with ghost points
+     * Number of total nodes (with ghosts)
      */
     const Idx3 grid_nodes;
-
+    /**
+     * Alias for x-axes total nodes number
+     */
+    const index_t &gx = grid_nodes[0];
+    /**
+     * Alias for y-axes total nodes number
+     */
+    const index_t &gy = grid_nodes[1];
+    /**
+     * Alias for z-axes total nodes number
+     */
+    const index_t &gz = grid_nodes[2];
 
     /**
-     * Number of nodes without ghost points
+     * Number of nodes (without ghost points)
      */
     const Idx3 nodes;
     /**
