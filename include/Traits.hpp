@@ -24,6 +24,8 @@ enum Addressing_T {
 
 typedef std::array<Real, 3> Vector;
 
+typedef std::array<index_t, 3> Idx3;
+
 /**
  * Define mathematical methods for vectors
  */

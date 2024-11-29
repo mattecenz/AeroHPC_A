@@ -16,7 +16,7 @@ public:
 
     Boundaries() = default;
 
-    Boundaries(std::vector<Condition *> cs) : _cs(cs) {}
+    explicit Boundaries(std::vector<Condition *> cs) : _cs(std::move(cs)) {}
 
     /**
       * Add a boundary condition to the list of the model
@@ -27,7 +27,7 @@ public:
       * Apply all the boundary conditions of the model,
       * Be aware that the insertion order of the conditions can affect the result of the application
       */
-    void apply(Grid &grid, Real time) { for (Condition *bc: _cs) bc->apply(grid, time); }
+    void apply(GridData &grid, Real time) { for (Condition *bc: _cs) bc->apply(grid, time); }
 };
 
 #endif //AEROHPC_A_BOUNDARIES_HPP

@@ -1,7 +1,7 @@
 #ifndef AEROHPC_A_RUNGEKUTTA_H
 #define AEROHPC_A_RUNGEKUTTA_H
 
-#include "Grid.hpp"
+#include "GridData.hpp"
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 #include "utils.hpp"
@@ -31,7 +31,7 @@ struct RKConst {
 };
 
 ////RHS function
-#define rhs(C) inline Real rhs_##C(Grid &grid, const Real nu, const index_t i, const index_t j, const index_t k) { \
+#define rhs(C) inline Real rhs_##C(GridData &grid, const Real nu, const index_t i, const index_t j, const index_t k) { \
     return -conv_##C(grid, i, j, k) + nu * lap_##C(grid, i, j, k); \
 }
 
@@ -43,23 +43,23 @@ rhs(W)
 
 
 //Runge-Kutta method
-void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
+void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
                 Real reynolds, Real deltat, Real time,
                 Boundaries &boundary_cond) {
 
     const Real nu = (real(1) / reynolds);
 
-    const Real dx = model.dx;
-    const Real dy = model.dy;
-    const Real dz = model.dz;
+    const Real dx = model.structure.dx;
+    const Real dy = model.structure.dy;
+    const Real dz = model.structure.dz;
 
-    const Real sdx = model.sdx;
-    const Real sdy = model.sdy;
-    const Real sdz = model.sdz;
+    const Real sdx = model.structure.sdx;
+    const Real sdy = model.structure.sdy;
+    const Real sdz = model.structure.sdz;
 
-    const index_t nx = model.nx;
-    const index_t ny = model.ny;
-    const index_t nz = model.nz;
+    const index_t nx = model.structure.nx;
+    const index_t ny = model.structure.ny;
+    const index_t nz = model.structure.nz;
 
     //kappa -> weighted_deltat 
     std::array<const Real, 5> kappa{
@@ -146,8 +146,6 @@ void rungeKutta(Grid &model, Grid &model_buff, Grid &rhs_buff,
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
 
 #ifdef ForcingT
     ft.set_time(time + kappa[0]);

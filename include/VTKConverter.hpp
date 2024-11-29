@@ -2,13 +2,13 @@
 #define AEROHPC_A_VTKCONVERTER_H
 
 #include "VTKFile.hpp"
-#include "Grid.hpp"
+#include "GridData.hpp"
 
 namespace VTKConverter{
 
-    VTKFile exportGrid(Grid& grid, std::string description = "");
+    VTKFile exportGrid(GridData& grid, std::string description = "");
 
-    std::vector<DataSection *> exportData(Grid& grid);
+    std::vector<DataSection *> exportData(GridData& grid);
 }
 
 #endif //AEROHPC_A_VTKCONVERTER_H

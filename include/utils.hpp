@@ -6,7 +6,7 @@
 #ifndef AEROHPC_A_UTILS_H
 #define AEROHPC_A_UTILS_H
 
-#include "Grid.hpp"
+#include "GridData.hpp"
 
 namespace utils {
     /**
@@ -16,8 +16,8 @@ namespace utils {
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the x direction
     */
-#define d_dx(C) inline Real d_dx_##C(const Grid &grid, int i, int j, int k){ \
-    return (grid.C(i + 1, j, k) - grid.C(i - 1, j, k)) / (2 * grid.dx); \
+#define d_dx(C) inline Real d_dx_##C(const GridData &grid, int i, int j, int k){ \
+    return (grid.C(i + 1, j, k) - grid.C(i - 1, j, k)) / (2 * grid.structure.dx); \
 }
 
     d_dx(U)
@@ -32,8 +32,8 @@ namespace utils {
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the y direction
     */
-#define d_dy(C) inline Real d_dy_##C(const Grid &grid, int i, int j, int k){ \
-    return (grid.C(i, j + 1, k) - grid.C(i, j - 1, k)) / (2 * grid.dy); \
+#define d_dy(C) inline Real d_dy_##C(const GridData &grid, int i, int j, int k){ \
+    return (grid.C(i, j + 1, k) - grid.C(i, j - 1, k)) / (2 * grid.structure.dy); \
 }
 
     d_dy(U)
@@ -49,8 +49,8 @@ namespace utils {
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the z direction
     */
-#define d_dz(C) inline Real d_dz_##C(const Grid &grid, int i, int j, int k){ \
-    return (grid.C(i, j, k + 1) - grid.C(i, j, k - 1)) / (2 * grid.dz); \
+#define d_dz(C) inline Real d_dz_##C(const GridData &grid, int i, int j, int k){ \
+    return (grid.C(i, j, k + 1) - grid.C(i, j, k - 1)) / (2 * grid.structure.dz); \
 }
 
     d_dz(U)
@@ -66,8 +66,8 @@ namespace utils {
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the x direction
     */
-#define d2_dx2(C) inline Real d2_dx2_##C(const Grid &grid, int i, int j, int k){ \
-    return (grid.C(i - 1, j, k) - 2 * grid.C(i, j, k) + grid.C(i + 1, j, k)) / (grid.dx * grid.dx); \
+#define d2_dx2(C) inline Real d2_dx2_##C(const GridData &grid, int i, int j, int k){ \
+    return (grid.C(i - 1, j, k) - 2 * grid.C(i, j, k) + grid.C(i + 1, j, k)) / (grid.structure.dx * grid.structure.dx); \
 }
 
     d2_dx2(U)
@@ -83,8 +83,8 @@ namespace utils {
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the y direction
     */
-#define d2_dy2(C) inline Real d2_dy2_##C(const Grid &grid, int i, int j, int k){ \
-    return (grid.C(i, j - 1, k) - 2 * grid.C(i, j, k) + grid.C(i, j + 1, k)) / (grid.dy * grid.dy); \
+#define d2_dy2(C) inline Real d2_dy2_##C(const GridData &grid, int i, int j, int k){ \
+    return (grid.C(i, j - 1, k) - 2 * grid.C(i, j, k) + grid.C(i, j + 1, k)) / (grid.structure.dy * grid.structure.dy); \
 }
 
     d2_dy2(U)
@@ -100,8 +100,8 @@ namespace utils {
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the z direction
     */
-#define d2_dz2(C) inline Real d2_dz2_##C(const Grid &grid, int i, int j, int k){ \
-    return (grid.C(i, j, k - 1) - 2 * grid.C(i, j, k) + grid.C(i, j, k + 1)) / (grid.dz * grid.dz); \
+#define d2_dz2(C) inline Real d2_dz2_##C(const GridData &grid, int i, int j, int k){ \
+    return (grid.C(i, j, k - 1) - 2 * grid.C(i, j, k) + grid.C(i, j, k + 1)) / (grid.structure.dz * grid.structure.dz); \
 }
 
     d2_dz2(U)
@@ -118,7 +118,7 @@ namespace utils {
     @return Laplacian evaluation in point (i,j,k)
     @brief Computes the value of the laplacian in a point
     */
-#define lap(C) inline Real lap_##C(const Grid &grid, int i, int j, int k){ \
+#define lap(C) inline Real lap_##C(const GridData &grid, int i, int j, int k){ \
     return d2_dx2_##C(grid, i, j, k) + d2_dy2_##C(grid, i, j, k) + d2_dz2_##C(grid, i, j, k); \
 }
 
@@ -136,7 +136,7 @@ namespace utils {
     @return Interpolated value
     @brief Computes the interpolation of a component from the grid "from" to the grid "to" in the point i,j,k of the "to" grid
     */
-#define interp(to, from) inline Real intp_##from##_on_##to(const Grid &grid, const int i, const int j, const int k) { \
+#define interp(to, from) inline Real intp_##from##_on_##to(const GridData &grid, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \
@@ -186,7 +186,7 @@ namespace utils {
     @return Convective term evaluation in point (i,j,k)
     @brief Computes the value of convective term of the Navier-Stokes equation in a point
     */
-#define conv(C) inline Real conv_##C(const Grid &grid, const int i, const int j, const int k) { \
+#define conv(C) inline Real conv_##C(const GridData &grid, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \

@@ -3,7 +3,7 @@
 
 #include <array>
 #include <cmath>
-#include "Grid.hpp"
+#include "GridData.hpp"
 
 using namespace std;
 

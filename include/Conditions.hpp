@@ -10,7 +10,7 @@ class PhysicalCondition: public Condition {
         /**
           * Typedef shortening lambda definition of mapping function
           */
-        typedef void (*Mapper)(Grid & grid, const Real time, const std::vector<TFunction>& functions);
+        typedef void (*Mapper)(GridData & grid, const Real time, const std::vector<TFunction>& functions);
 
 
         PhysicalCondition() = delete;
@@ -23,7 +23,7 @@ class PhysicalCondition: public Condition {
         /**
          * Apply the boundary condition onto the given grid
          */
-        void apply(Grid &grid, const Real time) const override { _mapper(grid,  time, _functions); }
+        void apply(GridData &grid, const Real time) const override { _mapper(grid,  time, _functions); }
 
     private:
         /**
@@ -43,7 +43,7 @@ public:
     /**
       * Typedef shortening lambda definition of mapping function
       */
-    typedef void (*Mapper)(Grid & grid, const Real time, const std::vector<DataFunction>& functions);
+    typedef void (*Mapper)(GridData & grid, const Real time, const std::vector<DataFunction>& functions);
 
 
     GhostCondition() = delete;
@@ -56,7 +56,7 @@ public:
     /**
      * Apply the boundary condition onto the given grid
      */
-    void apply(Grid &grid, const Real time) const override { _mapper(grid,  time, _functions); }
+    void apply(GridData &grid, const Real time) const override { _mapper(grid,  time, _functions); }
 
 private:
     /**

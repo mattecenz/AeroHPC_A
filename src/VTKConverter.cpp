@@ -2,14 +2,14 @@
 
 namespace VTKConverter {
 
-    std::vector<DataSection *> exportData(Grid &grid) {
+    std::vector<DataSection *> exportData(GridData &grid) {
 
         std::vector<std::vector<Real>> velocity;
         std::vector<std::vector<Real>> pressure;
 
-        for (index_t z = 0; z < grid.nz; ++z) {
-            for (index_t y = 0; y < grid.ny; ++y) {
-                for (index_t x = 0; x < grid.nx; ++x) {
+        for (index_t z = 0; z < grid.structure.nz; ++z) {
+            for (index_t y = 0; y < grid.structure.ny; ++y) {
+                for (index_t x = 0; x < grid.structure.nx; ++x) {
                     velocity.emplace_back(
                             std::vector<Real>{
                                     grid.U(x, y, z),
@@ -33,15 +33,15 @@ namespace VTKConverter {
         return out;
     }
 
-    VTKFile exportGrid(Grid &grid, std::string description) {
+    VTKFile exportGrid(GridData &grid, std::string description) {
         VTKFile file({
-                             real(grid.nx) * grid.dx,
-                             real(grid.ny) * grid.dy,
-                             real(grid.nz) * grid.dz,
+                             real(grid.structure.nx) * grid.structure.dx,
+                             real(grid.structure.ny) * grid.structure.dy,
+                             real(grid.structure.nz) * grid.structure.dz,
                      }, {
-                             static_cast<unsigned long>(grid.nx),
-                             static_cast<unsigned long>(grid.ny),
-                             static_cast<unsigned long>(grid.nz)
+                             static_cast<unsigned long>(grid.structure.nx),
+                             static_cast<unsigned long>(grid.structure.ny),
+                             static_cast<unsigned long>(grid.structure.nz)
                      }, std::move(description));
         file << exportData(grid);
 
