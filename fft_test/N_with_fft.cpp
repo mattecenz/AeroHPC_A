@@ -110,7 +110,7 @@ int main(int argc, char *argv[]){
     fft_output = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * xSize[0] * xSize[1] * xSize[2]);
 
     // Plan for FFT along x-direction
-    fftw_plan plan_x = fftw_plan_dft_1d(xSize[0], fft_input, fft_output, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_plan plan_x = fftw_plan_r2r_1d(xSize[0], fft_input, fft_output, FFTW_REDFT10, FFTW_ESTIMATE);
 
     // Perform FFT along x (for each y and z slice)
     for (int jp = 0; jp < xSize[1]; ++jp) {
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
     fft_output_y = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * ySize[0] * ySize[1] * ySize[2]);
 
     // Plan for FFT along y-direction
-    fftw_plan plan_y = fftw_plan_dft_1d(ySize[0], fft_input_y, fft_output_y, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_plan plan_y = fftw_plan_r2r_1d(ySize[0], fft_input_y, fft_output_y, FFTW_REDFT10, FFTW_ESTIMATE);
 
     // Perform FFT along y (for each x and z slice)
     for (int kp = 0; kp < ySize[2]; ++kp) {
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]){
     fft_output_z = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * zSize[0] * zSize[1] * zSize[2]);
 
     // Plan for FFT along z-direction
-    fftw_plan plan_z = fftw_plan_dft_1d(zSize[0], fft_input_z, fft_output_z, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_plan plan_z = fftw_plan_r2r_1d(zSize[0], fft_input_z, fft_output_z, FFTW_REDFT10, FFTW_ESTIMATE);
 
     // Perform FFT along z (for each x and y slice)
     for (int jp = 0; jp < zSize[1]; ++jp) {
@@ -193,62 +193,6 @@ int main(int argc, char *argv[]){
     c2d->transposeZ2Y(u3, u2);
     c2d->transposeY2X(u2, u1);
 
-    // Now gather all u1 arrays from all processes into one array on the root process (rank 0)
-    double *b_new = NULL;
-
-    if(mpiRank == 0) {
-        // Allocate space for the full b_new array
-        b_new = (double *)malloc(sizeof(double) * N * N * N);
-    }
-
-    // Gather the u1 data from each process into the root process
-    MPI_Gather(u1, xSize[0] * xSize[1] * xSize[2], MPI_DOUBLE, 
-               b_new, xSize[0] * xSize[1] * xSize[2], MPI_DOUBLE, 
-               0, MPI_COMM_WORLD);
-
-    auto end = std::chrono::high_resolution_clock::now();
-
-    // check the code:
-    // Perform parallel FFT along X, Y, Z dimensions (same as your code)
-    // fftw_complex *fft_input, *fft_output;
-    fft_input = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N * N);
-    fft_output = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * N * N * N);
-    fftw_plan plan_3d = fftw_plan_dft_3d(N, N, N, fft_input, fft_output, FFTW_FORWARD, FFTW_ESTIMATE);
-
-    // Perform the 3D FFT directly
-    for (int i = 0; i < N * N * N; ++i) {
-        fft_input[i][0] = b[i];  // Real part
-        fft_input[i][1] = 0;     // Imaginary part
-    }
-    fftw_execute(plan_3d);  // Execute the FFT on the whole array
-
-    // Store the FFT result in b_fft_direct (real part only)
-    double *b_fft_direct = (double *)malloc(sizeof(double) * N * N * N);
-    for (int i = 0; i < N * N * N; ++i) {
-        b_fft_direct[i] = fft_output[i][0]; // Real part
-    }
-
-    // Compute the L2 norm between b_fft_direct and b_new
-    if (mpiRank == 0) {
-        double l2_norm = 0.0;
-        for (int i = 0; i < N * N * N; ++i) {
-            l2_norm += (b_fft_direct[i] - b_new[i]) * (b_fft_direct[i] - b_new[i]);
-        }
-        l2_norm = sqrt(l2_norm);
-        cout << "L2 Norm between fft serial and parallel: " << l2_norm << endl;
-
-        // Calculate the duration (in milliseconds, microseconds, etc.)
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        std::cout << "FFT time: " << duration << " ms" << std::endl;
-        auto duration_pre = std::chrono::duration_cast<std::chrono::milliseconds>(end_pre - start_pre).count();
-        std::cout << "Decomposition time: " << duration_pre << " ms" << std::endl;
-        auto duration_tot = std::chrono::duration_cast<std::chrono::milliseconds>(end - start_pre).count();
-        std::cout << "Total time: " << duration_tot << " ms" << std::endl;
-
-        // Free memory
-        free(b_new);
-        free(b_fft_direct);
-    }
 
     fftw_free(fft_input);
     fftw_free(fft_output);
