@@ -29,7 +29,7 @@ set(CMAKE_CXX_COMPILER mpic++)
 # Create the executable and include all .cpp files found in ./lib
 # add_executable(test_fft with_fft.cpp ${DECOMP_SRC})
 
-add_executable(test_fft N_test_fftw_vector.cpp ${DECOMP_SRC})
+add_executable(test_fft N_with_fft.cpp ${DECOMP_SRC})
 
 # Link the FFTW library and the math library
 target_link_libraries(test_fft fftw3 m)
