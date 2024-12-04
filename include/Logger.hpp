@@ -336,7 +336,7 @@ public:
     * Print an empty line
     */
     Logger &empty() {
-        out << endl;
+        out << std::endl;
         return *this;
     }
 };

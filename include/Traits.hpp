@@ -9,6 +9,9 @@
 typedef float Real;
 #define real(val) static_cast<Real>(val)
 
+/**
+ * Typedef for array indexing
+ */
 typedef long index_t;
 
 /**
@@ -22,8 +25,14 @@ enum Addressing_T {
     STANDARD = 0
 };
 
+/**
+ * Typedef shortening Real Physical vector
+ */
 typedef std::array<Real, 3> Vector;
 
+/**
+ * Typedef shortening VolSpace dimensions
+ */
 typedef std::array<index_t, 3> Idx3;
 
 /**
@@ -65,9 +74,5 @@ typedef Real (*Function)(Real x, Real y, Real z);
  */
 typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 
-/**
- * Typedef shortening lambda definition of wrapper data accesser
- */
-typedef Real (*DataFunction)(index_t i, index_t j, index_t k);
 
 #endif //AEROHPC_A_TRAITS_H

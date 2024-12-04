@@ -18,7 +18,7 @@
 #define getForceW(ftt) ftt.computeGz(px + sdx, py + sdy, pz + dz)
 #endif
 
-using namespace mathUtils;
+namespace mu = mathUtils;
 
 struct RKConst {
     static constexpr Real alpha0 = 8.0 / 15.0;
@@ -30,7 +30,7 @@ struct RKConst {
 
 ////RHS function
 #define rhs(C) inline Real rhs_##C(GridData &grid, const Real nu, const index_t i, const index_t j, const index_t k) { \
-    return -conv_##C(grid, i, j, k) + nu * lap_##C(grid, i, j, k); \
+    return -mu::conv_##C(grid, i, j, k) + nu * mu::lap_##C(grid, i, j, k); \
 }
 
 rhs(U)

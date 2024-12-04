@@ -1,21 +1,10 @@
 #ifndef AEROHPC_A_GRIDDATA_H
 #define AEROHPC_A_GRIDDATA_H
 
-#include <vector>
-#include <cstdio>
-#include <array>
 #include "Traits.hpp"
 #include "GridStructure.hpp"
 
 class GridData {
-
-    /**
-     * Nodes data
-     */
-    Real *u;
-    Real *v;
-    Real *w;
-    Real *p;
 
     /**
      * Calculate the indexing used into velocity and pressure arrays
@@ -24,13 +13,26 @@ class GridData {
 
 public:
 
+    /**
+     * Dimension of one component of data
+     */
+    const index_t dim;
+
+    /**
+     * Velocity Data (concatenation of flattened array of all velocity components)
+     */
+    Real *velocity_data;
+
+    /**
+     * Pressure Data (flattened array of pressure)
+     */
+    Real *pressure_data;
+
+
     GridData() = delete;
 
     ~GridData() {
-        delete[] u;
-        delete[] v;
-        delete[] w;
-        delete[] p;
+        delete[] velocity_data;
     }
 
     /**
@@ -39,18 +41,21 @@ public:
      * @param spacing dx, dy, dz info
      * @param ghosts number of ghost nodes
      */
-    explicit GridData(const GridStructure& structure) : structure(structure){
-        auto dim = structure.grid_nodes[0] * structure.grid_nodes[1] * structure.grid_nodes[2];
-        u = new Real[dim];
-        v = new Real[dim];
-        w = new Real[dim];
-        p = new Real[dim];
+    GridData(const GridStructure &structure, bool allocPressure) : structure(structure),
+                                                                            dim(structure.grid_nodes[0] * structure.grid_nodes[1] *
+                                                                                structure.grid_nodes[2]) {
+        velocity_data = new Real[dim * 3];
+        pressure_data = nullptr;
+        if (allocPressure)
+            pressure_data = new Real[dim];
     }
 
+    explicit GridData(const GridStructure &structure) : GridData(structure, true) {}
+
     /**
-     * Reference Grid Structure
+     * Grid Structure
      */
-     const GridStructure &structure;
+    const GridStructure structure;
 
     /**
      * Operator that accesses the memory using a 3D view of the object
@@ -63,13 +68,13 @@ inline Real &name(index_t i, index_t j, index_t k) const { \
     return comp[indexing(i,j,k)]; \
 }
 
-    get_component(U, u)
+    get_component(U, velocity_data)
 
-    get_component(V, v)
+    get_component(V, (&velocity_data[dim]))
 
-    get_component(W, w)
+    get_component(W, (&velocity_data[dim + dim]))
 
-    get_component(P, p)
+    get_component(P, pressure_data)
 
     /**
      * Initialize the grid given the initial velocity and pressure function
@@ -80,10 +85,8 @@ inline Real &name(index_t i, index_t j, index_t k) const { \
      * Swap grid data with the given one
      */
     void swap(GridData &other) noexcept {
-        std::swap(u, other.u);
-        std::swap(v, other.v);
-        std::swap(w, other.w);
-        std::swap(p, other.p);
+        std::swap(velocity_data, other.velocity_data);
+        std::swap(pressure_data, other.pressure_data);
     }
 };
 

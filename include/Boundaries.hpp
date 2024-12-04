@@ -6,7 +6,7 @@
 
 class Boundaries {
 
-private:
+protected:
     /**
      * Inlet velocity boundary condition
      */
@@ -21,13 +21,13 @@ public:
     /**
       * Add a boundary condition to the list of the model
       */
-    void addCond(Condition &cond) { _cs.push_back(&cond); }
+    Boundaries &addCond(Condition &cond) { _cs.push_back(&cond); return *this; }
 
     /**
       * Apply all the boundary conditions of the model,
       * Be aware that the insertion order of the conditions can affect the result of the application
       */
-    void apply(GridData &grid, Real time) { for (Condition *bc: _cs) bc->apply(grid, time); }
+    virtual void apply(GridData &grid, Real time) { for (Condition *bc: _cs) bc->apply(grid, time); }
 };
 
 #endif //AEROHPC_A_BOUNDARIES_HPP

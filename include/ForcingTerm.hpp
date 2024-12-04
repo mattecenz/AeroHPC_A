@@ -5,8 +5,6 @@
 #include <cmath>
 #include "GridData.hpp"
 
-using namespace std;
-
 class ForcingTerm {
 
 public:

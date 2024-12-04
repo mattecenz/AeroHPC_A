@@ -1,14 +1,12 @@
-#include <vector>
-#include "L2NormCalculator.hpp"
-#include "GridData.hpp"
-#include "Boundaries.hpp"
-#include "Conditions.hpp"
-#include "RungeKutta.hpp"
+#include "Traits.hpp"
 #include "VTKConverter.hpp"
 #include "chronoUtils.hpp"
 #include "Logger.hpp"
-#include "GridStructure.hpp"
-
+#include "mpi.h"
+#include "boundariesBuilders.cpp"
+#include "C2Decomp.hpp"
+#include "L2NormCalculator.hpp"
+#include "RungeKutta.hpp"
 
 Real testSolver(Real deltaT, index_t dim) {
     // define T & deltaT  & Re
@@ -17,11 +15,11 @@ Real testSolver(Real deltaT, index_t dim) {
     // Define physical size of the problem (just for simplicity)
     constexpr Real phy_dim = 1.0;
 
-    logger.openSection("Running the TestSolver");
-    logger.printValue(5, "Final T", T);
-    logger.printValue(5, "dT", deltaT);
-    logger.printValue(5, "Re num", Re);
-    logger.printValue(5, "Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
+    logger.openSection("Running the TestSolver")
+            .printValue(5, "Final T", T)
+            .printValue(5, "dT", deltaT)
+            .printValue(5, "Re num", Re)
+            .printValue(5, "Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -47,9 +45,11 @@ Real testSolver(Real deltaT, index_t dim) {
     // define the mesh:
     GridData model(modelStructure);
 
-    logger.printTitle("Grid created");
-    logger.printValue(5, "nodes", to_string(modelStructure.nx) + " x " + to_string(modelStructure.ny) + " x " + to_string(modelStructure.nz));
-    logger.printValue(5, "ghosts", modelStructure.gp);
+    logger.printTitle("Grid created")
+            .printValue(5, "nodes", to_string(modelStructure.nx)
+                                    + " x " + to_string(modelStructure.ny)
+                                    + " x " + to_string(modelStructure.nz))
+            .printValue(5, "ghosts", modelStructure.gp);
 
     /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////
     // Define initial velocity function
@@ -74,212 +74,15 @@ Real testSolver(Real deltaT, index_t dim) {
                                                                  ExactSolution::v,
                                                                  ExactSolution::w};
 
-    /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
-    // North
-    PhysicalCondition::Mapper northFace = [](GridData &grid,
-                                             const Real currentTime,
-                                             const std::vector<TFunction> &functions) {
-        const Real sdx = grid.structure.sdx;
-        const Real sdy = grid.structure.sdy;
-        const Real sdz = grid.structure.sdz;
+    Boundaries boundaries;
+    buildBoundaries(boundaries, boundaryFunctions);
 
-        const TFunction exactU = functions[0];
-        const TFunction exactV = functions[1];
-        const TFunction exactW = functions[2];
+    //MPI STUFFS
+    /*
+    MPIBoundaries mpiBoundaries;
+    buildMPIBoundaries(c2d, modelStructure, mpiBoundaries, boundaryFunctions);
+     */
 
-        const index_t j = 0;
-        const Real y = real(j) * grid.structure.dy;
-
-        // apply on face with y constant
-
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i) * grid.structure.dx;
-                Real z = real(k) * grid.structure.dz;
-
-                // On y = 0 for ghost point we hae exact for V, other approximate
-                grid.U(i, j - 1, k) = 2 * exactU(x + grid.structure.dx, y, z + sdz, currentTime)
-                                      - grid.U(i, j, k);
-                grid.V(i, j - 1, k) = exactV(x + sdx, y, z + sdz, currentTime);
-                grid.W(i, j - 1, k) = 2 * exactW(x + sdx, y, z + grid.structure.dz, currentTime)
-                                      - grid.W(i, j, k);
-            }
-
-
-    };
-    // South
-    PhysicalCondition::Mapper southFace = [](GridData &grid,
-                                             const Real currentTime,
-                                             const std::vector<TFunction> &functions) {
-
-        const Real sdx = grid.structure.sdx;
-        const Real sdy = grid.structure.sdy;
-        const Real sdz = grid.structure.sdz;
-
-        const TFunction exactU = functions[0];
-        const TFunction exactV = functions[1];
-        const TFunction exactW = functions[2];
-
-        const index_t j = grid.structure.ny;
-        const Real y = real(j) * grid.structure.dy;
-
-        // apply on face with y constant
-
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i) * grid.structure.dx;
-                Real z = real(k) * grid.structure.dz;
-
-                // On y = phy_dim for domain point we have exact for V
-                grid.V(i, j - 1, k) = exactV(x + sdx, y, z + sdz, currentTime);
-                // For ghost points we have useless V, other approximate
-
-                grid.U(i, j, k) = 2 * exactU(x + grid.structure.dx, y, z + sdz, currentTime)
-                                  - grid.U(i, j - 1, k);
-                grid.V(i, j, k) = 0;
-                grid.W(i, j, k) = 2 * exactW(x + sdx, y, z + grid.structure.dz, currentTime)
-                                  - grid.W(i, j - 1, k);
-            }
-    };
-
-    // East
-    PhysicalCondition::Mapper eastFace = [](GridData &grid,
-                                            const Real currentTime,
-                                            const std::vector<TFunction> &functions) {
-        const Real sdx = grid.structure.sdx;
-        const Real sdy = grid.structure.sdy;
-        const Real sdz = grid.structure.sdz;
-
-        const TFunction exactU = functions[0];
-        const TFunction exactV = functions[1];
-        const TFunction exactW = functions[2];
-
-        const index_t k = grid.structure.nz;
-        const Real z = real(k) * grid.structure.dz;
-
-        for (index_t j = 0; j < grid.structure.ny; j++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i) * grid.structure.dx;
-                Real y = real(j) * grid.structure.dy;
-
-                // On z = phy_dim for domain point we have exact for W
-                grid.W(i, j, k - 1) = exactW(x + sdx, y + sdy, z, currentTime);
-                // For ghost points we gave useless W, other interpolate
-                grid.U(i, j, k) = 2 * exactU(x + grid.structure.dx, y + sdy, z, currentTime)
-                                  - grid.U(i, j, k - 1);
-                grid.V(i, j, k) = 2 * exactV(x + sdx, y + grid.structure.dy, z, currentTime)
-                                  - grid.V(i, j, k - 1);
-                grid.W(i, j, k) = 0;
-
-            }
-
-    };
-    // West
-    PhysicalCondition::Mapper westFace = [](GridData &grid,
-                                            const Real currentTime,
-                                            const std::vector<TFunction> &functions) {
-        const Real sdx = grid.structure.sdx;
-        const Real sdy = grid.structure.sdy;
-        const Real sdz = grid.structure.sdz;
-
-        const TFunction exactU = functions[0];
-        const TFunction exactV = functions[1];
-        const TFunction exactW = functions[2];
-
-        const index_t k = 0;
-        const Real z = real(k) * grid.structure.dz;
-
-        for (index_t j = 0; j < grid.structure.ny; j++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i) * grid.structure.dx;
-                Real y = real(j) * grid.structure.dy;
-
-                // On z = 0 for ghost point we have exact for W, other approximate
-                grid.U(i, j, k - 1) = 2 * exactU(x + grid.structure.dx, y + sdy, z, currentTime)
-                                      - grid.U(i, j, k);
-                grid.V(i, j, k - 1) = 2 * exactV(x + sdx, y + grid.structure.dy, z, currentTime)
-                                      - grid.V(i, j, k);
-                grid.W(i, j, k - 1) = exactW(x + sdx, y + sdy, z, currentTime);
-            }
-
-    };
-
-    // Front
-    PhysicalCondition::Mapper frontFace = [](GridData &grid,
-                                             const Real currentTime,
-                                             const std::vector<TFunction> &functions) {
-        const Real sdx = grid.structure.sdx;
-        const Real sdy = grid.structure.sdy;
-        const Real sdz = grid.structure.sdz;
-
-        const TFunction exactU = functions[0];
-        const TFunction exactV = functions[1];
-        const TFunction exactW = functions[2];
-
-        const index_t i = 0;
-        const Real x = real(i) * grid.structure.dx;
-
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t j = 0; j < grid.structure.ny; j++) {
-                Real y = real(j) * grid.structure.dy;
-                Real z = real(k) * grid.structure.dz;
-
-                // On x = 0 for ghost point we have exact for U, other approximate
-                grid.U(i - 1, j, k) = exactU(x, y + sdy, z + sdz, currentTime);
-                grid.V(i - 1, j, k) = 2 * exactV(x, y + grid.structure.dy, z + sdz, currentTime)
-                                      - grid.V(i, j, k);
-                grid.W(i - 1, j, k) = 2 * exactW(x, y + sdy, z + grid.structure.dz, currentTime)
-                                      - grid.W(i, j, k);
-            }
-
-    };
-
-    // Back
-    PhysicalCondition::Mapper backFace = [](GridData &grid,
-                                            const Real currentTime,
-                                            const std::vector<TFunction> &functions) {
-        const Real sdx = grid.structure.sdx;
-        const Real sdy = grid.structure.sdy;
-        const Real sdz = grid.structure.sdz;
-
-        const TFunction exactU = functions[0];
-        const TFunction exactV = functions[1];
-        const TFunction exactW = functions[2];
-
-        const index_t i = grid.structure.nx;
-        const Real x = real(i) * grid.structure.dx;
-
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t j = 0; j < grid.structure.ny; j++) {
-                Real y = real(j) * grid.structure.dy;
-                Real z = real(k) * grid.structure.dz;
-
-                // On x = phy_dim for domain point we have exact for U
-                grid.U(i - 1, j, k) = exactU(x, y + sdy, z + sdz, currentTime);
-                // For ghost point we have useless U, other approximate
-                grid.U(i, j, k) = 0;
-                grid.V(i, j, k) = 2 * exactV(x, y + grid.structure.dy, z + sdz, currentTime)
-                                  - grid.V(i - 1, j, k);
-                grid.W(i, j, k) = 2 * exactW(x, y + sdy, z + grid.structure.dz, currentTime)
-                                  - grid.W(i - 1, j, k);
-            }
-    };
-
-    /// Define boundary conditions /////////////////////////////////////////////////////////////////////////
-    PhysicalCondition northCond(northFace, boundaryFunctions);
-    PhysicalCondition southCond(southFace, boundaryFunctions);
-    PhysicalCondition eastCond(eastFace, boundaryFunctions);
-    PhysicalCondition westCond(westFace, boundaryFunctions);
-    PhysicalCondition frontCond(frontFace, boundaryFunctions);
-    PhysicalCondition backCond(backFace, boundaryFunctions);
-
-    /// Add boundary conditions to collection //////////////////////////////////////////////////////////////
-    Boundaries boundaries({&northCond,
-                           &southCond,
-                           &eastCond,
-                           &westCond,
-                           &frontCond,
-                           &backCond});
 
     logger.printTitle("Boundary condition set");
 
@@ -305,8 +108,8 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t printIt = 100; // prints every n iterations
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
-    logger.printTitle("Start computation");
-    logger.openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
+    logger.printTitle("Start computation")
+            .openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
 
     chrono_start(compT);
     boundaries.apply(model, currentTime);
@@ -330,16 +133,18 @@ Real testSolver(Real deltaT, index_t dim) {
     }
     chrono_stop(compT);
 
-    logger.closeTable();
-    logger.printTitle("End of computation", compT);
-    logger.closeSection();
-    logger.empty();
+    logger.closeTable()
+            .printTitle("End of computation", compT)
+            .closeSection()
+            .empty();
 
     return l2Norm;
 }
 
 
-int main() {
+int main(int argc, char **argv) {
+    MPI_Init(&argc, &argv);
+
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
     std::vector<index_t> dims = {4, 8, 16, 32, 64};
@@ -371,6 +176,8 @@ int main() {
     std::ofstream csvFile("output.csv");
     csvFile << "step,error" << std::endl;
     for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
+
+    MPI_Finalize();
 
     return 0;
 }
