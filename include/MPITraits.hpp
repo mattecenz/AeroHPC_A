@@ -4,9 +4,9 @@
 #include "mpi.h"
 
 #if Real == float
-#define MPI_Real MPI_FLOAT
+#define Real_MPI MPI_FLOAT
 #elif Real == double
-#define MPI_Real MPI_DOUBLE
+#define Real_MPI MPI_DOUBLE
 #endif
 
 #define NORTH_BUFFER_TAG 0

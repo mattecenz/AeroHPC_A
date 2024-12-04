@@ -19,7 +19,7 @@ Real testSolver(Real deltaT, index_t dim) {
             .printValue(5, "Final T", T)
             .printValue(5, "dT", deltaT)
             .printValue(5, "Re num", Re)
-            .printValue(5, "Phy dim", to_string(phy_dim) + " x " + to_string(phy_dim) + " x " + to_string(phy_dim));
+            .printValue(5, "Phy dim", std::to_string(phy_dim) + " x " + std::to_string(phy_dim) + " x " + std::to_string(phy_dim));
 
     // Define number of nodes for each axis
     const index_t nx = dim;
@@ -46,9 +46,9 @@ Real testSolver(Real deltaT, index_t dim) {
     GridData model(modelStructure);
 
     logger.printTitle("Grid created")
-            .printValue(5, "nodes", to_string(modelStructure.nx)
-                                    + " x " + to_string(modelStructure.ny)
-                                    + " x " + to_string(modelStructure.nz))
+            .printValue(5, "nodes", std::to_string(modelStructure.nx)
+                                    + " x " + std::to_string(modelStructure.ny)
+                                    + " x " + std::to_string(modelStructure.nz))
             .printValue(5, "ghosts", modelStructure.gp);
 
     /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////

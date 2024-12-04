@@ -233,8 +233,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // the buffer exchanger will be the same for all
     MPICondition::BufferExchanger exchanger = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
                                                  int proc_rank) {
-        MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, MPI_Real, proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, MPI_Real, proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+        MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+        MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
     // North
