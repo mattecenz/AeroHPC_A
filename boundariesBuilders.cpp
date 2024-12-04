@@ -275,6 +275,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         // TODO DETERMINE TO WHICH PROCESSOR I HAVE TO COMMUNICATE
         const int proc_rank = 0;
 
+        // process rank that is to the north
+        // const int proc_rank = decomp.neighbor[0][5];
+
         MPICondition::BufferInitializer northInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
             const index_t j = grid.structure.ny - 1;
@@ -315,21 +318,24 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     if (isOnBottom) {
 
     } else {
-
+        // process rank that is to the south
+        // const int proc_rank = decomp.neighbor[0][4];
     }
 
     //TODO EAST
     if (isOnRight) {
 
     } else {
-
+        // process rank that is to the east
+        // const int proc_rank = decomp.neighbor[0][3];
     }
 
     //TODO WEST
     if (isOnLeft) {
 
     } else {
-
+        // process rank that is to the west
+        // const int proc_rank = decomp.neighbor[0][2];
     }
 
     //TODO FRONT
