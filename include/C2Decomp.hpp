@@ -37,9 +37,10 @@ class C2Decomp{
 	MPI_Comm DECOMP_2D_COMM_ROW, DECOMP_2D_COMM_COL;
 
 
-    private:
 	//Defining neighboring blocks 
 	int neighbor[3][6];
+
+	private:
 	//Flags for periodic condition in 3D
 	bool periodicX, periodicY, periodicZ;
 
