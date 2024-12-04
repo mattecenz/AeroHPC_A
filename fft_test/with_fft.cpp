@@ -89,6 +89,17 @@ int main(int argc, char *argv[]){
     c2d->allocY(u2);
     c2d->allocZ(u3);
 
+    if (mpiRank == 3){
+
+        cout << "neighbor[0][0] : " << c2d->neighbor[0][0] << endl;
+        cout << "neighbor[0][1] : " << c2d->neighbor[0][1] << endl;
+        cout << "neighbor[0][2] : " << c2d->neighbor[0][2] << endl;
+        cout << "neighbor[0][3] : " << c2d->neighbor[0][3] << endl;
+        cout << "neighbor[0][4] : " << c2d->neighbor[0][4] << endl;
+        cout << "neighbor[0][5] : " << c2d->neighbor[0][5] << endl;
+
+    }
+
     // Distribute the data across the ranks
     for(int kp = 0; kp < xSize[2]; kp++){
         for(int jp = 0; jp < xSize[1]; jp++){
