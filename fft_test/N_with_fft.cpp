@@ -38,7 +38,7 @@ int main(int argc, char *argv[]){
     	cout << endl;
     }
 
-    const int N = 100;  // Cube size
+    const int N = 200;  // Cube size
     const double L = 1.0;  // Length of each dimension
     const double dx = L / N;
 
@@ -85,6 +85,7 @@ int main(int argc, char *argv[]){
     c2d->allocY(u2);
     c2d->allocZ(u3);
 
+    auto start = std::chrono::high_resolution_clock::now();
     // Distribute the data across the ranks
     for(int kp = 0; kp < xSize[2]; kp++){
         for(int jp = 0; jp < xSize[1]; jp++){
@@ -249,6 +250,10 @@ int main(int argc, char *argv[]){
         }
     }    
 
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    if (!mpiRank)
+    std::cout << "time: " << duration << " ms" << std::endl;
 
     fftw_free(fft_input);
     fftw_free(fft_output);

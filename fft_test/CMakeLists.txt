@@ -1,13 +1,29 @@
 cmake_minimum_required(VERSION 3.10)
 project(TestFFTW)
 
-# Specify the include directories
+# Optionally set default include and library paths (fallback)
+set(DEFAULT_FFTW_INCLUDE_PATH /usr/local/include)
+set(DEFAULT_FFTW_LIBRARY_PATH /usr/local/lib)
+
+# Try to find FFTW using find_package
+find_package(FFTW QUIET COMPONENTS SINGLE DOUBLE)
+
+# Check if FFTW was found, otherwise use the fallback paths
+if(FFTW_FOUND)
+    message(STATUS "FFTW found via find_package.")
+    set(FFTW_LIBRARIES FFTW::FFTW3 FFTW::FFTW3F)
+    set(FFTW_INCLUDE_DIRS "") # Already handled by FFTW imported targets
+else()
+    message(WARNING "FFTW not found via find_package. Falling back to default paths.")
+    set(FFTW_INCLUDE_DIRS ${DEFAULT_FFTW_INCLUDE_PATH})
+    set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.a)
+endif()
+
+# Add the include directories for 2decomp_C and FFTW
 include_directories(
-    /usr/local/include      # FFTW includes
+    ${FFTW_INCLUDE_DIRS}    # FFTW include path (via find_package or fallback)
     ./2decomp_C             # Include path for 2decomp_C headers
 )
-
-link_directories(/usr/local/lib)
 
 # Add the source files from 2decomp_C
 set(DECOMP_SRC
@@ -27,9 +43,7 @@ set(DECOMP_SRC
 set(CMAKE_CXX_COMPILER mpic++)
 
 # Create the executable and include all .cpp files found in ./lib
-# add_executable(test_fft with_fft.cpp ${DECOMP_SRC})
-
 add_executable(test_fft N_with_fft.cpp ${DECOMP_SRC})
 
 # Link the FFTW library and the math library
-target_link_libraries(test_fft fftw3 m)
+target_link_libraries(test_fft ${FFTW_LIBRARIES} m)
