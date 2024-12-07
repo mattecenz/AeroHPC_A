@@ -9,12 +9,18 @@
 #include "RungeKutta.hpp"
 
 Real testSolver(Real deltaT, index_t dim) {
+
+    int size, rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
     // define T & deltaT  & Re
     constexpr Real T = 1;
     constexpr Real Re = 4000;
     // Define physical size of the problem (just for simplicity)
     constexpr Real phy_dim = 1.0;
 
+    if (!rank)
     logger.openSection("Running the TestSolver")
             .printValue(5, "Final T", T)
             .printValue(5, "dT", deltaT)
@@ -45,6 +51,7 @@ Real testSolver(Real deltaT, index_t dim) {
     // define the mesh:
     GridData model(modelStructure);
 
+    if (!rank)
     logger.printTitle("Grid created")
             .printValue(5, "nodes", std::to_string(modelStructure.nx)
                                     + " x " + std::to_string(modelStructure.ny)
@@ -67,6 +74,7 @@ Real testSolver(Real deltaT, index_t dim) {
     model.initData(initialVel, initialPres);
     chrono_stop(initT);
 
+    if (!rank)
     logger.printTitle("Grid initialized", initT);
 
     /// Define boundaries condition functions //////////////////////////////////////////////////////////////
@@ -78,12 +86,16 @@ Real testSolver(Real deltaT, index_t dim) {
     buildBoundaries(boundaries, boundaryFunctions);
 
     //MPI STUFFS
-    /*
+    
     MPIBoundaries mpiBoundaries;
-    buildMPIBoundaries(c2d, modelStructure, mpiBoundaries, boundaryFunctions);
-     */
+    C2Decomp *c2d;
+    int pRow = 0, pCol = 0;
+    bool periodicBC[3] = {true, true, true};
+    c2d = new C2Decomp(nx, ny, nz, pRow, pCol, periodicBC);
+    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryFunctions);
+    
 
-
+    if (!rank)
     logger.printTitle("Boundary condition set");
 
     /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
@@ -91,6 +103,7 @@ Real testSolver(Real deltaT, index_t dim) {
     // Buffers
     GridData modelBuff(modelStructure);
     GridData rhsBuff(modelStructure);
+    if (!rank)
     logger.printTitle("Buffers created");
 
     // Time
@@ -108,6 +121,7 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t printIt = 100; // prints every n iterations
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
+    if (!rank)
     logger.printTitle("Start computation")
             .openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
 
@@ -127,12 +141,14 @@ Real testSolver(Real deltaT, index_t dim) {
             l2Norm = computeL2Norm(model, currentTime);
             chrono_stop(l2Time);
             perf = rkTime / nNodes;
+            if (!rank)
             logger.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
         }
         iter++;
     }
     chrono_stop(compT);
 
+    if (!rank)
     logger.closeTable()
             .printTitle("End of computation", compT)
             .closeSection()
@@ -147,7 +163,8 @@ int main(int argc, char **argv) {
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8, 16, 32, 64};
+    // std::vector<index_t> dims = {4, 8, 16, 32, 64};
+    std::vector<index_t> dims = {32};
 
     std::vector<Real> error;
 
