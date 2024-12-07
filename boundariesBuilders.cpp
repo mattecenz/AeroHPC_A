@@ -281,7 +281,6 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             // I want to copy the last in-domain layer
             const index_t j = grid.structure.ny - 1;
 
-            // Be careful when working with buffer since its always on x-z plane
             for (index_t k = 0; k < grid.structure.nz; k++) {
                 memcpy(&bufferOut.U(0, 0, k), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
                 memcpy(&bufferOut.V(0, 0, k), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
@@ -313,33 +312,273 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         boundaries.addPreCond(*northCond).addCond(*northCond);
     }
 
-    //TODO SOUTH
+    // SOUTH
     if (isOnBottom) {
+        PhysicalCondition::Mapper southFace = [](GridData &grid,
+                                                 const Real currentTime,
+                                                 const std::vector<TFunction> &functions) {
 
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
+
+            const index_t j = 0;
+            const Real y = real(j + grid.structure.py) * grid.structure.dy;
+
+            // apply on face with y constant
+
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                    // On y = 0 for ghost point we hae exact for V, other approximate
+                    grid.U(i, j - 1, k) = 2 * eU(x + grid.structure.dx, y, z + sdz, currentTime)
+                                          - grid.U(i, j, k);
+                    grid.V(i, j - 1, k) = eV(x + sdx, y, z + sdz, currentTime);
+                    grid.W(i, j - 1, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
+                                          - grid.W(i, j, k);
+                }
+        };
+
+        auto southCond = new PhysicalCondition(southFace, boundaryFunctions);
+        boundaries.addCond(*southCond);
     } else {
         // process rank that is to the south
         const int proc_rank = decomp.neighbor[0][4];
+
+        MPICondition::BufferInitializer southInit = [](GridData &grid, GridData &bufferOut) {
+            // I want to copy the last in-domain layer
+            const index_t j = 0;
+
+            for (index_t k = 0; k < grid.structure.nz; k++) {
+                memcpy(&bufferOut.U(0, 0, k), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&bufferOut.V(0, 0, k), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&bufferOut.W(0, 0, k), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+            }
+        };
+
+        MPICondition::BufferMapper southMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
+            MPI_Status status{};
+            MPI_Wait(requestIn, &status);
+
+            MPI_Request_free(requestIn);
+            MPI_Request_free(requestOut);
+
+            // Copy the buffer into the ghost point layer
+            const index_t j = -1;
+            for (index_t k = 0; k < grid.structure.nz; k++) {
+                memcpy(&grid.U(0, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&grid.V(0, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&grid.W(0, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.nx);
+            }
+        };
+
+        // Since south face is a X-Z plane the face has dimension 1 for Y
+        GridStructure bufferStructure({gridStructure.nx, 1, gridStructure.nz}, {0,0,0}, {0,0,0}, 0);
+        auto *southCond = new MPICondition(southInit, exchanger, southMapp, bufferStructure, proc_rank);
+
+        // NOTE that we add mpi condition for both precondition and condition
+        boundaries.addPreCond(*southCond).addCond(*southCond);
     }
 
-    //TODO EAST
+    // EAST
     if (isOnRight) {
+        PhysicalCondition::Mapper eastFace = [](GridData &grid,
+                                                const Real currentTime,
+                                                const std::vector<TFunction> &functions) {
 
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
+
+            const index_t k = grid.structure.nz;
+            const Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+            for (index_t j = 0; j < grid.structure.ny; j++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real y = real(j + grid.structure.py) * grid.structure.dy;
+
+                    // On z = phy_dim for domain point we have exact for W
+                    grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
+                    // For ghost points we gave useless W, other interpolate
+                    grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y + sdy, z, currentTime)
+                                      - grid.U(i, j, k - 1);
+                    grid.V(i, j, k) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
+                                      - grid.V(i, j, k - 1);
+                    grid.W(i, j, k) = 0;
+
+                }
+
+        };
+
+        auto eastCond = new PhysicalCondition(eastFace, boundaryFunctions);
+        boundaries.addCond(*eastCond);
     } else {
         // process rank that is to the east
         const int proc_rank = decomp.neighbor[0][3];
+
+        MPICondition::BufferInitializer eastInit = [](GridData &grid, GridData &bufferOut) {
+            // I want to copy the last in-domain layer
+            const index_t k = grid.structure.nz - 1;
+
+            for (index_t j = 0; j < grid.structure.ny; j++) {
+                memcpy(&bufferOut.U(0, j, 0), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&bufferOut.V(0, j, 0), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&bufferOut.W(0, j, 0), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+            }
+        };
+
+        MPICondition::BufferMapper eastMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
+            MPI_Status status{};
+            MPI_Wait(requestIn, &status);
+
+            MPI_Request_free(requestIn);
+            MPI_Request_free(requestOut);
+
+            // Copy the buffer into the ghost point layer
+            const index_t k = grid.structure.nz;
+            for (index_t j = 0; j < grid.structure.ny; j++) {
+                memcpy(&grid.U(0, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.nx);
+                memcpy(&grid.V(0, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.nx);
+                memcpy(&grid.W(0, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.nx);
+            }
+        };
+
+        // Since east face is a X-Y plane the face has dimension 1 for Z
+        GridStructure bufferStructure({gridStructure.nx, gridStructure.ny, 1}, {0,0,0}, {0,0,0}, 0);
+        auto *eastCond = new MPICondition(eastInit, exchanger, eastMapp, bufferStructure, proc_rank);
+
+        // NOTE that we add mpi condition for both precondition and condition
+        boundaries.addPreCond(*eastCond).addCond(*eastCond);
     }
 
     //TODO WEST
     if (isOnLeft) {
+        PhysicalCondition::Mapper westFace = [](GridData &grid,
+                                                const Real currentTime,
+                                                const std::vector<TFunction> &functions) {
 
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
+
+            const index_t k = 0;
+            const Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+            for (index_t j = 0; j < grid.structure.ny; j++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real y = real(j + grid.structure.py) * grid.structure.dy;
+
+                    // On z = 0 for ghost point we have exact for W, other approximate
+                    grid.U(i, j, k - 1) = 2 * eU(x + grid.structure.dx, y + sdy, z, currentTime)
+                                          - grid.U(i, j, k);
+                    grid.V(i, j, k - 1) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
+                                          - grid.V(i, j, k);
+                    grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
+                }
+
+        };
+
+        auto westCond = new PhysicalCondition(westFace, boundaryFunctions);
+        boundaries.addCond(*westCond);
     } else {
         // process rank that is to the west
         const int proc_rank = decomp.neighbor[0][2];
+
+        MPICondition::BufferInitializer westInit = [](GridData &grid, GridData &bufferOut) {
+            // I want to copy the last in-domain layer
+            const index_t k = 0;
+
+            for (index_t j = 0; j < grid.structure.ny; j++) {
+                memcpy(&bufferOut.U(0, j, 0), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&bufferOut.V(0, j, 0), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
+                memcpy(&bufferOut.W(0, j, 0), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+            }
+        };
+
+        MPICondition::BufferMapper westMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
+            MPI_Status status{};
+            MPI_Wait(requestIn, &status);
+
+            MPI_Request_free(requestIn);
+            MPI_Request_free(requestOut);
+
+            // Copy the buffer into the ghost point layer
+            const index_t k = -1;
+            for (index_t j = 0; j < grid.structure.ny; j++) {
+                memcpy(&grid.U(0, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.nx);
+                memcpy(&grid.V(0, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.nx);
+                memcpy(&grid.W(0, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.nx);
+            }
+        };
+
+        // Since east face is a X-Y plane the face has dimension 1 for Z
+        GridStructure bufferStructure({gridStructure.nx, gridStructure.ny, 1}, {0,0,0}, {0,0,0}, 0);
+        auto *westCond = new MPICondition(westInit, exchanger, westMapp, bufferStructure, proc_rank);
+
+        // NOTE that we add mpi condition for both precondition and condition
+        boundaries.addPreCond(*westCond).addCond(*westCond);
     }
 
-    //TODO FRONT
 
-    //TODO BACK
+    // Font and back faces are always phisical boundaries in pencil domain decomposition
 
+    // FRONT
+    PhysicalCondition::Mapper frontFace = [](GridData &grid,
+                                             const Real currentTime,
+                                             const std::vector<TFunction> &functions) {
 
+        getStaggeredSpacing(grid, sdx, sdy, sdz);
+        getExactFunctions(functions, eU, eV, eW);
+
+        const index_t i = 0;
+        const Real x = real(i + grid.structure.px) * grid.structure.dx;
+
+        for (index_t k = 0; k < grid.structure.nz; k++)
+            for (index_t j = 0; j < grid.structure.ny; j++) {
+                Real y = real(j + grid.structure.py) * grid.structure.dy;
+                Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                // On x = 0 for ghost point we have exact for U, other approximate
+                grid.U(i - 1, j, k) = eU(x, y + sdy, z + sdz, currentTime);
+                grid.V(i - 1, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
+                                      - grid.V(i, j, k);
+                grid.W(i - 1, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
+                                      - grid.W(i, j, k);
+            }
+
+    };
+
+    auto frontCond = new PhysicalCondition(frontFace, boundaryFunctions);
+    boundaries.addCond(*frontCond);
+
+    // BACK
+    PhysicalCondition::Mapper backFace = [](GridData &grid,
+                                            const Real currentTime,
+                                            const std::vector<TFunction> &functions) {
+
+        getStaggeredSpacing(grid, sdx, sdy, sdz);
+        getExactFunctions(functions, eU, eV, eW);
+
+        const index_t i = grid.structure.nx;
+        const Real x = real(i + grid.structure.px) * grid.structure.dx;
+
+        for (index_t k = 0; k < grid.structure.nz; k++)
+            for (index_t j = 0; j < grid.structure.ny; j++) {
+                Real y = real(j + grid.structure.py) * grid.structure.dy;
+                Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                // On x = phy_dim for domain point we have exact for U
+                grid.U(i - 1, j, k) = eU(x, y + sdy, z + sdz, currentTime);
+                // For ghost point we have useless U, other approximate
+                grid.U(i, j, k) = 0;
+                grid.V(i, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
+                                  - grid.V(i - 1, j, k);
+                grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
+                                  - grid.W(i - 1, j, k);
+            }
+    };
+
+    auto backCond = new PhysicalCondition(backFace, boundaryFunctions);
+    boundaries.addCond(*backCond);
 }
