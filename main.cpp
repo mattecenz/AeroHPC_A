@@ -31,7 +31,7 @@ Real testSolver(Real deltaT, index_t dim) {
     c2d = new C2Decomp(dim, dim, dim, pRow, pCol, periodicBC);
 
     // define T & deltaT  & Re
-    constexpr Real T = 1;
+    constexpr Real T = 1.0;
     constexpr Real Re = 4000;
     // Define physical size of the problem (just for simplicity)
     constexpr Real phy_dim = 1.0;
@@ -132,7 +132,8 @@ Real testSolver(Real deltaT, index_t dim) {
     Real currentTime = 0.0;
 
     // last iteration l2Norm capture
-    Real l2Norm = 0.0;
+    Real localL2Norm = 0.0;
+    Real globalL2Norm = 0.0;
 
     // Performance variables
     Real nNodes = real(modelStructure.nx * modelStructure.ny * modelStructure.nz);
@@ -160,11 +161,14 @@ Real testSolver(Real deltaT, index_t dim) {
         if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
         {
             chrono_start(l2Time);
-            l2Norm = computeL2Norm(model, currentTime);
+            localL2Norm = computeL2Norm(model, currentTime);
             chrono_stop(l2Time);
             perf = rkTime / nNodes;
+
+            MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+            globalL2Norm = std::sqrt(globalL2Norm);
             if (!rank)
-            logger.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
+            logger.printTableValues(iter, {currentTime, globalL2Norm, rkTime, l2Time, perf});
         }
         iter++;
     }
@@ -176,7 +180,7 @@ Real testSolver(Real deltaT, index_t dim) {
             .closeSection()
             .empty();
 
-    return l2Norm;
+    return globalL2Norm;
 }
 
 
@@ -186,7 +190,7 @@ int main(int argc, char **argv) {
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.01, 0.0005, 0.00025};
     // std::vector<index_t> dims = {4, 8, 16, 32, 64};
-    std::vector<index_t> dims = {100};
+    std::vector<index_t> dims = {120};
 
     std::vector<Real> error;
 
