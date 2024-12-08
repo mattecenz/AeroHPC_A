@@ -26,7 +26,7 @@ Real testSolver(Real deltaT, index_t dim) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     C2Decomp *c2d;
-    int pRow = 2, pCol = 2;
+    int pRow = 1, pCol = size;
     bool periodicBC[3] = {true, true, true};
     c2d = new C2Decomp(dim, dim, dim, pRow, pCol, periodicBC);
 
