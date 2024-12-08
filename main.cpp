@@ -16,11 +16,19 @@
 #include "L2NormCalculator.hpp"
 #include "RungeKutta.hpp"
 
+using namespace std;
+
+
 Real testSolver(Real deltaT, index_t dim) {
 
     int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    C2Decomp *c2d;
+    int pRow = size, pCol = 1;
+    bool periodicBC[3] = {true, true, true};
+    c2d = new C2Decomp(dim, dim, dim, pRow, pCol, periodicBC);
 
     // define T & deltaT  & Re
     constexpr Real T = 1;
@@ -36,15 +44,19 @@ Real testSolver(Real deltaT, index_t dim) {
             .printValue(5, "Phy dim", std::to_string(phy_dim) + " x " + std::to_string(phy_dim) + " x " + std::to_string(phy_dim));
 
     // Define number of nodes for each axis
-    const index_t nx = dim;
-    const index_t ny = dim;
-    const index_t nz = dim;
+    const index_t nx = c2d->xSize[0];
+    const index_t ny = c2d->xSize[1];
+    const index_t nz = c2d->xSize[2];
+
+    if (!rank){
+        cout << nx << ", " << ny << ", " << nz << endl;
+    }
     Idx3 nodes = {nx, ny, nz};
 
     // Define global displacement of the grid
-    const index_t gx = 0;
-    const index_t gy = 0;
-    const index_t gz = 0;
+    const index_t gx = c2d->xStart[0];
+    const index_t gy = c2d->xStart[1];
+    const index_t gz = c2d->xStart[2];
     Idx3 displacement = {gx, gy, gz};
 
     // Define physical size of the problem for each axis
@@ -96,10 +108,6 @@ Real testSolver(Real deltaT, index_t dim) {
     //MPI STUFFS
     
     MPIBoundaries mpiBoundaries;
-    C2Decomp *c2d;
-    int pRow = 1, pCol = size;
-    bool periodicBC[3] = {true, true, true};
-    c2d = new C2Decomp(100, 100, 100, pRow, pCol, periodicBC);
     buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryFunctions);
     
 
@@ -170,9 +178,9 @@ int main(int argc, char **argv) {
     MPI_Init( &argc, &argv);
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
+    std::vector<Real> deltaTs = {0.01, 0.0005, 0.00025};
     // std::vector<index_t> dims = {4, 8, 16, 32, 64};
-    std::vector<index_t> dims = {100};
+    std::vector<index_t> dims = {128};
 
     std::vector<Real> error;
 
