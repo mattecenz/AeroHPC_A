@@ -26,7 +26,7 @@ Real testSolver(Real deltaT, index_t dim) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     C2Decomp *c2d;
-    int pRow = size, pCol = 1;
+    int pRow = 2, pCol = 2;
     bool periodicBC[3] = {true, true, true};
     c2d = new C2Decomp(dim, dim, dim, pRow, pCol, periodicBC);
 
@@ -47,17 +47,23 @@ Real testSolver(Real deltaT, index_t dim) {
     const index_t nx = c2d->xSize[0];
     const index_t ny = c2d->xSize[1];
     const index_t nz = c2d->xSize[2];
+    Idx3 nodes = {nx, ny, nz};
 
     if (!rank){
         cout << nx << ", " << ny << ", " << nz << endl;
     }
-    Idx3 nodes = {nx, ny, nz};
 
     // Define global displacement of the grid
+    // NOT SURE
     const index_t gx = c2d->xStart[0];
     const index_t gy = c2d->xStart[1];
     const index_t gz = c2d->xStart[2];
     Idx3 displacement = {gx, gy, gz};
+
+    if (!rank){
+        cout << gx << ", " << gy << ", " << gz << endl;
+    }
+
 
     // Define physical size of the problem for each axis
     const Real sx = phy_dim / real(nx);
@@ -180,7 +186,7 @@ int main(int argc, char **argv) {
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.01, 0.0005, 0.00025};
     // std::vector<index_t> dims = {4, 8, 16, 32, 64};
-    std::vector<index_t> dims = {128};
+    std::vector<index_t> dims = {100};
 
     std::vector<Real> error;
 
