@@ -1,8 +1,16 @@
+#include <mpi.h>
+#include <cmath>
+#include <cstdlib>
+#include <cstddef>
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <assert.h>
+
 #include "Traits.hpp"
 #include "VTKConverter.hpp"
 #include "chronoUtils.hpp"
 #include "Logger.hpp"
-#include "mpi.h"
 #include "boundariesBuilders.cpp"
 #include "C2Decomp.hpp"
 #include "L2NormCalculator.hpp"
@@ -89,9 +97,9 @@ Real testSolver(Real deltaT, index_t dim) {
     
     MPIBoundaries mpiBoundaries;
     C2Decomp *c2d;
-    int pRow = 0, pCol = 0;
+    int pRow = 1, pCol = size;
     bool periodicBC[3] = {true, true, true};
-    c2d = new C2Decomp(nx, ny, nz, pRow, pCol, periodicBC);
+    c2d = new C2Decomp(100, 100, 100, pRow, pCol, periodicBC);
     buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryFunctions);
     
 
@@ -159,12 +167,12 @@ Real testSolver(Real deltaT, index_t dim) {
 
 
 int main(int argc, char **argv) {
-    MPI_Init(&argc, &argv);
+    MPI_Init( &argc, &argv);
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
     // std::vector<index_t> dims = {4, 8, 16, 32, 64};
-    std::vector<index_t> dims = {32};
+    std::vector<index_t> dims = {100};
 
     std::vector<Real> error;
 
