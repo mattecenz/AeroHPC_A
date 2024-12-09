@@ -8,9 +8,9 @@ void GridData::initData(const VectorFunction &initial_velocity, const Function &
     for (index_t z = 0; z < structure.nz; ++z) {
         for (index_t y = 0; y < structure.ny; ++y) {
             for (index_t x = 0; x < structure.nx; ++x) {
-                Real px = real(x) * structure.dx;
-                Real py = real(y) * structure.dy;
-                Real pz = real(z) * structure.dz;
+                Real px = real(x + structure.px) * structure.dx;
+                Real py = real(y + structure.py) * structure.dy;
+                Real pz = real(z + structure.pz) * structure.dz;
 
                 U(x, y, z) = initial_velocity(px + structure.dx, py + structure.sdy, pz + structure.sdz)[0];
                 V(x, y, z) = initial_velocity(px + structure.sdx, py + structure.dy, pz + structure.sdz)[1];

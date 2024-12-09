@@ -7,9 +7,9 @@
 #include "mathUtils.hpp"
 
 #ifdef ForcingT
-#define getPhys(i, j, k)  Real px = real(i) * dx;   \
-                        Real py = real(j) * dy;     \
-                        Real pz = real(k) * dz
+#define getPhys(i, j, k)  Real px = real(i + model.structure.px) * dx;   \
+                        Real py = real(j + model.structure.py) * dy;     \
+                        Real pz = real(k + model.structure.pz) * dz
 
 #define getForceU(ftt) ftt.computeGx(px + dx, py + sdy, pz + sdz)
 

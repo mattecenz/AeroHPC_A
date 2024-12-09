@@ -36,8 +36,8 @@ public:
                                         _proc_rank(proc_rank),
                                         _bufferIn(bufferStructure, false),
                                         _bufferOut(bufferStructure, false),
-                                        _requestIn(),
-                                        _requestOut() {}
+                                        _requestIn(MPI_REQUEST_NULL),
+                                        _requestOut(MPI_REQUEST_NULL) {}
 
 
     /**
