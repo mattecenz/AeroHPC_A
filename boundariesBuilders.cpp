@@ -217,8 +217,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
     // global reference of this process position
-    int n_y_proc = decomp.dims[0] - 1;
-    int n_z_proc = decomp.dims[1] - 1;
+    int n_y_proc = decomp.dims[0];
+    int n_z_proc = decomp.dims[1];
     int this_y_pos = decomp.coord[0];
     int this_z_pos = decomp.coord[1];
 
@@ -282,7 +282,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger northExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
-                                                 int proc_rank) {
+                                                    int proc_rank) {
+            *requestIn = MPI_REQUEST_NULL;
+            *requestOut = MPI_REQUEST_NULL;
             MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
             MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
@@ -290,9 +292,6 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferMapper northMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
             MPI_Status status{};
             MPI_Wait(requestIn, &status);
-
-            MPI_Request_free(requestIn);
-            MPI_Request_free(requestOut);
 
             // Copy the buffer into the ghost point layer
             const index_t j = grid.structure.ny;
@@ -304,8 +303,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         // Since north face is a X-Z plane the face has dimension 1 for Y
-        GridStructure bufferStructure({gridStructure.nx, 1, gridStructure.nz}, {0,0,0}, {0,0,0}, 0);
-        auto *northCond = new MPICondition(northInit, northExc, northMapp, bufferStructure, proc_rank);
+        auto *bufferStructure = new GridStructure({gridStructure.nx, 1, gridStructure.nz}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *northCond = new MPICondition(northInit, northExc, northMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
         boundaries.addPreCond(*northCond).addCond(*northCond);
@@ -357,7 +356,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger southExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
-                                             int proc_rank) {
+                                                    int proc_rank) {
+            *requestIn = MPI_REQUEST_NULL;
+            *requestOut = MPI_REQUEST_NULL;
             MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
             MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
@@ -365,9 +366,6 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferMapper southMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
             MPI_Status status{};
             MPI_Wait(requestIn, &status);
-
-            MPI_Request_free(requestIn);
-            MPI_Request_free(requestOut);
 
             // Copy the buffer into the ghost point layer
             const index_t j = -1;
@@ -379,8 +377,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         // Since south face is a X-Z plane the face has dimension 1 for Y
-        GridStructure bufferStructure({gridStructure.nx, 1, gridStructure.nz}, {0,0,0}, {0,0,0}, 0);
-        auto *southCond = new MPICondition(southInit, southExc, southMapp, bufferStructure, proc_rank);
+        auto *bufferStructure = new GridStructure({gridStructure.nx, 1, gridStructure.nz}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *southCond = new MPICondition(southInit, southExc, southMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
         boundaries.addPreCond(*southCond).addCond(*southCond);
@@ -434,7 +432,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger eastExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
-                                             int proc_rank) {
+                                                   int proc_rank) {
+            *requestIn = MPI_REQUEST_NULL;
+            *requestOut = MPI_REQUEST_NULL;
             MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
             MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
@@ -442,9 +442,6 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferMapper eastMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
             MPI_Status status{};
             MPI_Wait(requestIn, &status);
-
-            MPI_Request_free(requestIn);
-            MPI_Request_free(requestOut);
 
             // Copy the buffer into the ghost point layer
             const index_t k = grid.structure.nz;
@@ -456,14 +453,14 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         // Since east face is a X-Y plane the face has dimension 1 for Z
-        GridStructure bufferStructure({gridStructure.nx, gridStructure.ny, 1}, {0,0,0}, {0,0,0}, 0);
-        auto *eastCond = new MPICondition(eastInit, eastExc, eastMapp, bufferStructure, proc_rank);
+        auto *bufferStructure = new GridStructure({gridStructure.nx, gridStructure.ny, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *eastCond = new MPICondition(eastInit, eastExc, eastMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
         boundaries.addPreCond(*eastCond).addCond(*eastCond);
     }
 
-    //TODO WEST
+    //WEST
     if (isOnLeft) {
         PhysicalCondition::Mapper westFace = [](GridData &grid,
                                                 const Real currentTime,
@@ -508,7 +505,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger westExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
-                                             int proc_rank) {
+                                                   int proc_rank) {
+            *requestIn = MPI_REQUEST_NULL;
+            *requestOut = MPI_REQUEST_NULL;
             MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
             MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
@@ -516,9 +515,6 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferMapper westMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
             MPI_Status status{};
             MPI_Wait(requestIn, &status);
-
-            MPI_Request_free(requestIn);
-            MPI_Request_free(requestOut);
 
             // Copy the buffer into the ghost point layer
             const index_t k = -1;
@@ -530,8 +526,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         // Since east face is a X-Y plane the face has dimension 1 for Z
-        GridStructure bufferStructure({gridStructure.nx, gridStructure.ny, 1}, {0,0,0}, {0,0,0}, 0);
-        auto *westCond = new MPICondition(westInit, westExc, westMapp, bufferStructure, proc_rank);
+        auto *bufferStructure = new GridStructure({gridStructure.nx, gridStructure.ny, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *westCond = new MPICondition(westInit, westExc, westMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
         boundaries.addPreCond(*westCond).addCond(*westCond);

@@ -44,6 +44,6 @@ Real computeL2Norm(const GridData &grid, Real time) {
         }
     }
 
-    return std::sqrt(sum * (grid.structure.dx * grid.structure.dy * grid.structure.dz));
+    return sum * (grid.structure.dx * grid.structure.dy * grid.structure.dz);
     //  /std::sqrt(sum_exact * (grid.structure.dx * grid.structure.dy * grid.structure.dz));
 }

@@ -37,7 +37,7 @@ Real testSolver(Real deltaT, index_t dim) {
     constexpr Real phy_dim = 1.0;
 
     if (!rank)
-    logger.openSection("Running the TestSolver")
+        logger.openSection("Running the TestSolver")
             .printValue(5, "Final T", T)
             .printValue(5, "dT", deltaT)
             .printValue(5, "Re num", Re)
@@ -49,21 +49,12 @@ Real testSolver(Real deltaT, index_t dim) {
     const index_t nz = c2d->xSize[2];
     Idx3 nodes = {nx, ny, nz};
 
-    if (!rank){
-        cout << nx << ", " << ny << ", " << nz << endl;
-    }
-
     // Define global displacement of the grid
     // NOT SURE
-    const index_t gx = c2d->xStart[0];
-    const index_t gy = c2d->xStart[1];
-    const index_t gz = c2d->xStart[2];
-    Idx3 displacement = {gx, gy, gz};
-
-    if (!rank){
-        cout << gx << ", " << gy << ", " << gz << endl;
-    }
-
+    const index_t px = c2d->xStart[0];
+    const index_t py = c2d->xStart[1];
+    const index_t pz = c2d->xStart[2];
+    Idx3 displacement = {px, py, pz};
 
     // Define physical size of the problem for each axis
     const Real sx = phy_dim / real(nx);
@@ -78,7 +69,7 @@ Real testSolver(Real deltaT, index_t dim) {
     GridData model(modelStructure);
 
     if (!rank)
-    logger.printTitle("Grid created")
+        logger.printTitle("Grid created")
             .printValue(5, "nodes", std::to_string(modelStructure.nx)
                                     + " x " + std::to_string(modelStructure.ny)
                                     + " x " + std::to_string(modelStructure.nz))
@@ -101,7 +92,7 @@ Real testSolver(Real deltaT, index_t dim) {
     chrono_stop(initT);
 
     if (!rank)
-    logger.printTitle("Grid initialized", initT);
+        logger.printTitle("Grid initialized", initT);
 
     /// Define boundaries condition functions //////////////////////////////////////////////////////////////
     const std::vector<TFunction> boundaryFunctions = std::vector{ExactSolution::u,
@@ -118,7 +109,7 @@ Real testSolver(Real deltaT, index_t dim) {
     
 
     if (!rank)
-    logger.printTitle("Boundary condition set");
+        logger.printTitle("Boundary condition set");
 
     /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
 
@@ -126,7 +117,7 @@ Real testSolver(Real deltaT, index_t dim) {
     GridData modelBuff(modelStructure);
     GridData rhsBuff(modelStructure);
     if (!rank)
-    logger.printTitle("Buffers created");
+        logger.printTitle("Buffers created");
 
     // Time
     Real currentTime = 0.0;
@@ -145,7 +136,7 @@ Real testSolver(Real deltaT, index_t dim) {
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     if (!rank)
-    logger.printTitle("Start computation")
+        logger.printTitle("Start computation")
             .openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
 
     chrono_start(compT);
@@ -157,7 +148,6 @@ Real testSolver(Real deltaT, index_t dim) {
         currentTime += deltaT;
         chrono_stop(rkTime);
 
-
         if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
         {
             chrono_start(l2Time);
@@ -165,17 +155,17 @@ Real testSolver(Real deltaT, index_t dim) {
             chrono_stop(l2Time);
             perf = rkTime / nNodes;
 
-            MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
             globalL2Norm = std::sqrt(globalL2Norm);
             if (!rank)
-            logger.printTableValues(iter, {currentTime, globalL2Norm, rkTime, l2Time, perf});
+                logger.printTableValues(iter, {currentTime, localL2Norm, rkTime, l2Time, perf});
         }
         iter++;
     }
     chrono_stop(compT);
 
     if (!rank)
-    logger.closeTable()
+        logger.closeTable()
             .printTitle("End of computation", compT)
             .closeSection()
             .empty();
@@ -183,14 +173,13 @@ Real testSolver(Real deltaT, index_t dim) {
     return globalL2Norm;
 }
 
-
 int main(int argc, char **argv) {
-    MPI_Init( &argc, &argv);
+    MPI_Init(&argc, &argv);
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.01, 0.0005, 0.00025};
-    // std::vector<index_t> dims = {4, 8, 16, 32, 64};
-    std::vector<index_t> dims = {120};
+    std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
+    std::vector<index_t> dims = {4, 8,16, 32, 64};
+    //std::vector<index_t> dims = {8};
 
     std::vector<Real> error;
 
