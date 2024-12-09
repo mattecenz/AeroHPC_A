@@ -18,17 +18,36 @@ endif ()
 # Example usage message
 message(STATUS "Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 
+
+set(DEFAULT_FFTW_INCLUDE_PATH /usr/local/include)
+set(DEFAULT_FFTW_LIBRARY_PATH /usr/local/lib)
+
+# Check if FFTW was found, otherwise use the fallback paths
+if(FFTW_FOUND)
+    message(STATUS "FFTW found via find_package.")
+    set(FFTW_LIBRARIES FFTW::FFTW3 FFTW::FFTW3F)
+    set(FFTW_INCLUDE_DIRS "") # Already handled by FFTW imported targets
+else()
+    message(WARNING "FFTW not found via find_package. Falling back to default paths.")
+    set(FFTW_INCLUDE_DIRS ${DEFAULT_FFTW_INCLUDE_PATH})
+    set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.a)
+endif()
+
+
+# Try to find FFTW using find_package
+find_package(FFTW QUIET COMPONENTS SINGLE DOUBLE)
+
 # Include header files
-include_directories(include)
+include_directories(include ${FFTW_INCLUDE_DIRS})
 
 # Include source files
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # Main file name
-set(MAIN_FILE "main.cpp")
+set(MAIN_FILE "testFPS.cpp")
 
 # Target file name
-set(TARGET_FILE "AeroHPC_A")
+set(TARGET_FILE "AeroHPC_A_test_FPS")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto -Ofast -funroll-all-loops -fopenmp-simd -ffast-math ")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -mtune=native -fopenmp-simd -fopt-info-all\
@@ -39,3 +58,4 @@ add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 
 #ForcingTerm FLAG
 add_definitions(-DForcingT)
+target_link_libraries(AeroHPC_A_test_FPS ${FFTW_LIBRARIES} m)

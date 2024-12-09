@@ -1,4 +1,4 @@
-#include "poissonSolver.hpp"
+#include "PoissonSolver.hpp"
 
 poissonSolver::poissonSolver(int N, double L, double *b, bool periodicBC[3], int pRow, int pCol)
     : N(N), L(L), b(b), pRow(pRow), pCol(pCol) {
@@ -63,11 +63,24 @@ void poissonSolver::initializeGrid() {
 
 void poissonSolver::performFFT() {
     // Perform FFT along each axis
-    c2d->fftX(u1, u1);
-    c2d->transposeX2Y(u1, u2);
-    c2d->fftY(u2, u2);
-    c2d->transposeY2Z(u2, u3);
-    c2d->fftZ(u3, u3);
+
+    // call the FFTW lib here
+    // c2d-> (u1, u1);
+    // c2d->transposeX2Y(u1, u2);
+    // c2d->fftY(u2, u2);
+    // c2d->transposeY2Z(u2, u3);
+    // c2d->fftZ(u3, u3);
+}
+
+void poissonSolver::performIFFT() {
+    // Perform inverse FFT along each axis
+
+    // call the FFTW lib here
+    // c2d->ifftZ(u3, u3);
+    // c2d->transposeZ2Y(u3, u2);
+    // c2d->ifftY(u2, u2);
+    // c2d->transposeY2X(u2, u1);
+    // c2d->ifftX(u1, u1);
 }
 
 void poissonSolver::solveEigenvalues() {
@@ -88,14 +101,6 @@ void poissonSolver::solveEigenvalues() {
     }
 }
 
-void poissonSolver::performIFFT() {
-    // Perform inverse FFT along each axis
-    c2d->ifftZ(u3, u3);
-    c2d->transposeZ2Y(u3, u2);
-    c2d->ifftY(u2, u2);
-    c2d->transposeY2X(u2, u1);
-    c2d->ifftX(u1, u1);
-}
 
 void poissonSolver::solve(double *X) {
     initializeGrid();

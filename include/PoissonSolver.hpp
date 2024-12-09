@@ -37,7 +37,7 @@ public:
     poissonSolver(int N, double L, double *b, bool periodicBC[3], int pRow = 0, int pCol = 0);
     ~poissonSolver();
 
-    void solve(double *X); // Updates the input array `X` with the solution
+    void solve(Real *X); // Updates the input array `X` with the solution
 };
 
 #endif
