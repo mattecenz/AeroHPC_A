@@ -99,9 +99,6 @@ Real testSolver(Real deltaT, index_t dim) {
                                                                  ExactSolution::v,
                                                                  ExactSolution::w};
 
-    Boundaries boundaries;
-    buildBoundaries(boundaries, boundaryFunctions);
-
     //MPI STUFFS
     
     MPIBoundaries mpiBoundaries;
@@ -140,11 +137,11 @@ Real testSolver(Real deltaT, index_t dim) {
             .openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
 
     chrono_start(compT);
-    boundaries.apply(model, currentTime);
+    mpiBoundaries.apply(model, currentTime);
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, boundaries);
+        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries);
         currentTime += deltaT;
         chrono_stop(rkTime);
 
