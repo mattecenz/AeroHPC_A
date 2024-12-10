@@ -227,8 +227,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // flags to define if the processor is on a physical boundary
     bool isOnTop = (this_y_pos == n_y_proc - 1);
     bool isOnBottom = (this_y_pos == 0);
-    bool isOnLeft = (this_z_pos == n_z_proc - 1);
-    bool isOnRight = (this_z_pos == 0);
+    bool isOnLeft = (this_z_pos == 0);
+    bool isOnRight = (this_z_pos == n_z_proc - 1);
 
     /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
 
@@ -265,8 +265,6 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         auto *northCond = new PhysicalCondition(northFace, boundaryFunctions);
         boundaries.addCond(*northCond);
-
-
     } else {
         // process rank that is to the north
         const int proc_rank = decomp.neighbor[0][2];
@@ -284,10 +282,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         MPICondition::BufferExchanger northExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                                     MPI_Request *requestIn, int proc_rank) {
-
-            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI,
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
                       proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI,
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
                       proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
@@ -309,7 +306,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         auto *northCond = new MPICondition(northInit, northExc, northMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*northCond).addCond(*northCond);
+        boundaries.addPreCond(*northCond);
     }
 
     // SOUTH
@@ -360,11 +357,11 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferExchanger southExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                                     MPI_Request *requestIn,
                                                     int proc_rank) {
-            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI,
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
                       proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
 
 
-            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI,
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
                       proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
 
         };
@@ -387,7 +384,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         auto *southCond = new MPICondition(southInit, southExc, southMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*southCond).addCond(*southCond);
+        boundaries.addPreCond(*southCond);
     }
 
     // EAST
@@ -425,7 +422,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     }
     else {
         // process rank that is to the east
-        const int proc_rank = decomp.neighbor[0][5];
+        const int proc_rank = decomp.neighbor[0][4];
+
+        std::cout << "I'm " << decomp.nRank << ", at my right there is " << proc_rank << std::endl;
 
         MPICondition::BufferInitializer eastInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
@@ -441,9 +440,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferExchanger eastExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                                    MPI_Request *requestIn,
                                                    int proc_rank) {
-            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI, proc_rank,
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, proc_rank,
                       EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI, proc_rank,
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, proc_rank,
                       WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
@@ -465,7 +464,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         auto *eastCond = new MPICondition(eastInit, eastExc, eastMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*eastCond).addCond(*eastCond);
+        boundaries.addPreCond(*eastCond);
     }
 
     //WEST
@@ -500,7 +499,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     }
     else {
         // process rank that is to the west
-        const int proc_rank = decomp.neighbor[0][4];
+        const int proc_rank = decomp.neighbor[0][5];
 
         MPICondition::BufferInitializer westInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
@@ -516,9 +515,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         MPICondition::BufferExchanger westExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                                    MPI_Request *requestIn,
                                                    int proc_rank) {
-            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI, proc_rank,
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, proc_rank,
                       WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI, proc_rank,
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, proc_rank,
                       EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
@@ -540,7 +539,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         auto *westCond = new MPICondition(westInit, westExc, westMapp, *bufferStructure, proc_rank);
 
         // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*westCond).addCond(*westCond);
+        boundaries.addPreCond(*westCond);
     }
 
 
