@@ -453,7 +453,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         // process rank that is to the east
         const int east_neigh_rank = decomp.neighbor[0][4];
 
-        std::cout << "I'm " << decomp.nRank << ", at my right there is " << proc_rank << std::endl;
+        std::cout << "I'm " << decomp.nRank << ", at my right there is " << east_neigh_rank << std::endl;
 
         MPICondition::BufferInitializer eastInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
