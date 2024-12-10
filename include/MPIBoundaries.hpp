@@ -6,33 +6,42 @@
 
 class MPIBoundaries : public Boundaries {
 
-
-    std::vector<MPICondition *> _pre_cs;
+    /**
+     * Collection of boundary function that needs MPI communications
+     */
+    std::vector<MPICondition *> _mpi_cs;
 
 public:
 
     MPIBoundaries() = default;
 
-    explicit MPIBoundaries(std::vector<Condition *> cs, std::vector<MPICondition *> pre_cs)
+    /**
+     * Construct an MPIBoundaries object initialized with given BC and MPI_BC
+     */
+    MPIBoundaries(std::vector<Condition *> cs, std::vector<MPICondition *> mpi_cs)
             : Boundaries(std::move(cs)),
-              _pre_cs(std::move(pre_cs)) {}
+              _mpi_cs(std::move(mpi_cs)) {}
 
-    MPIBoundaries &addPreCond(MPICondition &cond) { _pre_cs.push_back(&cond); return *this; }
+    /**
+     * Add an MPI BC to the collection
+     */
+    MPIBoundaries &addMPICond(MPICondition &cond) { _mpi_cs.push_back(&cond); return *this; }
 
     void apply(GridData &grid, Real time) override {
         // Fill all outgoing buffers
-        for (MPICondition *pre_c: _pre_cs) pre_c->init(grid);
+        for (MPICondition *mpi_c: _mpi_cs) mpi_c->init(grid);
 
         // Start exchange of input and output buffers
-        for (MPICondition *pre_c: _pre_cs) pre_c->exchange();
+        for (MPICondition *mpi_c: _mpi_cs) mpi_c->exchange();
 
         // Apply all boundary condition
         // first we apply all the physical one (this optimizes communication while working)
         for (Condition *bc: _cs) bc->apply(grid, time);
 
         // then all logical ones
-        for (MPICondition *pre_c: _pre_cs) pre_c->apply(grid, time);
+        for (MPICondition *mpi_c: _mpi_cs) mpi_c->apply(grid, time);
 
+        // Await all processor has applied BC
         MPI_Barrier(MPI_COMM_WORLD);
     }
 

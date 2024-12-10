@@ -1,3 +1,7 @@
+/**
+ * This file contains functions that compile the BC collection
+ */
+
 #include "C2Decomp.hpp"
 
 #include "Traits.hpp"
@@ -211,14 +215,16 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     boundaries.addCond(*backCond);
 }
 
-
+/**
+ * Builds boundary conditions for a partitioned space
+ */
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
                                const std::vector<TFunction> &boundaryFunctions) {
 
 #define int(v) static_cast<int>(v)
 
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
-    // global reference of this process position
+    // global position of this process
     int n_y_proc = decomp.dims[0];
     int n_z_proc = decomp.dims[1];
     int this_y_pos = decomp.coord[0];
@@ -232,20 +238,24 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
     /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
 
-    // North
+    // NORTH (MAX Y)
     if (isOnTop) {
+        // The processor is on top of global domain, it has to apply on the upper face the physical BC
+
+        // This lambda defines how the #functions have to be applied to the #grid
         PhysicalCondition::Mapper northFace = [](GridData &grid,
                                                  const Real currentTime,
                                                  const std::vector<TFunction> &functions) {
 
+            // Use macro to get some variables
             getStaggeredSpacing(grid, sdx, sdy, sdz);
             getExactFunctions(functions, eU, eV, eW);
 
+            // The upper boundary is at the max Y
             const index_t j = grid.structure.ny;
             const Real y = real(j + grid.structure.py) * grid.structure.dy;
 
-            // apply on face with y constant
-
+            // apply on face
             for (index_t k = 0; k < grid.structure.nz; k++)
                 for (index_t i = 0; i < grid.structure.nx; i++) {
                     Real x = real(i + grid.structure.px) * grid.structure.dx;
@@ -263,16 +273,23 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
                 }
         };
 
+        // Build the #condition that will associate the mapper (#face) to the corresponding #BC_functions
         auto *northCond = new PhysicalCondition(northFace, boundaryFunctions);
+        // Add the #condition to the collection
         boundaries.addCond(*northCond);
     } else {
-        // process rank that is to the north
-        const int proc_rank = decomp.neighbor[0][2];
+        // The processor is not on top of the global domain,
+        // so we have to set up a communication layer with the above processor
 
+        // process rank that is to the north of this one
+        const int north_neigh_rank = decomp.neighbor[0][2];
+
+        std::cout << "I'm " << decomp.nRank << ", above me there is " << north_neigh_rank << std::endl;
+
+        // This lambda defines how the outgoing communication buffer has to be initialized
         MPICondition::BufferInitializer northInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
             const index_t j = grid.structure.ny - 1;
-
             for (index_t k = 0; k < grid.structure.nz; k++) {
                 memcpy(&bufferOut.U(0, 0, k), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
                 memcpy(&bufferOut.V(0, 0, k), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
@@ -280,19 +297,26 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             }
         };
 
+        // This lambda defines which data has to be shared with the given neighbour (#neigh_rank)
         MPICondition::BufferExchanger northExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
-                                                    MPI_Request *requestIn, int proc_rank) {
+                                                    MPI_Request *requestIn, int neigh_rank) {
+            // This proc will send his outgoing buffer with the tag #NORTH_BUFFER_TAG
+            // (means that the buffer is the top layer of this domain)
             MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
-                      proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+                      neigh_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+            // This proc will receive into ingoing buffer data with tag #SOUTH_BUFFER_TAG
+            // (means that the buffer is the top layer of neighbour domain)
             MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
-                      proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+                      neigh_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
+        // This lambda defines how the ingoing communication buffer has to be copied into the local model grid
         MPICondition::BufferMapper northMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
                                                   MPI_Request *requestIn) {
+            // Since communication are asynchronous I wait for the ingoing buffer to be completely received
             MPI_Wait(requestIn, MPI_STATUS_IGNORE);
 
-            // Copy the buffer into the ghost point layer
+            // Copy the buffer into the upper ghost point layer
             const index_t j = grid.structure.ny;
             for (index_t k = 0; k < grid.structure.nz; k++) {
                 memcpy(&grid.U(0, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.nx);
@@ -301,16 +325,22 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             }
         };
 
+        // Define the structure of communication buffers,
         // Since north face is a X-Z plane the face has dimension 1 for Y
         auto *bufferStructure = new GridStructure({gridStructure.nx, 1, gridStructure.nz}, {0, 0, 0}, {0, 0, 0}, 0);
-        auto *northCond = new MPICondition(northInit, northExc, northMapp, *bufferStructure, proc_rank);
 
-        // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*northCond);
+        // Create the BC, I assign as neighbour the north_neighbour
+        auto *northCond = new MPICondition(northInit, northExc, northMapp, *bufferStructure, north_neigh_rank);
+
+        // Add the BC to the collection
+        boundaries.addMPICond(*northCond);
     }
 
-    // SOUTH
+    // SOUTH (MIN Y)
     if (isOnBottom) {
+        // The processor is on bottom of global domain, it has to apply on the lower face the physical BC
+        std::cout << "I'm " << decomp.nRank << ", i'm at bottom" << std::endl;
+
         PhysicalCondition::Mapper southFace = [](GridData &grid,
                                                  const Real currentTime,
                                                  const std::vector<TFunction> &functions) {
@@ -318,10 +348,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             getStaggeredSpacing(grid, sdx, sdy, sdz);
             getExactFunctions(functions, eU, eV, eW);
 
+            // South face has y=0
             const index_t j = 0;
             const Real y = real(j + grid.structure.py) * grid.structure.dy;
-
-            // apply on face with y constant
 
             for (index_t k = 0; k < grid.structure.nz; k++)
                 for (index_t i = 0; i < grid.structure.nx; i++) {
@@ -340,13 +369,15 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         auto southCond = new PhysicalCondition(southFace, boundaryFunctions);
         boundaries.addCond(*southCond);
     } else {
+        // The processor is not on bottom of the global domain,
+        // so we have to set up a communication layer with the below processor
+
         // process rank that is to the south
-        const int proc_rank = decomp.neighbor[0][3];
+        const int south_neigh_rank = decomp.neighbor[0][3];
 
         MPICondition::BufferInitializer southInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
             const index_t j = 0;
-
             for (index_t k = 0; k < grid.structure.nz; k++) {
                 memcpy(&bufferOut.U(0, 0, k), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
                 memcpy(&bufferOut.V(0, 0, k), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
@@ -355,15 +386,11 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger southExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
-                                                    MPI_Request *requestIn,
-                                                    int proc_rank) {
+                                                    MPI_Request *requestIn, int neigh_rank) {
             MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
-                      proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-
-
+                      neigh_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
             MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
-                      proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
-
+                      neigh_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
         MPICondition::BufferMapper southMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
@@ -381,14 +408,14 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         // Since south face is a X-Z plane the face has dimension 1 for Y
         auto *bufferStructure = new GridStructure({gridStructure.nx, 1, gridStructure.nz}, {0, 0, 0}, {0, 0, 0}, 0);
-        auto *southCond = new MPICondition(southInit, southExc, southMapp, *bufferStructure, proc_rank);
-
-        // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*southCond);
+        auto *southCond = new MPICondition(southInit, southExc, southMapp, *bufferStructure, south_neigh_rank);
+        boundaries.addMPICond(*southCond);
     }
 
-    // EAST
+    // EAST (MAX Z)
     if (isOnRight) {
+        // The processor is at the right of global domain, it has to apply on the right face the physical BC
+
         PhysicalCondition::Mapper eastFace = [](GridData &grid,
                                                 const Real currentTime,
                                                 const std::vector<TFunction> &functions) {
@@ -419,10 +446,12 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         auto eastCond = new PhysicalCondition(eastFace, boundaryFunctions);
         boundaries.addCond(*eastCond);
-    }
-    else {
+    } else {
+        // The processor is not on the right of the global domain,
+        // so we have to set up a communication layer with the processor at right
+
         // process rank that is to the east
-        const int proc_rank = decomp.neighbor[0][4];
+        const int east_neigh_rank = decomp.neighbor[0][4];
 
         std::cout << "I'm " << decomp.nRank << ", at my right there is " << proc_rank << std::endl;
 
@@ -438,11 +467,10 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger eastExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
-                                                   MPI_Request *requestIn,
-                                                   int proc_rank) {
-            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, proc_rank,
+                                                   MPI_Request *requestIn, int neigh_rank) {
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
                       EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, proc_rank,
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
                       WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
@@ -461,14 +489,14 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         // Since east face is a X-Y plane the face has dimension 1 for Z
         auto *bufferStructure = new GridStructure({gridStructure.nx, gridStructure.ny, 1}, {0, 0, 0}, {0, 0, 0}, 0);
-        auto *eastCond = new MPICondition(eastInit, eastExc, eastMapp, *bufferStructure, proc_rank);
-
-        // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*eastCond);
+        auto *eastCond = new MPICondition(eastInit, eastExc, eastMapp, *bufferStructure, east_neigh_rank);
+        boundaries.addMPICond(*eastCond);
     }
 
-    //WEST
+    // WEST (MIN Z)
     if (isOnLeft) {
+        // The processor is on left of global domain, it has to apply on the left face the physical BC
+
         PhysicalCondition::Mapper westFace = [](GridData &grid,
                                                 const Real currentTime,
                                                 const std::vector<TFunction> &functions) {
@@ -496,15 +524,16 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         auto westCond = new PhysicalCondition(westFace, boundaryFunctions);
         boundaries.addCond(*westCond);
-    }
-    else {
+    } else {
+        // The processor is not on the left of the global domain,
+        // so we have to set up a communication layer with the processor at left
+
         // process rank that is to the west
-        const int proc_rank = decomp.neighbor[0][5];
+        const int west_proc_rank = decomp.neighbor[0][5];
 
         MPICondition::BufferInitializer westInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
             const index_t k = 0;
-
             for (index_t j = 0; j < grid.structure.ny; j++) {
                 memcpy(&bufferOut.U(0, j, 0), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
                 memcpy(&bufferOut.V(0, j, 0), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
@@ -513,11 +542,10 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         };
 
         MPICondition::BufferExchanger westExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
-                                                   MPI_Request *requestIn,
-                                                   int proc_rank) {
-            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, proc_rank,
+                                                   MPI_Request *requestIn, int neigh_rank) {
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
                       WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, proc_rank,
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
                       EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
@@ -536,16 +564,14 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         // Since east face is a X-Y plane the face has dimension 1 for Z
         auto *bufferStructure = new GridStructure({gridStructure.nx, gridStructure.ny, 1}, {0, 0, 0}, {0, 0, 0}, 0);
-        auto *westCond = new MPICondition(westInit, westExc, westMapp, *bufferStructure, proc_rank);
-
-        // NOTE that we add mpi condition for both precondition and condition
-        boundaries.addPreCond(*westCond);
+        auto *westCond = new MPICondition(westInit, westExc, westMapp, *bufferStructure, west_proc_rank);
+        boundaries.addMPICond(*westCond);
     }
 
 
-    // Font and back faces are always phisical boundaries in pencil domain decomposition
+    // Font and back faces are always physical boundaries in pencil domain decomposition
 
-    // FRONT
+    // FRONT (MIN X)
     PhysicalCondition::Mapper frontFace = [](GridData &grid,
                                              const Real currentTime,
                                              const std::vector<TFunction> &functions) {
@@ -574,7 +600,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     auto frontCond = new PhysicalCondition(frontFace, boundaryFunctions);
     boundaries.addCond(*frontCond);
 
-    // BACK
+    // BACK (MAX X)
     PhysicalCondition::Mapper backFace = [](GridData &grid,
                                             const Real currentTime,
                                             const std::vector<TFunction> &functions) {
