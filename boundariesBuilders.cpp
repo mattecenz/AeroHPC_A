@@ -12,6 +12,114 @@
 #include "MPICondition.hpp"
 #include "MPIBoundaries.hpp"
 
+#include <iostream>
+
+void print(GridData &grid, std::string &filename) {
+
+    std::ofstream file;
+    file.open(filename);
+
+    file << std::setprecision(2) << std::fixed;
+
+    file << "U:" << endl;
+    std::string space;
+    for (int j = grid.structure.ny; j >= -1; --j) {
+        for (int k = -1; k <= grid.structure.nz; ++k) {
+            file << space;
+            for (int i = -1; i <= grid.structure.nx; ++i) {
+                file << grid.U(i, j, k) << " ";
+            }
+            file << endl;
+            space += "\t";
+        }
+        space = "";
+        file << endl;
+    }
+
+    file << endl << "V:" << endl;
+    for (int j = grid.structure.ny; j >= -1; --j) {
+        for (int k = -1; k <= grid.structure.nz; ++k) {
+            file << space;
+            for (int i = -1; i <= grid.structure.nx; ++i) {
+                file << grid.V(i, j, k) << " ";
+            }
+            file << endl;
+            space += "\t";
+        }
+        space = "";
+        file << endl;
+    }
+
+    file << endl << "W:" << endl;
+    for (int j = grid.structure.ny; j >= -1; --j) {
+        for (int k = -1; k <= grid.structure.nz; ++k) {
+            file << space;
+            for (int i = -1; i <= grid.structure.nx; ++i) {
+                file << grid.W(i, j, k) << " ";
+            }
+            file << endl;
+            space += "\t";
+        }
+        space = "";
+        file << endl;
+    }
+}
+
+void printBuffer(GridData &grid, std::string &filename) {
+
+    std::ofstream file;
+    file.open(filename);
+
+    file << std::setprecision(2) << std::scientific;
+
+    file << "U:" << endl;
+
+    std::string space;
+    for (int j = grid.structure.ny - 1; j > -1; --j) {
+        for (int k = 0; k < grid.structure.nz; ++k) {
+            file << space;
+            for (int i = 0; i < grid.structure.nx; ++i) {
+                file << grid.U(i, j, k) << " ";
+            }
+            file << endl;
+            space += "\t";
+        }
+        space = "";
+        file << endl;
+    }
+
+    file << endl << "V:" << endl;
+
+    for (int j = grid.structure.ny - 1; j > -1; --j) {
+        for (int k = 0; k < grid.structure.nz; ++k) {
+            file << space;
+            for (int i = 0; i < grid.structure.nx; ++i) {
+                file << grid.V(i, j, k) << " ";
+            }
+            file << endl;
+            space += "\t";
+        }
+        space = "";
+        file << endl;
+    }
+
+    file << endl << "W:" << endl;
+
+    for (int j = grid.structure.ny - 1; j > -1; --j) {
+        for (int k = 0; k < grid.structure.nz; ++k) {
+            file << space;
+            for (int i = 0; i < grid.structure.nx; ++i) {
+                file << grid.W(i, j, k) << " ";
+            }
+            file << endl;
+            space += "\t";
+        }
+        space = "";
+        file << endl;
+    }
+
+}
+
 
 // Couple of macro for shortening the code
 #define getStaggeredSpacing(grid, x, y, z) \
@@ -237,10 +345,13 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     bool isOnRight = (this_z_pos == n_z_proc - 1);
 
     /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
+    std::cout << "I'm " << decomp.nRank << ", i'm at " << decomp.xStart[0] << " " << decomp.xStart[1] << " "
+              << decomp.xStart[2] << std::endl;
 
     // NORTH (MAX Y)
     if (isOnTop) {
         // The processor is on top of global domain, it has to apply on the upper face the physical BC
+        std::cout << "I'm " << decomp.nRank << ", i'm at top" << std::endl;
 
         // This lambda defines how the #functions have to be applied to the #grid
         PhysicalCondition::Mapper northFace = [](GridData &grid,
@@ -375,6 +486,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         // process rank that is to the south
         const int south_neigh_rank = decomp.neighbor[0][3];
 
+        std::cout << "I'm " << decomp.nRank << ", below me there is " << south_neigh_rank << std::endl;
+
         MPICondition::BufferInitializer southInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
             const index_t j = 0;
@@ -415,6 +528,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // EAST (MAX Z)
     if (isOnRight) {
         // The processor is at the right of global domain, it has to apply on the right face the physical BC
+        std::cout << "I'm " << decomp.nRank << ", i'm at right" << std::endl;
 
         PhysicalCondition::Mapper eastFace = [](GridData &grid,
                                                 const Real currentTime,
@@ -497,6 +611,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     if (isOnLeft) {
         // The processor is on left of global domain, it has to apply on the left face the physical BC
 
+        std::cout << "I'm " << decomp.nRank << ", i'm at left" << std::endl;
+
         PhysicalCondition::Mapper westFace = [](GridData &grid,
                                                 const Real currentTime,
                                                 const std::vector<TFunction> &functions) {
@@ -530,6 +646,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         // process rank that is to the west
         const int west_proc_rank = decomp.neighbor[0][5];
+
+        std::cout << "I'm " << decomp.nRank << ", at my left there is " << west_proc_rank << std::endl;
 
         MPICondition::BufferInitializer westInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer

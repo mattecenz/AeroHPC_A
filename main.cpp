@@ -11,8 +11,15 @@
 #include "L2NormCalculator.hpp"
 #include "RungeKutta.hpp"
 
+#define TEST 0
+
 using namespace std;
 
+void testBoundaries(MPIBoundaries &boundaries, GridData &grid, C2Decomp &decomp){
+    boundaries.apply(grid,0);
+    std::string filename = "grid_" + to_string(decomp.nRank)+ ".txt";
+    print(grid,filename);
+}
 
 Real testSolver(Real deltaT, index_t dim) {
 
@@ -76,9 +83,16 @@ Real testSolver(Real deltaT, index_t dim) {
 
     /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////
     // Define initial velocity function
+
+#if TEST
+    auto initialVel = [](Real x, Real y, Real z) -> Vector {
+        return {y,y,y};
+    };
+#else
     auto initialVel = [](Real x, Real y, Real z) -> Vector {
         return {ExactSolution::u(x, y, z, 0), ExactSolution::v(x, y, z, 0), ExactSolution::w(x, y, z, 0)};
     };
+#endif
 
     // Define initial pressure function
     // For the moment it does not work so do not care about it
@@ -94,9 +108,14 @@ Real testSolver(Real deltaT, index_t dim) {
         logger.printTitle("Grid initialized", initT);
 
     /// Define boundaries condition functions //////////////////////////////////////////////////////////////
+#if TEST
+    TFunction testBound = [](Real x, Real y, Real z, Real t) -> Real {return 48.9999;};
+    const std::vector<TFunction> boundaryFunctions = std::vector{testBound, testBound, testBound};
+#else
     const std::vector<TFunction> boundaryFunctions = std::vector{ExactSolution::u,
                                                                  ExactSolution::v,
                                                                  ExactSolution::w};
+#endif
 
     //MPI STUFFS
     
@@ -134,6 +153,10 @@ Real testSolver(Real deltaT, index_t dim) {
     if (!rank)
         logger.printTitle("Start computation")
             .openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
+#if TEST
+    testBoundaries(mpiBoundaries, model, *c2d);
+    return 0.0;
+#endif
 
     chrono_start(compT);
     mpiBoundaries.apply(model, currentTime);
@@ -175,8 +198,11 @@ int main(int argc, char **argv) {
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
+#if TEST
+    std::vector<index_t> dims = {4};
+#else
     std::vector<index_t> dims = {4, 8, 16, 32, 64};
-    //std::vector<index_t> dims = {8};
+#endif
 
     std::vector<Real> error;
 
