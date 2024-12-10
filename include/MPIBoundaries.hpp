@@ -32,6 +32,8 @@ public:
 
         // then all logical ones
         for (MPICondition *pre_c: _pre_cs) pre_c->apply(grid, time);
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
 };

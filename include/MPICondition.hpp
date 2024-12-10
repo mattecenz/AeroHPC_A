@@ -20,7 +20,7 @@ public:
     /**
      * Typedef shortening lambda definition of mapping function
      */
-    typedef void (*BufferMapper)(GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut);
+    typedef void (*BufferMapper)(GridData &grid, GridData &buffer, MPI_Request *requestOut, MPI_Request *requestIn);
 
 
     MPICondition() = delete;
@@ -35,9 +35,7 @@ public:
                                         _mapper(mapper),
                                         _proc_rank(proc_rank),
                                         _bufferIn(bufferStructure, false),
-                                        _bufferOut(bufferStructure, false),
-                                        _requestIn(MPI_REQUEST_NULL),
-                                        _requestOut(MPI_REQUEST_NULL) {}
+                                        _bufferOut(bufferStructure, false){}
 
 
     /**
@@ -47,7 +45,7 @@ public:
 
     void exchange() { _exchanger(_bufferOut, _bufferIn, &_requestOut, &_requestIn, _proc_rank); }
 
-    void apply(GridData &grid, const Real time) override { _mapper(grid, _bufferOut, &_requestIn, &_requestOut); }
+    void apply(GridData &grid, const Real time) override { _mapper(grid, _bufferIn, &_requestOut, &_requestIn); }
 
 private:
 

@@ -1,12 +1,7 @@
 #include <mpi.h>
 #include <cmath>
-#include <cstdlib>
-#include <cstddef>
-#include <cstring>
 #include <iostream>
 #include <fstream>
-#include <assert.h>
-
 #include "Traits.hpp"
 #include "VTKConverter.hpp"
 #include "chronoUtils.hpp"
@@ -25,10 +20,14 @@ Real testSolver(Real deltaT, index_t dim) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+    const index_t dim_x = dim;
+    const index_t dim_y = dim;
+    const index_t dim_z = dim;
+
     C2Decomp *c2d;
-    int pRow = 1, pCol = size;
+    int pRow = size, pCol = 1;
     bool periodicBC[3] = {true, true, true};
-    c2d = new C2Decomp(dim, dim, dim, pRow, pCol, periodicBC);
+    c2d = new C2Decomp(dim_x, dim_y, dim_z, pRow, pCol, periodicBC);
 
     // define T & deltaT  & Re
     constexpr Real T = 1.0;
@@ -57,9 +56,9 @@ Real testSolver(Real deltaT, index_t dim) {
     Idx3 displacement = {px, py, pz};
 
     // Define physical size of the problem for each axis
-    const Real sx = phy_dim / real(nx);
-    const Real sy = phy_dim / real(ny);
-    const Real sz = phy_dim / real(nz);
+    const Real sx = phy_dim / real(dim_x);
+    const Real sy = phy_dim / real(dim_y);
+    const Real sz = phy_dim / real(dim_z);
     Vector spacing = {sx, sy, sz};
 
     // Initialize the global Grid Structure
@@ -152,10 +151,11 @@ Real testSolver(Real deltaT, index_t dim) {
             chrono_stop(l2Time);
             perf = rkTime / nNodes;
 
+            globalL2Norm = 0.0;
             MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
             globalL2Norm = std::sqrt(globalL2Norm);
             if (!rank)
-                logger.printTableValues(iter, {currentTime, localL2Norm, rkTime, l2Time, perf});
+                logger.printTableValues(iter, {currentTime, globalL2Norm, rkTime, l2Time, perf});
         }
         iter++;
     }
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8,16, 32, 64};
+    std::vector<index_t> dims = {4, 8, 16, 32, 64};
     //std::vector<index_t> dims = {8};
 
     std::vector<Real> error;

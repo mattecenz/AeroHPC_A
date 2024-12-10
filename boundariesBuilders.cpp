@@ -215,6 +215,8 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
                                const std::vector<TFunction> &boundaryFunctions) {
 
+#define int(v) static_cast<int>(v)
+
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
     // global reference of this process position
     int n_y_proc = decomp.dims[0];
@@ -225,8 +227,8 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // flags to define if the processor is on a physical boundary
     bool isOnTop = (this_y_pos == n_y_proc - 1);
     bool isOnBottom = (this_y_pos == 0);
-    bool isOnLeft = (this_z_pos == 0);
-    bool isOnRight = (this_z_pos == n_z_proc - 1);
+    bool isOnLeft = (this_z_pos == n_z_proc - 1);
+    bool isOnRight = (this_z_pos == 0);
 
     /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
 
@@ -264,11 +266,10 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         auto *northCond = new PhysicalCondition(northFace, boundaryFunctions);
         boundaries.addCond(*northCond);
 
-    } else {
-        // TODO DETERMINE TO WHICH PROCESSOR I HAVE TO COMMUNICATE
 
+    } else {
         // process rank that is to the north
-        const int proc_rank = decomp.neighbor[0][5];
+        const int proc_rank = decomp.neighbor[0][2];
 
         MPICondition::BufferInitializer northInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
@@ -281,17 +282,18 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             }
         };
 
-        MPICondition::BufferExchanger northExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
-                                                    int proc_rank) {
-            *requestIn = MPI_REQUEST_NULL;
-            *requestOut = MPI_REQUEST_NULL;
-            MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+        MPICondition::BufferExchanger northExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                                    MPI_Request *requestIn, int proc_rank) {
+
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI,
+                      proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI,
+                      proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
-        MPICondition::BufferMapper northMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
-            MPI_Status status{};
-            MPI_Wait(requestIn, &status);
+        MPICondition::BufferMapper northMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                                  MPI_Request *requestIn) {
+            MPI_Wait(requestIn, MPI_STATUS_IGNORE);
 
             // Copy the buffer into the ghost point layer
             const index_t j = grid.structure.ny;
@@ -342,7 +344,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         boundaries.addCond(*southCond);
     } else {
         // process rank that is to the south
-        const int proc_rank = decomp.neighbor[0][4];
+        const int proc_rank = decomp.neighbor[0][3];
 
         MPICondition::BufferInitializer southInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
@@ -355,17 +357,21 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             }
         };
 
-        MPICondition::BufferExchanger southExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
+        MPICondition::BufferExchanger southExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                                    MPI_Request *requestIn,
                                                     int proc_rank) {
-            *requestIn = MPI_REQUEST_NULL;
-            *requestOut = MPI_REQUEST_NULL;
-            MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI,
+                      proc_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+
+
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI,
+                      proc_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+
         };
 
-        MPICondition::BufferMapper southMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
-            MPI_Status status{};
-            MPI_Wait(requestIn, &status);
+        MPICondition::BufferMapper southMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                                  MPI_Request *requestIn) {
+            MPI_Wait(requestIn, MPI_STATUS_IGNORE);
 
             // Copy the buffer into the ghost point layer
             const index_t j = -1;
@@ -416,9 +422,10 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         auto eastCond = new PhysicalCondition(eastFace, boundaryFunctions);
         boundaries.addCond(*eastCond);
-    } else {
+    }
+    else {
         // process rank that is to the east
-        const int proc_rank = decomp.neighbor[0][3];
+        const int proc_rank = decomp.neighbor[0][5];
 
         MPICondition::BufferInitializer eastInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
@@ -431,17 +438,18 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             }
         };
 
-        MPICondition::BufferExchanger eastExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
+        MPICondition::BufferExchanger eastExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                                   MPI_Request *requestIn,
                                                    int proc_rank) {
-            *requestIn = MPI_REQUEST_NULL;
-            *requestOut = MPI_REQUEST_NULL;
-            MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI, proc_rank,
+                      EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI, proc_rank,
+                      WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
-        MPICondition::BufferMapper eastMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
-            MPI_Status status{};
-            MPI_Wait(requestIn, &status);
+        MPICondition::BufferMapper eastMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                                 MPI_Request *requestIn) {
+            MPI_Wait(requestIn, MPI_STATUS_IGNORE);
 
             // Copy the buffer into the ghost point layer
             const index_t k = grid.structure.nz;
@@ -489,9 +497,10 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         auto westCond = new PhysicalCondition(westFace, boundaryFunctions);
         boundaries.addCond(*westCond);
-    } else {
+    }
+    else {
         // process rank that is to the west
-        const int proc_rank = decomp.neighbor[0][2];
+        const int proc_rank = decomp.neighbor[0][4];
 
         MPICondition::BufferInitializer westInit = [](GridData &grid, GridData &bufferOut) {
             // I want to copy the last in-domain layer
@@ -504,17 +513,18 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
             }
         };
 
-        MPICondition::BufferExchanger westExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestIn, MPI_Request *requestOut,
+        MPICondition::BufferExchanger westExc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                                   MPI_Request *requestIn,
                                                    int proc_rank) {
-            *requestIn = MPI_REQUEST_NULL;
-            *requestOut = MPI_REQUEST_NULL;
-            MPI_Isend(bufferOut.velocity_data, bufferOut.dim * 3, Real_MPI, proc_rank, WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-            MPI_Irecv(bufferIn.velocity_data, bufferIn.dim * 3, Real_MPI, proc_rank, EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+            MPI_Isend(bufferOut.velocity_data, int(bufferOut.dim) * 3, Real_MPI, proc_rank,
+                      WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+            MPI_Irecv(bufferIn.velocity_data, int(bufferIn.dim) * 3, Real_MPI, proc_rank,
+                      EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
         };
 
-        MPICondition::BufferMapper westMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestIn, MPI_Request *requestOut) {
-            MPI_Status status{};
-            MPI_Wait(requestIn, &status);
+        MPICondition::BufferMapper westMapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                                 MPI_Request *requestIn) {
+            MPI_Wait(requestIn, MPI_STATUS_IGNORE);
 
             // Copy the buffer into the ghost point layer
             const index_t k = -1;
