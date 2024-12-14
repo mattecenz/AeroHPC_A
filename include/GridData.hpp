@@ -34,12 +34,7 @@ public:
      */
     Real *pressure_data;
 
-
     GridData() = delete;
-
-    ~GridData() {
-        delete[] velocity_data;
-    }
 
     /**
      * Construct a staggered grid with ghost nodes,

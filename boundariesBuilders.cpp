@@ -59,10 +59,10 @@ namespace north {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
         // I want to copy the last in-domain layer
         const index_t j = grid.structure.ny - 1;
-        for (index_t k = 0; k < grid.structure.nz; k++) {
-            memcpy(&bufferOut.U(0, 0, k), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.V(0, 0, k), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.W(0, 0, k), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+        for (index_t k = -1; k <= grid.structure.nz; k++) {
+            memcpy(&bufferOut.U(0, 0, k), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.V(0, 0, k), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.W(0, 0, k), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
@@ -87,10 +87,10 @@ namespace north {
 
         // Copy the buffer into the upper ghost point layer
         const index_t j = grid.structure.ny;
-        for (index_t k = 0; k < grid.structure.nz; k++) {
-            memcpy(&grid.U(0, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.V(0, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.W(0, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.nx);
+        for (index_t k = -1; k <= grid.structure.nz; k++) {
+            memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.gx);
         }
     };
 }
@@ -124,10 +124,10 @@ namespace south {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
         // I want to copy the last in-domain layer
         const index_t j = 0;
-        for (index_t k = 0; k < grid.structure.nz; k++) {
-            memcpy(&bufferOut.U(0, 0, k), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.V(0, 0, k), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.W(0, 0, k), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+        for (index_t k = -1; k <= grid.structure.nz; k++) {
+            memcpy(&bufferOut.U(0, 0, k), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.V(0, 0, k), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.W(0, 0, k), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
@@ -145,10 +145,10 @@ namespace south {
 
         // Copy the buffer into the ghost point layer
         const index_t j = -1;
-        for (index_t k = 0; k < grid.structure.nz; k++) {
-            memcpy(&grid.U(0, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.V(0, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.W(0, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.nx);
+        for (index_t k = -1; k <= grid.structure.nz; k++) {
+            memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.gx);
         }
     };
 }
@@ -185,10 +185,10 @@ namespace east {
         // I want to copy the last in-domain layer
         const index_t k = grid.structure.nz - 1;
 
-        for (index_t j = 0; j < grid.structure.ny; j++) {
-            memcpy(&bufferOut.U(0, j, 0), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.V(0, j, 0), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.W(0, j, 0), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+        for (index_t j = -1; j <= grid.structure.ny; j++) {
+            memcpy(&bufferOut.U(0, j, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.V(0, j, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.W(0, j, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
@@ -206,10 +206,10 @@ namespace east {
 
         // Copy the buffer into the ghost point layer
         const index_t k = grid.structure.nz;
-        for (index_t j = 0; j < grid.structure.ny; j++) {
-            memcpy(&grid.U(0, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.V(0, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.W(0, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.nx);
+        for (index_t j = -1; j <= grid.structure.ny; j++) {
+            memcpy(&grid.U(-1, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.V(-1, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.W(-1, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.gx);
         }
     };
 }
@@ -242,10 +242,10 @@ namespace west {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
         // I want to copy the last in-domain layer
         const index_t k = 0;
-        for (index_t j = 0; j < grid.structure.ny; j++) {
-            memcpy(&bufferOut.U(0, j, 0), &grid.U(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.V(0, j, 0), &grid.V(0, j, k), sizeof(Real) * grid.structure.nx);
-            memcpy(&bufferOut.W(0, j, 0), &grid.W(0, j, k), sizeof(Real) * grid.structure.nx);
+        for (index_t j = -1; j <= grid.structure.ny; j++) {
+            memcpy(&bufferOut.U(0, j, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.V(0, j, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.W(0, j, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
@@ -263,10 +263,10 @@ namespace west {
 
         // Copy the buffer into the ghost point layer
         const index_t k = -1;
-        for (index_t j = 0; j < grid.structure.ny; j++) {
-            memcpy(&grid.U(0, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.V(0, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.nx);
-            memcpy(&grid.W(0, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.nx);
+        for (index_t j = -1; j <= grid.structure.ny; j++) {
+            memcpy(&grid.U(-1, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.V(-1, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.W(-1, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.gx);
         }
     };
 }
@@ -323,6 +323,122 @@ namespace back {
                 grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                   - grid.W(i - 1, j, k);
             }
+    };
+}
+/// NORTH EAST /////////////////////////////////////////////////////////////////////////////////////////
+namespace nhet {
+    MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
+        // I want to copy the last in-domain layer
+        const index_t j = grid.structure.ny - 1;
+        const index_t k = grid.structure.nz - 1;
+        memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+    };
+
+    MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                           MPI_Request *requestIn, int neigh_rank) {
+        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+                  neigh_rank, NORTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+                  neigh_rank, SOUTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+    };
+
+    MPICondition::BufferMapper mapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                         MPI_Request *requestIn) {
+        MPI_Wait(requestIn, MPI_STATUS_IGNORE);
+        const index_t j = grid.structure.ny;
+        const index_t k = grid.structure.nz;
+        memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+    };
+}
+/// NORTH WEST /////////////////////////////////////////////////////////////////////////////////////////
+namespace nhwt {
+    MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
+        // I want to copy the last in-domain layer
+        const index_t j = grid.structure.ny - 1;
+        const index_t k = 0;
+        memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+    };
+
+    MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                           MPI_Request *requestIn, int neigh_rank) {
+        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+                  neigh_rank, NORTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+                  neigh_rank, SOUTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+    };
+
+    MPICondition::BufferMapper mapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                         MPI_Request *requestIn) {
+        MPI_Wait(requestIn, MPI_STATUS_IGNORE);
+        const index_t j = grid.structure.ny;
+        const index_t k = -1;
+        memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+    };
+}
+/// SOUTH EAST /////////////////////////////////////////////////////////////////////////////////////////
+namespace shet {
+    MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
+        // I want to copy the last in-domain layer
+        const index_t j = 0;
+        const index_t k = grid.structure.nz - 1;
+        memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+    };
+
+    MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                           MPI_Request *requestIn, int neigh_rank) {
+        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+                  neigh_rank, SOUTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+                  neigh_rank, NORTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+    };
+
+    MPICondition::BufferMapper mapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                         MPI_Request *requestIn) {
+        MPI_Wait(requestIn, MPI_STATUS_IGNORE);
+        const index_t j = -1;
+        const index_t k = grid.structure.nz;
+        memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+    };
+}
+/// SOUTH WEST /////////////////////////////////////////////////////////////////////////////////////////
+namespace shwt {
+    MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
+        // I want to copy the last in-domain layer
+        const index_t j = 0;
+        const index_t k = 0;
+        memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+    };
+
+    MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
+                                           MPI_Request *requestIn, int neigh_rank) {
+        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+                  neigh_rank, SOUTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
+        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+                  neigh_rank, NORTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
+    };
+
+    MPICondition::BufferMapper mapp = [](GridData &grid, GridData &buffer, MPI_Request *requestOut,
+                                         MPI_Request *requestIn) {
+        MPI_Wait(requestIn, MPI_STATUS_IGNORE);
+        const index_t j = -1;
+        const index_t k = -1;
+        memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
     };
 }
 
@@ -557,7 +673,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
 
         // Define the structure of communication buffers,
         // Since north face is a X-Z plane the face has dimension 1 for Y
-        auto *bufferStructure = new GridStructure({gridStructure.nx, 1, gridStructure.nz}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *bufferStructure = new GridStructure({gridStructure.gx, 1, gridStructure.gz}, {0, 0, 0}, {0, 0, 0}, 0);
 
         // Create the BC, I assign as neighbour the north_neighbour
         auto *northCond = new MPICondition(north::init, north::exc, north::mapp, *bufferStructure, north_neigh_rank);
@@ -579,7 +695,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         const int south_neigh_rank = decomp.neighbor[0][3];
 
         // Since south face is a X-Z plane the face has dimension 1 for Y
-        auto *bufferStructure = new GridStructure({gridStructure.nx, 1, gridStructure.nz}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *bufferStructure = new GridStructure({gridStructure.gx, 1, gridStructure.gz}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *southCond = new MPICondition(south::init, south::exc, south::mapp, *bufferStructure, south_neigh_rank);
         boundaries.addMPICond(*southCond);
     }
@@ -597,7 +713,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         const int east_neigh_rank = decomp.neighbor[0][4];
 
         // Since east face is a X-Y plane the face has dimension 1 for Z
-        auto *bufferStructure = new GridStructure({gridStructure.nx, gridStructure.ny, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *bufferStructure = new GridStructure({gridStructure.gx, gridStructure.gy, 1}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *eastCond = new MPICondition(east::init, east::exc, east::mapp, *bufferStructure, east_neigh_rank);
         boundaries.addMPICond(*eastCond);
     }
@@ -615,12 +731,52 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         const int west_proc_rank = decomp.neighbor[0][5];
 
         // Since east face is a X-Y plane the face has dimension 1 for Z
-        auto *bufferStructure = new GridStructure({gridStructure.nx, gridStructure.ny, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *bufferStructure = new GridStructure({gridStructure.gx, gridStructure.gy, 1}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *westCond = new MPICondition(west::init, west::exc, west::mapp, *bufferStructure, west_proc_rank);
         boundaries.addMPICond(*westCond);
     }
 
 
+    if (!(isOnTop || isOnRight)){
+        int nhet_proc_rank;
+        const int coord[] = {this_y_pos + 1,this_z_pos + 1};
+        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &nhet_proc_rank);
+
+        auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *nhetCond = new MPICondition(nhet::init, nhet::exc, nhet::mapp, *bufferStructure, nhet_proc_rank);
+        boundaries.addMPICond(*nhetCond);
+    }
+
+    if(!(isOnTop || isOnLeft)){
+        int nhwt_proc_rank;
+        const int coord[] = {this_y_pos + 1, this_z_pos - 1};
+        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &nhwt_proc_rank);
+
+
+        auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *nhwtCond = new MPICondition(nhwt::init, nhwt::exc, nhwt::mapp, *bufferStructure, nhwt_proc_rank);
+        boundaries.addMPICond(*nhwtCond);
+    }
+
+    if(!(isOnBottom || isOnRight)){
+        int shet_proc_rank;
+        const int coord[] = {this_y_pos - 1, this_z_pos + 1};
+        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &shet_proc_rank);
+
+        auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *shetCond = new MPICondition(shet::init, shet::exc, shet::mapp, *bufferStructure, shet_proc_rank);
+        boundaries.addMPICond(*shetCond);
+    }
+
+    if(!(isOnBottom || isOnLeft)){
+        int shwt_proc_rank;
+        const int coord[] = {this_y_pos-1,this_z_pos-1};
+        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &shwt_proc_rank);
+
+        auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
+        auto *shwtCond = new MPICondition(shwt::init, shwt::exc, shwt::mapp, *bufferStructure, shwt_proc_rank);
+        boundaries.addMPICond(*shwtCond);
+    }
 
     // Font and back faces are always physical boundaries in pencil domain decomposition
 
