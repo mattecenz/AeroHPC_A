@@ -5,6 +5,7 @@
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 #include "mathUtils.hpp"
+#include "justfortest.hpp"
 
 #ifdef ForcingT
 #define getPhys(i, j, k)  Real px = real(i + model.structure.px) * dx;   \
@@ -77,7 +78,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         for (index_t k = 0; k < nz; ++k) {
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
-                for (index_t i = 0; i < nx - 1; ++i) {
+                for (index_t i = 0; i < nx; ++i) {
 
 #ifdef ForcingT
                     getPhys(i, j, k);
@@ -95,7 +96,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         }
 
         for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny - 1; ++j) {
+            for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
 
@@ -115,7 +116,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
             }
         }
 
-        for (index_t k = 0; k < nz - 1; ++k) {
+        for (index_t k = 0; k < nz; ++k) {
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
@@ -142,7 +143,6 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
 /// COLLECT DATA ///////////////////////////////////////////////////////////////////////////////////////////////
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ForcingT
@@ -154,7 +154,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         for (index_t k = 0; k < nz; ++k) {
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
-                for (index_t i = 0; i < nx - 1; ++i) {
+                for (index_t i = 0; i < nx; ++i) {
 
 #ifdef ForcingT
                     getPhys(i, j, k);
@@ -176,7 +176,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         }
 
         for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny - 1; ++j) {
+            for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
 
@@ -199,7 +199,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
             }
         }
 
-        for (index_t k = 0; k < nz - 1; ++k) {
+        for (index_t k = 0; k < nz; ++k) {
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
@@ -236,7 +236,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         for (index_t k = 0; k < nz; ++k) {
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
-                for (index_t i = 0; i < nx - 1; ++i) {
+                for (index_t i = 0; i < nx; ++i) {
 
 #ifdef ForcingT
                     getPhys(i, j, k);
@@ -255,7 +255,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         }
 
         for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny - 1; ++j) {
+            for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
 
@@ -299,6 +299,12 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
         boundary_cond.apply(model_buff, time + deltat);
     }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    int size,rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    std::string filename = "grid/grid_" + to_string(size) + "_" + to_string(rank) + "_" + to_string(0) + ".csv";
+    print(model_buff, filename);
+
 
     model.swap(model_buff);
 }
