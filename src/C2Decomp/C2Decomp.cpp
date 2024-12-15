@@ -80,7 +80,7 @@ void C2Decomp::decomp2DInit(int pRow, int pCol) {
         zSize[i] = decompMain.zsz[i];
     }
 
-    ierr = MPI_Type_size(C2D_MPI_Real, &myTypeBytes);
+    ierr = MPI_Type_size(C2D_MPI_DTYPE, &myTypeBytes);
 
 };
 

@@ -48,7 +48,7 @@ void C2Decomp::writeOne(int ipencil, C2D_DTYPE *var, const std::string& filename
 
 }
 
-void C2Decomp::readOne(int ipencil, double *var, const std::string& filename) {
+void C2Decomp::readOne(int ipencil, C2D_DTYPE *var, const std::string& filename) {
 
     MPI_Offset disp;
     MPI_File fh;

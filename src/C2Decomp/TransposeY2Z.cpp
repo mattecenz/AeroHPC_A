@@ -1,6 +1,6 @@
 #include "C2Decomp.hpp"
 
-void C2Decomp::transposeY2Z(double *src, double *dst){
+void C2Decomp::transposeY2Z(C2D_DTYPE *src, C2D_DTYPE *dst){
 
     int s1, s2, s3, d1, d2, d3;
 
@@ -14,14 +14,14 @@ void C2Decomp::transposeY2Z(double *src, double *dst){
 
     memSplitYZ(src, s1, s2, s3, work1_r, dims[1], decompMain.y2dist);
 
-    MPI_Alltoallv(work1_r, decompMain.y2cnts, decompMain.y2disp, realType, 
-		  dst,     decompMain.z2cnts, decompMain.z2disp, realType, 		   
+    MPI_Alltoallv(work1_r, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
+		  dst,     decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
 		  DECOMP_2D_COMM_ROW);
 
 
 }
 
-void C2Decomp::transposeY2Z_MajorIndex(double *src, double *dst){
+void C2Decomp::transposeY2Z_MajorIndex(C2D_DTYPE *src, C2D_DTYPE *dst){
 
     int s1, s2, s3, d1, d2, d3;
 
@@ -35,8 +35,8 @@ void C2Decomp::transposeY2Z_MajorIndex(double *src, double *dst){
 
     memSplitYZ_YMajor(src, s1, s2, s3, work1_r, dims[1], decompMain.y2dist);
 
-    MPI_Alltoallv(work1_r, decompMain.y2cnts, decompMain.y2disp, realType, 
-		  work2_r,     decompMain.z2cnts, decompMain.z2disp, realType, 		   
+    MPI_Alltoallv(work1_r, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
+		  work2_r,     decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
 		  DECOMP_2D_COMM_ROW);
 
     //Just do the transpose here...
@@ -52,7 +52,7 @@ void C2Decomp::transposeY2Z_MajorIndex(double *src, double *dst){
 
 }
 
-void C2Decomp::transposeY2Z_Start(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeY2Z_Start(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int s1, s2, s3;
 
@@ -62,14 +62,14 @@ void C2Decomp::transposeY2Z_Start(MPI_Request &handle, double *src, double *dst,
 
     memSplitYZ(src, s1, s2, s3, sbuf, dims[1], decompMain.y2dist);
 
-    MPI_Ialltoallv(sbuf, decompMain.y2cnts, decompMain.y2disp, realType,
-                   rbuf, decompMain.z2cnts, decompMain.z2disp, realType,
+    MPI_Ialltoallv(sbuf, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
+                   rbuf, decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
                    DECOMP_2D_COMM_ROW, &handle);
 
 
 }
 
-void C2Decomp::transposeY2Z_Wait(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeY2Z_Wait(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int d1, d2, d3;
     MPI_Status status;
@@ -84,7 +84,7 @@ void C2Decomp::transposeY2Z_Wait(MPI_Request &handle, double *src, double *dst, 
 
 }
 
-void C2Decomp::transposeY2Z_MajorIndex_Start(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeY2Z_MajorIndex_Start(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int s1, s2, s3;
 
@@ -94,14 +94,14 @@ void C2Decomp::transposeY2Z_MajorIndex_Start(MPI_Request &handle, double *src, d
 
     memSplitYZ_YMajor(src, s1, s2, s3, sbuf, dims[1], decompMain.y2dist);
 
-    MPI_Ialltoallv(sbuf, decompMain.y2cnts, decompMain.y2disp, realType,
-                   rbuf, decompMain.z2cnts, decompMain.z2disp, realType,
+    MPI_Ialltoallv(sbuf, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
+                   rbuf, decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
                    DECOMP_2D_COMM_ROW, &handle);
 
 
 }
 
-void C2Decomp::transposeY2Z_MajorIndex_Wait(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeY2Z_MajorIndex_Wait(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int d1, d2, d3;
     MPI_Status status;

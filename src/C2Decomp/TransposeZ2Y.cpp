@@ -1,6 +1,6 @@
 #include "C2Decomp.hpp"
 
-void C2Decomp::transposeZ2Y(double *src, double *dst){
+void C2Decomp::transposeZ2Y(C2D_DTYPE *src, C2D_DTYPE *dst){
 
     int s1, s2, s3, d1, d2, d3;
 
@@ -9,8 +9,8 @@ void C2Decomp::transposeZ2Y(double *src, double *dst){
     d3 = decompMain.ysz[2];
 
 
-    MPI_Alltoallv(src,     decompMain.z2cnts, decompMain.z2disp, realType, 
-		  work2_r, decompMain.y2cnts, decompMain.y2disp, realType, 
+    MPI_Alltoallv(src,     decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
+		  work2_r, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
 		  DECOMP_2D_COMM_ROW);
 
     
@@ -19,7 +19,7 @@ void C2Decomp::transposeZ2Y(double *src, double *dst){
 }
 
 
-void C2Decomp::transposeZ2Y_MajorIndex(double *src, double *dst){
+void C2Decomp::transposeZ2Y_MajorIndex(C2D_DTYPE *src, C2D_DTYPE *dst){
 
     int s1, s2, s3, d1, d2, d3;
 
@@ -42,8 +42,8 @@ void C2Decomp::transposeZ2Y_MajorIndex(double *src, double *dst){
         }
     }
 
-    MPI_Alltoallv(work1_r, decompMain.z2cnts, decompMain.z2disp, realType, 
-		  work2_r, decompMain.y2cnts, decompMain.y2disp, realType, 
+    MPI_Alltoallv(work1_r, decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
+		  work2_r, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
 		  DECOMP_2D_COMM_ROW);
 
     
@@ -51,7 +51,7 @@ void C2Decomp::transposeZ2Y_MajorIndex(double *src, double *dst){
 
 }
 
-void C2Decomp::transposeZ2Y_Start(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeZ2Y_Start(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int s1, s2, s3;
 
@@ -61,14 +61,14 @@ void C2Decomp::transposeZ2Y_Start(MPI_Request &handle, double *src, double *dst,
 
     memcpy(sbuf, src, s1*s2*s3*sizeof(double));
 
-    MPI_Ialltoallv(sbuf, decompMain.z2cnts, decompMain.z2disp, realType,
-                   rbuf, decompMain.y2cnts, decompMain.y2disp, realType,
+    MPI_Ialltoallv(sbuf, decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
+                   rbuf, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
                    DECOMP_2D_COMM_ROW, &handle);
 
 
 }
 
-void C2Decomp::transposeZ2Y_Wait(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeZ2Y_Wait(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int d1, d2, d3;
     MPI_Status status;
@@ -83,7 +83,7 @@ void C2Decomp::transposeZ2Y_Wait(MPI_Request &handle, double *src, double *dst, 
 
 }
 
-void C2Decomp::transposeZ2Y_MajorIndex_Start(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeZ2Y_MajorIndex_Start(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int s1, s2, s3;
 
@@ -102,14 +102,14 @@ void C2Decomp::transposeZ2Y_MajorIndex_Start(MPI_Request &handle, double *src, d
         }
     }
 
-    MPI_Ialltoallv(sbuf, decompMain.z2cnts, decompMain.z2disp, realType,
-                   rbuf, decompMain.y2cnts, decompMain.y2disp, realType,
+    MPI_Ialltoallv(sbuf, decompMain.z2cnts, decompMain.z2disp, C2D_MPI_DTYPE,
+                   rbuf, decompMain.y2cnts, decompMain.y2disp, C2D_MPI_DTYPE,
                    DECOMP_2D_COMM_ROW, &handle);
 
 
 }
 
-void C2Decomp::transposeZ2Y_MajorIndex_Wait(MPI_Request &handle, double *src, double *dst, double *sbuf, double *rbuf){
+void C2Decomp::transposeZ2Y_MajorIndex_Wait(MPI_Request &handle, C2D_DTYPE *src, C2D_DTYPE *dst, C2D_DTYPE *sbuf, C2D_DTYPE *rbuf){
 
     int d1, d2, d3;
     MPI_Status status;
