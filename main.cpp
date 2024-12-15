@@ -31,8 +31,8 @@ Real testSolver(Real deltaT, index_t dim) {
     c2d = new C2Decomp(dim, dim, dim, pRow, pCol, periodicBC);
 
     // define T & deltaT  & Re
-    constexpr Real T = 1.0;
-    constexpr Real Re = 4000;
+    constexpr Real T = 0.1;
+    constexpr Real Re = 1000;
     // Define physical size of the problem (just for simplicity)
     constexpr Real phy_dim = 1.0;
 
@@ -174,8 +174,8 @@ int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
     // dividing the timestep size to half
-    std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8,16, 32, 64};
+    std::vector<Real> deltaTs = {0.0001, 0.0005, 0.00025};
+    std::vector<index_t> dims = {4, 8, 16, 32, 64};
     //std::vector<index_t> dims = {8};
 
     std::vector<Real> error;
