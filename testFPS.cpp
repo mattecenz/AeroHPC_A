@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
     poissonSolver solver(N, L, b, c2d);
     solver.solve(X);
 
+    solver.setB(b);
+
     // Finalize MPI
     MPI_Finalize();
     return 0;
