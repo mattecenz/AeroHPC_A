@@ -137,7 +137,7 @@ Real testSolver(Real deltaT, index_t dim) {
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries);
+        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries, c2d);
         currentTime += deltaT;
         chrono_stop(rkTime);
 
