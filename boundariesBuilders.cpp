@@ -640,7 +640,7 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
                                const std::vector<TFunction> &boundaryFunctions) {
 
-#define int(v) static_cast<int>(v)
+#define CAST_TO_INT(v) static_cast<int>(v)
 
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
     // global position of this process

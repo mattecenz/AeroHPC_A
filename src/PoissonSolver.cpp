@@ -1,6 +1,6 @@
 #include "PoissonSolver.hpp"
 
-poissonSolver::poissonSolver(int N, double L, double *b, C2Decomp *c2d)
+poissonSolver::poissonSolver(int N, Real L, C2Decomp *c2d)
     : N(N), L(L), b(b), c2d(c2d) {
     dx = L / N;
 
@@ -39,7 +39,7 @@ poissonSolver::~poissonSolver() {
     fftw_free(u3);
 }
 
-void poissonSolver::setB(double *b) {
+void poissonSolver::setB(Real *b) {
     this->b = b; // Dynamically update `b`
 }
 
@@ -54,7 +54,7 @@ void poissonSolver::initializeGrid() {
                                  + (c2d->xStart[1] + jp) * N 
                                  + (c2d->xStart[0] + ip);
 
-                u1[ii] = b[global_index];
+                u1[ii] = static_cast<double>(b[global_index]);
             }
         }
     }
@@ -84,12 +84,6 @@ void poissonSolver::performFFT() {
     // Transpose u1 to u2 (y-direction)
     c2d->transposeX2Y(u1, u2);
 
-
-    // Allocate fft buffers for y direction
-    double *fft_input_y, *fft_output_y;
-    fft_input_y = (double*)fftw_malloc(sizeof(double) * ySize[0] * ySize[1] * ySize[2]);
-    fft_output_y = (double*)fftw_malloc(sizeof(double) * ySize[0] * ySize[1] * ySize[2]);
-
     // Perform FFT along y (for each x and z slice)
     for (int kp = 0; kp < ySize[2]; ++kp) {
         for (int ip = 0; ip < ySize[0]; ++ip) {
@@ -109,11 +103,6 @@ void poissonSolver::performFFT() {
 
     // Transpose u2 to u3 (z-direction)
     c2d->transposeY2Z(u2, u3);
-
-    // Perform FFT along the Z direction (on u3)
-    double *fft_input_z, *fft_output_z;
-    fft_input_z = (double*)fftw_malloc(sizeof(double) * zSize[0] * zSize[1] * zSize[2]);
-    fft_output_z = (double*)fftw_malloc(sizeof(double) * zSize[0] * zSize[1] * zSize[2]);
 
     // Perform FFT along z (for each x and y slice)
     for (int jp = 0; jp < zSize[1]; ++jp) {
@@ -205,16 +194,16 @@ void poissonSolver::solveEigenvalues() {
                 int kx = ((c2d->zStart[0] + ip) < N / 2) ? (c2d->zStart[0] + ip) : (c2d->zStart[0] + ip - N);
 
                 size_t idx = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
-                double ksq = -(kx * kx + ky * ky + kz * kz);
-                double eigenvalue = (ksq == 0) ? 1e-10 : ksq;
-                u3[idx] /= eigenvalue;
+                Real ksq = -(kx * kx + ky * ky + kz * kz);
+                Real eigenvalue = (ksq == 0) ? 1e-10 : ksq;
+                u3[idx] /= static_cast<double>(eigenvalue);
             }
         }
     }
 }
 
 
-void poissonSolver::solve(double *X) {
+void poissonSolver::solve(Real *X) {
     initializeGrid();
     performFFT();
     solveEigenvalues();
@@ -222,6 +211,6 @@ void poissonSolver::solve(double *X) {
 
     // Store the result in X
     for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
-        X[i] = u1[i];
+        X[i] = static_cast<float>(u1[i]);
     }
 }

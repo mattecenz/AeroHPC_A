@@ -72,7 +72,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
     // bring this out later
     double L = 1.0;
-    // poissonSolver solver(nx, L, nullptr, c2d);
+    // Define the solver object
+    poissonSolver solver(nx, L, c2d);
 
     //kappa -> weighted_deltat 
     std::array<const Real, 11> kappa{
