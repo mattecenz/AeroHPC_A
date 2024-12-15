@@ -50,11 +50,11 @@ void poissonSolver::initializeGrid() {
             for (int ip = 0; ip < xSize[0]; ip++) {
                 int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
 
-                int global_index = (c2d->xStart[2] + kp) * (nz * ny) 
-                                 + (c2d->xStart[1] + jp) * nx
-                                 + (c2d->xStart[0] + ip);
+                // int global_index = (c2d->xStart[2] + kp) * (nz * ny) 
+                //                  + (c2d->xStart[1] + jp) * nx
+                //                  + (c2d->xStart[0] + ip);
 
-                u1[ii] = b[global_index];
+                u1[ii] = b[ii];
             }
         }
     }
