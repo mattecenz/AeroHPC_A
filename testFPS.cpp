@@ -1,7 +1,9 @@
 #include <iostream>
 #include <vector>
 
+#include "C2Decomp.hpp"
 #include "PoissonSolver.hpp"
+
 
 using namespace std;
 
@@ -26,15 +28,20 @@ int main(int argc, char *argv[]) {
     	cout << endl;
     }
 
+    
     int N = 200;
     double L = 1.0;
+    int pRow = 0, pCol=0;
+    bool periodicBC[3] = {true, true, true};
+    C2Decomp *c2d = new C2Decomp(N, N, N, pRow, pCol, periodicBC);
+
     double *b = new double[N * N * N];
     double *X = new double[N * N * N];
-    bool periodicBC[3] = {true, true, true};
 
-    poissonSolver solver(N, L, b, periodicBC);
-    // solver.solve(X);
+    poissonSolver solver(N, L, b, c2d);
+    solver.solve(X);
 
-
+    // Finalize MPI
+    MPI_Finalize();
     return 0;
 }

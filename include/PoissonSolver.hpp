@@ -25,8 +25,8 @@ private:
     double xSize[3], ySize[3], zSize[3];
     bool periodicBC[3];
     int pRow, pCol;
-    fftw_plan fft_plan_x, fft_plan_y, fft_plan_z;
-    fftw_plan ifft_plan_x, ifft_plan_y, ifft_plan_z;
+    double *fft_inputX, *fft_inputY, *fft_inputZ;         // FFT input buffer
+    double *fft_outputX, *fft_outputY, *fft_outputZ;      // FFT input buffer
 
     void initializeGrid();
     void performFFT();
@@ -34,10 +34,13 @@ private:
     void solveEigenvalues();
 
 public:
-    poissonSolver(int N, double L, double *b, bool periodicBC[3], int pRow = 0, int pCol = 0);
+    poissonSolver(int N, double L, double *b, C2Decomp *c2d);
     ~poissonSolver();
 
-    void solve(Real *X); // Updates the input array `X` with the solution
+    void setB(double *b);   // Setter function to update `b`, the rhs
+    void solve(double *X); 
+    // later on change this to Real *X
+    // Updates the input array `X` with the solution
 };
 
 #endif
