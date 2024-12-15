@@ -17,7 +17,7 @@
 
 class poissonSolver {
 private:
-    int N;                  // Grid size
+    int nx, ny, nz;                  // Grid size
     Real L;               // Domain length
     Real dx;               // Grid spacing
     Real *b;               // Input vector (right-hand side of Ax=b)
@@ -35,7 +35,7 @@ private:
     void solveEigenvalues();
 
 public:
-    poissonSolver(int N, Real L, C2Decomp *c2d);
+    poissonSolver(int nx, int ny, int nz, Real L, C2Decomp *c2d);
     ~poissonSolver();
 
     void setB(Real *b);   // Setter function to update `b`, the rhs

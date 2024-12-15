@@ -1,8 +1,8 @@
 #include "PoissonSolver.hpp"
 
-poissonSolver::poissonSolver(int N, Real L, C2Decomp *c2d)
-    : N(N), L(L), b(b), c2d(c2d) {
-    dx = L / N;
+poissonSolver::poissonSolver(int nx, int ny, int nz, Real L, C2Decomp *c2d)
+    : nx(nx), ny(ny), nz(nz), L(L), b(b), c2d(c2d) {
+
 
     // Allocate buffers
     c2d->allocX(u1);
@@ -50,11 +50,11 @@ void poissonSolver::initializeGrid() {
             for (int ip = 0; ip < xSize[0]; ip++) {
                 int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
 
-                int global_index = (c2d->xStart[2] + kp) * (N * N) 
-                                 + (c2d->xStart[1] + jp) * N 
+                int global_index = (c2d->xStart[2] + kp) * (nz * ny) 
+                                 + (c2d->xStart[1] + jp) * nx
                                  + (c2d->xStart[0] + ip);
 
-                u1[ii] = static_cast<double>(b[global_index]);
+                u1[ii] = b[global_index];
             }
         }
     }
@@ -187,11 +187,11 @@ void poissonSolver::performIFFT() {
 void poissonSolver::solveEigenvalues() {
     // Compute and apply eigenvalues
     for (int kp = 0; kp < zSize[2]; ++kp) {
-        int kz = ((c2d->zStart[2] + kp) < N / 2) ? (c2d->zStart[2] + kp) : (c2d->zStart[2] + kp - N);
+        int kz = ((c2d->zStart[2] + kp) < nz / 2) ? (c2d->zStart[2] + kp) : (c2d->zStart[2] + kp - nz);
         for (int jp = 0; jp < zSize[1]; ++jp) {
-            int ky = ((c2d->zStart[1] + jp) < N / 2) ? (c2d->zStart[1] + jp) : (c2d->zStart[1] + jp - N);
+            int ky = ((c2d->zStart[1] + jp) < ny / 2) ? (c2d->zStart[1] + jp) : (c2d->zStart[1] + jp - ny);
             for (int ip = 0; ip < zSize[0]; ++ip) {
-                int kx = ((c2d->zStart[0] + ip) < N / 2) ? (c2d->zStart[0] + ip) : (c2d->zStart[0] + ip - N);
+                int kx = ((c2d->zStart[0] + ip) < nx / 2) ? (c2d->zStart[0] + ip) : (c2d->zStart[0] + ip - nx);
 
                 size_t idx = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
                 Real ksq = -(kx * kx + ky * ky + kz * kz);
@@ -205,12 +205,12 @@ void poissonSolver::solveEigenvalues() {
 
 void poissonSolver::solve(Real *X) {
     initializeGrid();
-    performFFT();
-    solveEigenvalues();
-    performIFFT();
+    // performFFT();
+    // solveEigenvalues();
+    // performIFFT();
 
-    // Store the result in X
-    for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
-        X[i] = static_cast<float>(u1[i]);
-    }
+    // // Store the result in X
+    // for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
+    //     X[i] = (u1[i]);
+    // }
 }

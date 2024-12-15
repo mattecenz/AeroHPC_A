@@ -5,7 +5,7 @@
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 #include "mathUtils.hpp"
-#include "PoissonSolver.hpp"
+// #include "PoissonSolver.hpp"
 
 #ifdef ForcingT
 #define getPhys(i, j, k)  Real px = real(i + model.structure.px) * dx;   \
@@ -73,7 +73,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
     // bring this out later
     double L = 1.0;
     // Define the solver object
-    poissonSolver solver(nx, L, c2d);
+    // poissonSolver solver(nx, ny, nz, L, c2d);
 
     //kappa -> weighted_deltat 
     std::array<const Real, 11> kappa{
@@ -170,6 +170,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 /// COLLECT DATA ///////////////////////////////////////////////////////////////////////////////////////////////
 //TODO: THIS CAN BE COMPUTED IN THE RUNGE-KUTTA ITERATIONS, BUT LOOP ORDERS HAVE TO BE CHANGED
 Real b[nx * ny * nz];
+
 for (index_t k = 0; k < nz; ++k) {
     for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
@@ -189,6 +190,10 @@ Real x[nx * ny * nz];
     // CALL SOLVER
     // COMPUTE NEW PRESSURE AND PUT IT IN THE GRID
     // ADJUST VELOCITY
+
+    // solver.setB(b);
+    // solver.solve(x);
+    
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ForcingT
