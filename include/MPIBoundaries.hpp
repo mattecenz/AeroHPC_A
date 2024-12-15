@@ -28,18 +28,20 @@ public:
     MPIBoundaries &addMPICond(MPICondition &cond) { _mpi_cs.push_back(&cond); return *this; }
 
     void apply(GridData &grid, Real time) override {
+
         // Fill all outgoing buffers
         for (MPICondition *mpi_c: _mpi_cs) mpi_c->init(grid);
 
         // Start exchange of input and output buffers
         for (MPICondition *mpi_c: _mpi_cs) mpi_c->exchange();
 
+        // then all logical ones
+        for (MPICondition *mpi_c: _mpi_cs) mpi_c->apply(grid, time);
+
         // Apply all boundary condition
         // first we apply all the physical one (this optimizes communication while working)
         for (Condition *bc: _cs) bc->apply(grid, time);
 
-        // then all logical ones
-        for (MPICondition *mpi_c: _mpi_cs) mpi_c->apply(grid, time);
 
         // Await all processor has applied BC
         MPI_Barrier(MPI_COMM_WORLD);
