@@ -62,15 +62,15 @@ public:
      */
     const Idx3 displacement;
     /**
-     * Alias for x-axes nodes number
+     * Alias for x-axes global displacement
      */
     const index_t &px = displacement[0];
     /**
-     * Alias for y-axes nodes number
+     * Alias for y-axes global displacement
      */
     const index_t &py = displacement[1];
     /**
-     * Alias for z-axes nodes number
+     * Alias for z-axes global displacement
      */
     const index_t &pz = displacement[2];
 
@@ -94,19 +94,19 @@ public:
     const Real &dz = spacing[2];
 
     /**
-     * Node spacing
+     * Node staggering spacing
      */
     const Vector staggered_spacing;
     /**
-     * Alias for x-axes spacing
+     * Alias for x-axes staggering spacing
      */
     const Real &sdx = staggered_spacing[0];
     /**
-     * Alias for y-axes spacing
+     * Alias for y-axes staggering spacing
      */
     const Real &sdy = staggered_spacing[1];
     /**
-     * Alias for z-axes spacing
+     * Alias for z-axes staggering spacing
      */
     const Real &sdz = staggered_spacing[2];
 };

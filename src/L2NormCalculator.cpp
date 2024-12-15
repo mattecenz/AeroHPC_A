@@ -18,9 +18,9 @@ Real computeL2Norm(const GridData &grid, Real time) {
             for (index_t k = 0; k < grid.structure.nz; ++k) {
 
                 // Convert grid indices to real space coordinates
-                Real x = real(i) * grid.structure.dx;
-                Real y = real(j) * grid.structure.dy;
-                Real z = real(k) * grid.structure.dz;
+                Real x = real(i + grid.structure.px) * grid.structure.dx;
+                Real y = real(j + grid.structure.py) * grid.structure.dy;
+                Real z = real(k + grid.structure.pz) * grid.structure.dz;
 
                 // Calculate the exact solution for each component
                 Real exactU = ExactSolution::u(x + grid.structure.dx, y + sdy, z + sdz, time);
@@ -44,6 +44,6 @@ Real computeL2Norm(const GridData &grid, Real time) {
         }
     }
 
-    return std::sqrt(sum * (grid.structure.dx * grid.structure.dy * grid.structure.dz));
+    return sum * (grid.structure.dx * grid.structure.dy * grid.structure.dz);
     //  /std::sqrt(sum_exact * (grid.structure.dx * grid.structure.dy * grid.structure.dz));
 }

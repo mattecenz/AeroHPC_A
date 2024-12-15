@@ -5,6 +5,8 @@
 #include <string>
 #include <iterator>
 #include <sstream>
+#include <iomanip> // Add this line for setprecision and scientific
+
 
 /**
 * Macro for retrieving symmetric spacing

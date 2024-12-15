@@ -1,42 +1,61 @@
+#include <mpi.h>
+#include <cmath>
 #include "Traits.hpp"
 #include "VTKConverter.hpp"
 #include "chronoUtils.hpp"
 #include "Logger.hpp"
-#include "mpi.h"
 #include "boundariesBuilders.cpp"
 #include "C2Decomp.hpp"
 #include "L2NormCalculator.hpp"
 #include "RungeKutta.hpp"
 
+using namespace std;
+
 Real testSolver(Real deltaT, index_t dim) {
+
+    int size, rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    const index_t dim_x = dim;
+    const index_t dim_y = dim;
+    const index_t dim_z = dim;
+
+    C2Decomp *c2d;
+    int pRow = 2, pCol = 2;
+    bool periodicBC[3] = {true, true, true};
+    c2d = new C2Decomp(dim_x, dim_y, dim_z, pRow, pCol, periodicBC);
+
     // define T & deltaT  & Re
-    constexpr Real T = 1;
+    constexpr Real T = 1.0;
     constexpr Real Re = 4000;
     // Define physical size of the problem (just for simplicity)
     constexpr Real phy_dim = 1.0;
 
-    logger.openSection("Running the TestSolver")
+    if (!rank)
+        logger.openSection("Running the TestSolver")
             .printValue(5, "Final T", T)
             .printValue(5, "dT", deltaT)
             .printValue(5, "Re num", Re)
             .printValue(5, "Phy dim", std::to_string(phy_dim) + " x " + std::to_string(phy_dim) + " x " + std::to_string(phy_dim));
 
     // Define number of nodes for each axis
-    const index_t nx = dim;
-    const index_t ny = dim;
-    const index_t nz = dim;
+    const index_t nx = c2d->xSize[0];
+    const index_t ny = c2d->xSize[1];
+    const index_t nz = c2d->xSize[2];
     Idx3 nodes = {nx, ny, nz};
 
     // Define global displacement of the grid
-    const index_t gx = 0;
-    const index_t gy = 0;
-    const index_t gz = 0;
-    Idx3 displacement = {gx, gy, gz};
+    // NOT SURE
+    const index_t px = c2d->xStart[0];
+    const index_t py = c2d->xStart[1];
+    const index_t pz = c2d->xStart[2];
+    Idx3 displacement = {px, py, pz};
 
     // Define physical size of the problem for each axis
-    const Real sx = phy_dim / real(nx);
-    const Real sy = phy_dim / real(ny);
-    const Real sz = phy_dim / real(nz);
+    const Real sx = phy_dim / real(dim_x);
+    const Real sy = phy_dim / real(dim_y);
+    const Real sz = phy_dim / real(dim_z);
     Vector spacing = {sx, sy, sz};
 
     // Initialize the global Grid Structure
@@ -45,7 +64,8 @@ Real testSolver(Real deltaT, index_t dim) {
     // define the mesh:
     GridData model(modelStructure);
 
-    logger.printTitle("Grid created")
+    if (!rank)
+        logger.printTitle("Grid created")
             .printValue(5, "nodes", std::to_string(modelStructure.nx)
                                     + " x " + std::to_string(modelStructure.ny)
                                     + " x " + std::to_string(modelStructure.nz))
@@ -67,37 +87,37 @@ Real testSolver(Real deltaT, index_t dim) {
     model.initData(initialVel, initialPres);
     chrono_stop(initT);
 
-    logger.printTitle("Grid initialized", initT);
+    if (!rank)
+        logger.printTitle("Grid initialized", initT);
 
     /// Define boundaries condition functions //////////////////////////////////////////////////////////////
     const std::vector<TFunction> boundaryFunctions = std::vector{ExactSolution::u,
                                                                  ExactSolution::v,
                                                                  ExactSolution::w};
 
-    Boundaries boundaries;
-    buildBoundaries(boundaries, boundaryFunctions);
-
     //MPI STUFFS
-    /*
+    
     MPIBoundaries mpiBoundaries;
-    buildMPIBoundaries(c2d, modelStructure, mpiBoundaries, boundaryFunctions);
-     */
+    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryFunctions);
+    
 
-
-    logger.printTitle("Boundary condition set");
+    if (!rank)
+        logger.printTitle("Boundary condition set");
 
     /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
 
     // Buffers
     GridData modelBuff(modelStructure);
     GridData rhsBuff(modelStructure);
-    logger.printTitle("Buffers created");
+    if (!rank)
+        logger.printTitle("Buffers created");
 
     // Time
     Real currentTime = 0.0;
 
     // last iteration l2Norm capture
-    Real l2Norm = 0.0;
+    Real localL2Norm = 0.0;
+    Real globalL2Norm = 0.0;
 
     // Performance variables
     Real nNodes = real(modelStructure.nx * modelStructure.ny * modelStructure.nz);
@@ -108,39 +128,45 @@ Real testSolver(Real deltaT, index_t dim) {
     index_t printIt = 100; // prints every n iterations
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
-    logger.printTitle("Start computation")
-            .openTable("Iter", {"ts", "l2", "rkT", "l2T", "TxN"});
+    if (!rank)
+        logger.printTitle("Start computation")
+            .openTable("Iter", {"ts", "gl2", "rkT", "l2T", "TxN"});
 
     chrono_start(compT);
-    boundaries.apply(model, currentTime);
+    mpiBoundaries.apply(model, currentTime);
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, boundaries);
+        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries);
         currentTime += deltaT;
         chrono_stop(rkTime);
-
 
         if (!(iter % printIt) || currentTime >= T) // prints every n iteration or if is the last one
         {
             chrono_start(l2Time);
-            l2Norm = computeL2Norm(model, currentTime);
+            localL2Norm = computeL2Norm(model, currentTime);
             chrono_stop(l2Time);
             perf = rkTime / nNodes;
-            logger.printTableValues(iter, {currentTime, l2Norm, rkTime, l2Time, perf});
+
+            globalL2Norm = 0.0;
+            MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
+            globalL2Norm = std::sqrt(globalL2Norm);
+            if (!rank)
+                logger.printTableValues(iter, {currentTime, globalL2Norm, rkTime, l2Time, perf});
         }
         iter++;
     }
     chrono_stop(compT);
 
-    logger.closeTable()
+    if (!rank)
+        logger.closeTable()
             .printTitle("End of computation", compT)
             .closeSection()
             .empty();
 
-    return l2Norm;
+//    c2d->decompInfoFinalize();
+    return globalL2Norm;
 }
-
 
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
@@ -177,6 +203,7 @@ int main(int argc, char **argv) {
     csvFile << "step,error" << std::endl;
     for (int i = 0; i < dims.size(); ++i) csvFile << dims[i] << "," << error[i] << std::endl;
 
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 
     return 0;

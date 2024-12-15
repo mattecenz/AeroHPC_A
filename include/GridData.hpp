@@ -11,12 +11,18 @@ class GridData {
      */
     index_t indexing(index_t x, index_t y, index_t z) const;
 
+
+    /**
+     * Dimension of one component of data considering the grid nodes with ghosts
+     */
+    const index_t grid_dim;
+
 public:
 
     /**
-     * Dimension of one component of data
+     * Dimension of one component of data considering the grid nodes without ghosts
      */
-    const index_t dim;
+    const index_t node_dim;
 
     /**
      * Velocity Data (concatenation of flattened array of all velocity components)
@@ -28,12 +34,7 @@ public:
      */
     Real *pressure_data;
 
-
     GridData() = delete;
-
-    ~GridData() {
-        delete[] velocity_data;
-    }
 
     /**
      * Construct a staggered grid with ghost nodes,
@@ -42,12 +43,16 @@ public:
      * @param ghosts number of ghost nodes
      */
     GridData(const GridStructure &structure, bool allocPressure) : structure(structure),
-                                                                            dim(structure.grid_nodes[0] * structure.grid_nodes[1] *
-                                                                                structure.grid_nodes[2]) {
-        velocity_data = new Real[dim * 3];
+                                                                   node_dim(structure.nx *
+                                                                            structure.ny *
+                                                                            structure.nz),
+                                                                   grid_dim(structure.gx *
+                                                                            structure.gy *
+                                                                            structure.gz) {
+        velocity_data = new Real[grid_dim * 3];
         pressure_data = nullptr;
         if (allocPressure)
-            pressure_data = new Real[dim];
+            pressure_data = new Real[grid_dim];
     }
 
     explicit GridData(const GridStructure &structure) : GridData(structure, true) {}
@@ -70,9 +75,9 @@ inline Real &name(index_t i, index_t j, index_t k) const { \
 
     get_component(U, velocity_data)
 
-    get_component(V, (&velocity_data[dim]))
+    get_component(V, (&velocity_data[grid_dim]))
 
-    get_component(W, (&velocity_data[dim + dim]))
+    get_component(W, (&velocity_data[grid_dim + grid_dim]))
 
     get_component(P, pressure_data)
 
