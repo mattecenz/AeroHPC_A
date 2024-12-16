@@ -6,6 +6,11 @@ void C2Decomp::allocX(double *&var){
     int ysize = decompMain.xsz[1];
     int zsize = decompMain.xsz[2];
 
+    std::cout << "allocX:" << std::endl;
+    std::cout << xsize << std::endl;
+    std::cout << ysize << std::endl;
+    std::cout << zsize << std::endl;
+
     var = new double[xsize*ysize*zsize];
 
 }

@@ -9,6 +9,8 @@ poissonSolver::poissonSolver(int N, double L, double *b, C2Decomp *c2d)
     c2d->allocY(u2);
     c2d->allocZ(u3);
 
+    
+
     // Retrieve grid dimensions
     xSize[0] = c2d->xSize[0];
     xSize[1] = c2d->xSize[1];
@@ -54,7 +56,7 @@ void poissonSolver::initializeGrid() {
                                  + (c2d->xStart[1] + jp) * N 
                                  + (c2d->xStart[0] + ip);
 
-                u1[ii] = b[global_index];
+                u1[ii] = 0.0;
             }
         }
     }
@@ -84,12 +86,6 @@ void poissonSolver::performFFT() {
     // Transpose u1 to u2 (y-direction)
     c2d->transposeX2Y(u1, u2);
 
-
-    // Allocate fft buffers for y direction
-    double *fft_input_y, *fft_output_y;
-    fft_input_y = (double*)fftw_malloc(sizeof(double) * ySize[0] * ySize[1] * ySize[2]);
-    fft_output_y = (double*)fftw_malloc(sizeof(double) * ySize[0] * ySize[1] * ySize[2]);
-
     // Perform FFT along y (for each x and z slice)
     for (int kp = 0; kp < ySize[2]; ++kp) {
         for (int ip = 0; ip < ySize[0]; ++ip) {
@@ -109,11 +105,6 @@ void poissonSolver::performFFT() {
 
     // Transpose u2 to u3 (z-direction)
     c2d->transposeY2Z(u2, u3);
-
-    // Perform FFT along the Z direction (on u3)
-    double *fft_input_z, *fft_output_z;
-    fft_input_z = (double*)fftw_malloc(sizeof(double) * zSize[0] * zSize[1] * zSize[2]);
-    fft_output_z = (double*)fftw_malloc(sizeof(double) * zSize[0] * zSize[1] * zSize[2]);
 
     // Perform FFT along z (for each x and y slice)
     for (int jp = 0; jp < zSize[1]; ++jp) {
@@ -217,11 +208,13 @@ void poissonSolver::solveEigenvalues() {
 void poissonSolver::solve(double *X) {
     initializeGrid();
     performFFT();
-    solveEigenvalues();
-    performIFFT();
+    std::cout << "FFT finished" << std::endl;
+    // solveEigenvalues();
+    // performIFFT();
+    // std::cout << "IFFT finished" << std::endl;
 
-    // Store the result in X
-    for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
-        X[i] = u1[i];
-    }
+    // // Store the result in X
+    // for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
+    //     X[i] = u1[i];
+    // }
 }

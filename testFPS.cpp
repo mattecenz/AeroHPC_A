@@ -31,17 +31,26 @@ int main(int argc, char *argv[]) {
     
     int N = 200;
     double L = 1.0;
-    int pRow = 0, pCol=0;
+    int pRow = 2, pCol=2;
     bool periodicBC[3] = {true, true, true};
     C2Decomp *c2d = new C2Decomp(N, N, N, pRow, pCol, periodicBC);
 
-    double *b = new double[N * N * N];
-    double *X = new double[N * N * N];
+    int xsize = c2d->xSize[0];
+    int ysize = c2d->xSize[1];
+    int zsize = c2d->xSize[2];
+
+    std::cout << "decomp:" << std::endl;
+    std::cout << xsize << std::endl;
+    std::cout << ysize << std::endl;
+    std::cout << zsize << std::endl;
+
+    double *b = new double[xsize * ysize * zsize];
+    double *X = new double[xsize * ysize * zsize];
 
     poissonSolver solver(N, L, b, c2d);
     solver.solve(X);
 
-    solver.setB(b);
+    // solver.setB(b);
 
     // Finalize MPI
     MPI_Finalize();
