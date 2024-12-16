@@ -26,6 +26,8 @@ namespace mathUtils {
 
     d_dx(W)
 
+    d_dx(P)
+
     /**
     @param[in] model Model containing both the staggered grid and the spacing
     @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
@@ -41,6 +43,8 @@ namespace mathUtils {
     d_dy(V)
 
     d_dy(W)
+
+    d_dy(P)
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -58,6 +62,8 @@ namespace mathUtils {
     d_dz(V)
 
     d_dz(W)
+
+    d_dz(P)
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing

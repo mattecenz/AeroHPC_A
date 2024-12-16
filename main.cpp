@@ -79,8 +79,13 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Define initial pressure function
     // For the moment it does not work so do not care about it
+    // auto initialPres = [](Real x, Real y, Real z) -> Real {
+    //     return x + y + z;
+    // };
+
+    // THIS IS TO TEST IF THE CHANGES TO RUNGE-KUTTA WORK
     auto initialPres = [](Real x, Real y, Real z) -> Real {
-        return x + y + z;
+        return 0;
     };
 
     chrono_start(initT);

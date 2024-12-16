@@ -26,6 +26,8 @@ struct RKConst {
     static constexpr Real alpha2 = 5.0 / 12.0;
     static constexpr Real alpha3 = 3.0 / 4.0;
     static constexpr Real alpha4 = 2.0 / 3.0;
+    static constexpr Real alpha5 = 2.0/ 15.0;
+    static constexpr Real alpha6 = 1.0/ 3.0;
 };
 
 ////RHS function
@@ -60,12 +62,14 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
     const index_t nz = model.structure.nz;
 
     //kappa -> weighted_deltat 
-    std::array<const Real, 5> kappa{
+    std::array<const Real, 7> kappa{
             RKConst::alpha0 * deltat,
             RKConst::alpha1 * deltat,
             RKConst::alpha2 * deltat,
             RKConst::alpha3 * deltat,
-            RKConst::alpha4 * deltat
+            RKConst::alpha4 * deltat,
+            RKConst::alpha5 * deltat,
+            RKConst::alpha6 * deltat
     };
 
 #ifdef ForcingT
@@ -89,7 +93,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
                     const Real r = rhs_U(model, nu, i, j, k);
                     rhs_buff.U(i, j, k) = (r + force);
 
-                    model_buff.U(i, j, k) = model.U(i, j, k) + kappa[0] * (r + force);
+                    model_buff.U(i, j, k) = model.U(i, j, k) + kappa[0] * (r + force) - kappa[0]*mathUtils::d_dx_P(model,i,j,k);
                 }
             }
         }
@@ -109,7 +113,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
                     const Real r = rhs_V(model, nu, i, j, k);
                     rhs_buff.V(i, j, k) = (r + force);
 
-                    model_buff.V(i, j, k) = model.V(i, j, k) + kappa[0] * (r + force);
+                    model_buff.V(i, j, k) = model.V(i, j, k) + kappa[0] * (r + force) - kappa[0]*mathUtils::d_dy_P(model,i,j,k);
                 }
 
             }
@@ -130,7 +134,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
                     const Real r = rhs_W(model, nu, i, j, k);
                     rhs_buff.W(i, j, k) = (r + force);
 
-                    model_buff.W(i, j, k) = model.W(i, j, k) + kappa[0] * (r + force);
+                    model_buff.W(i, j, k) = model.W(i, j, k) + kappa[0] * (r + force) - kappa[0]*mathUtils::d_dz_P(model,i,j,k);
                 }
             }
         }
@@ -169,7 +173,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
                     model.U(i, j, k) = model_buff.U(i, j, k)
                                        - kappa[1] * r1
-                                       + kappa[2] * (r2 + force2);
+                                       + kappa[2] * (r2 + force2)
+                                       - kappa[5] * mathUtils::d_dx_P(model_buff,i,j,k);
                 }
             }
         }
@@ -193,7 +198,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
                     model.V(i, j, k) = model_buff.V(i, j, k)
                                        - kappa[1] * r1
-                                       + kappa[2] * (r2 + force2);
+                                       + kappa[2] * (r2 + force2)
+                                       - kappa[5] * mathUtils::d_dy_P(model_buff,i,j,k);
                 }
             }
         }
@@ -217,7 +223,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
                     model.W(i, j, k) = model_buff.W(i, j, k)
                                        - kappa[1] * r1
-                                       + kappa[2] * (r2 + force2);
+                                       + kappa[2] * (r2 + force2)
+                                       - kappa[5] * mathUtils::d_dz_P(model_buff,i,j,k);
                 }
             }
         }
@@ -248,7 +255,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
                     model_buff.U(i, j, k) = model.U(i, j, k)
                                             - kappa[2] * rhs_buff.U(i, j, k)
-                                            + kappa[3] * (r + force);
+                                            + kappa[3] * (r + force)
+                                            - kappa[6] * mathUtils::d_dx_P(model,i,j,k);
                 }
             }
         }
@@ -269,7 +277,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
                     model_buff.V(i, j, k) = model.V(i, j, k)
                                             - kappa[2] * rhs_buff.V(i, j, k)
-                                            + kappa[3] * (r + force);
+                                            + kappa[3] * (r + force)
+                                            - kappa[6] * mathUtils::d_dy_P(model,i,j,k);
                 }
             }
         }
@@ -290,7 +299,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
 
                     model_buff.W(i, j, k) = model.W(i, j, k)
                                             - kappa[2] * rhs_buff.W(i, j, k)
-                                            + kappa[3] * (r + force);
+                                            + kappa[3] * (r + force)
+                                            - kappa[6] * mathUtils::d_dz_P(model,i,j,k);
                 }
             }
         }
