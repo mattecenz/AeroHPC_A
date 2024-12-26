@@ -29,8 +29,9 @@ int main(int argc, char *argv[]) {
     	cout << endl;
     }
 
-    int N = 120;
+    int N = 10;
     double L = 1.0;
+    const double dx = L / N;
     int pRow = 0, pCol=0;
     bool periodicBC[3] = {true, true, true};
     C2Decomp *c2d = new C2Decomp(N, N, N, pRow, pCol, periodicBC);
@@ -42,63 +43,14 @@ int main(int argc, char *argv[]) {
     double *b = new double[xsize * ysize * zsize];
     double *X = new double[xsize * ysize * zsize];
 
-    // initialize b as 
-    // b = -3 * cos(x) * cos(y) * cos(z)
-    for (size_t x = 0; x < xsize; ++x) {
-        for (size_t y = 0; y < ysize; ++y) {
-            for (size_t z = 0; z < zsize; ++z) {
-                size_t index = x * (ysize * zsize) + y * zsize + z; // 3D to 1D mapping
-                b[index] = -3.0 * std::cos(M_PI * x) * std::cos(M_PI * y) * std::cos(M_PI * z);
-            }
-        }
-    }
 
-    for (size_t i = 0; i < xsize * ysize * zsize; ++i) {
-        X[i] = 0.0;
-    }
-
-
-    poissonSolver solver(N, L, b, c2d);
+    poissonSolver solver(N, L, c2d);
+    solver.setB(b);
     solver.solve(X);
-
-
-    double *X_exact = new double[xsize * ysize * zsize];
-    // define X_exact as 
-    // X_exact = cos(x) * cos(y) * cos(z)
-    for (size_t x = 0; x < xsize; ++x) {
-        for (size_t y = 0; y < ysize; ++y) {
-            for (size_t z = 0; z < zsize; ++z) {
-                size_t index = x * (ysize * zsize) + y * zsize + z; // 3D to 1D mapping
-                X_exact[index] = std::cos(M_PI * x) * std::cos(M_PI * y) * std::cos(M_PI * z);
-            }
-        }
-    }
-
-    // Compute the L2 norm
-    double local_sum = 0.0;
-    for (size_t i = 0; i < xsize * ysize * zsize; ++i) {
-        double diff = X[i] - X_exact[i];
-        local_sum += diff * diff;
-    }
-
-    // Reduce the local sum to compute the global sum
-    double global_sum = 0.0;
-    MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-    if (!mpiRank) {
-        double l2_norm = std::sqrt(global_sum / (N * N * N)); // Divide by total number of elements
-        cout << "L2 norm between X and X_exact: " << l2_norm << endl;
-    }
-
-    if (!mpiRank){
-        cout << X[0] << endl;
-        cout << X_exact[0] << endl;
-    }
 
     // Cleanup
     delete[] b;
     delete[] X;
-    delete[] X_exact;
 
     // Finalize MPI
     MPI_Finalize();

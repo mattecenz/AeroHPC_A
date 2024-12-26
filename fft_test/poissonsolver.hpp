@@ -34,7 +34,7 @@ private:
     void solveEigenvalues();
 
 public:
-    poissonSolver(int N, double L, double *b, C2Decomp *c2d);
+    poissonSolver(int N, double L, C2Decomp *c2d);
     ~poissonSolver();
 
     void setB(double *b);   // Setter function to update `b`, the rhs

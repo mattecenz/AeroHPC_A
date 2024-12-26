@@ -1,7 +1,7 @@
 #include "poissonsolver.hpp"
 
-poissonSolver::poissonSolver(int N, double L, double *b, C2Decomp *c2d)
-    : N(N), L(L), b(b), c2d(c2d) {
+poissonSolver::poissonSolver(int N, double L, C2Decomp *c2d)
+    : N(N), L(L), c2d(c2d) {
     dx = L / N;
 
     // Allocate buffers
@@ -44,23 +44,6 @@ void poissonSolver::setB(double *b) {
     this->b = b; // Dynamically update `b`
 }
 
-void poissonSolver::initializeGrid() {
-    // Distribute b into u1
-    for (int kp = 0; kp < xSize[2]; kp++) {
-        for (int jp = 0; jp < xSize[1]; jp++) {
-            for (int ip = 0; ip < xSize[0]; ip++) {
-                int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
-
-                // int global_index = (c2d->xStart[2] + kp) * (N * N) 
-                //                  + (c2d->xStart[1] + jp) * N 
-                //                  + (c2d->xStart[0] + ip);
-
-                // std::cout << global_index << std::endl;
-                u1[ii] = b[ii];
-            }
-        }
-    }
-}
 
 void poissonSolver::performFFT() {
     // Perform FFT along each axis
@@ -205,12 +188,14 @@ void poissonSolver::solveEigenvalues() {
 
 
 void poissonSolver::solve(double *X) {
-    initializeGrid();
+    
+    for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i){
+        u1[i] = b[i];
+    }
+
     performFFT();
-    // std::cout << "FFT finished" << std::endl;
     solveEigenvalues();
     performIFFT();
-    // std::cout << "IFFT finished" << std::endl;
 
     // Store the result in X
     for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
