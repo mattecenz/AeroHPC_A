@@ -23,7 +23,9 @@ endif()
 include_directories(
     ${FFTW_INCLUDE_DIRS}    # FFTW include path (via find_package or fallback)
     ./2decomp_C             # Include path for 2decomp_C headers
-)
+
+    ./
+    )
 
 # Add the source files from 2decomp_C
 set(DECOMP_SRC
@@ -37,13 +39,15 @@ set(DECOMP_SRC
     ./2decomp_C/TransposeY2X.cpp
     ./2decomp_C/TransposeY2Z.cpp
     ./2decomp_C/TransposeZ2Y.cpp
+
+    ./poissonsolver.cpp
 )
 
 # Set the compiler to mpic++ for parallel compilation
 set(CMAKE_CXX_COMPILER mpic++)
 
 # Create the executable and include all .cpp files found in ./lib
-add_executable(test_fft with_fft.cpp ${DECOMP_SRC})
+add_executable(test_fft poissonsolverTest.cpp ${DECOMP_SRC})
 
 # Link the FFTW library and the math library
 target_link_libraries(test_fft ${FFTW_LIBRARIES} m)
