@@ -1,4 +1,4 @@
-#include "poissonsolver.hpp"
+#include "poissonSolver.hpp"
 
 poissonSolver::poissonSolver(int N, double L, C2Decomp *c2d)
     : N(N), L(L), c2d(c2d) {

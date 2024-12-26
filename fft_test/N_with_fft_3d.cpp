@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
     if(!mpiRank){
         cout << endl;
         cout << "-------------------" << endl;
-    	cout << " Parallel FFT " << endl;
+    	cout << " N 3d " << endl;
     	cout << "-------------------" << endl;
     	cout << endl;
     }
@@ -42,10 +42,29 @@ int main(int argc, char *argv[]){
     const double L = 1.0;  // Length of each dimension
     const double dx = L / N;
 
+
+    // Step 1: Generate the X array
+    double *X = (double *)malloc(sizeof(double) * N * N * N);
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            for (int k = 0; k < N; ++k) {
+                double xi = i * dx;
+                double yj = j * dx;
+                double zk = k * dx;
+                // Compute the 1D linear index for the 3D grid
+                int index = i * (N * N) + j * N + k;
+                X[index] = cos(xi) * cos(yj) * cos(zk);
+            }
+        }
+    }
+
+    // Step 2: Construct the matrix A
+    
+    
+
     // This b is the right-hand-side vector in Ax=b
     double *b = (double *)malloc(sizeof(double) * N * N * N);
-    double *X_global = (double *)malloc(sizeof(double) * N * N * N);
-    double *X_exact = (double *)malloc(sizeof(double) * N * N * N);
+    
         
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -57,7 +76,6 @@ int main(int argc, char *argv[]){
                 int index = i * (N * N) + j * N + k;
                 // b[index] = sin(2 * M_PI * xi) * sin(2 * M_PI * yj) * sin(2 * M_PI * zk);
                 b[index] = -3 * cos(xi) * cos(yj) * cos(zk);
-                X_exact[index] = cos(xi) * cos(yj) * cos(zk);
             }
         }
     }

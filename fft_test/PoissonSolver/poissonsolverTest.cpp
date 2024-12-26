@@ -3,7 +3,7 @@
 #include <cmath>
 
 #include "C2Decomp.hpp"
-#include "poissonsolver.hpp"
+#include "poissonSolver.hpp"
 
 
 using namespace std;
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     	cout << endl;
     }
 
-    int N = 10;
+    int N = 100;
     double L = 1.0;
     const double dx = L / N;
     int pRow = 0, pCol=0;

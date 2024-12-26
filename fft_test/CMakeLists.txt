@@ -47,7 +47,7 @@ set(DECOMP_SRC
 set(CMAKE_CXX_COMPILER mpic++)
 
 # Create the executable and include all .cpp files found in ./lib
-add_executable(test_fft poissonsolverTest.cpp ${DECOMP_SRC})
+add_executable(test_fft N_with_fft_3d.cpp ${DECOMP_SRC})
 
 # Link the FFTW library and the math library
 target_link_libraries(test_fft ${FFTW_LIBRARIES} m)
