@@ -5,6 +5,7 @@
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 #include "mathUtils.hpp"
+#include "poissonSolver.hpp"
 
 #ifdef ForcingT
 #define getPhys(i, j, k)                         \
@@ -44,16 +45,13 @@ struct RKConst
 
 rhs(U)
 
-    rhs(V)
+rhs(V)
 
-        rhs(W)
+rhs(W)
 
     // Runge-Kutta method
-    void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
-                    Real reynolds, Real deltat, Real time,
-                    Boundaries &boundary_cond)
+void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real reynolds, Real deltat, Real time, Boundaries &boundary_cond, C2Decomp *c2d)
 {
-
     const Real nu = (real(1) / reynolds);
 
     const Real dx = model.structure.dx;
@@ -84,8 +82,8 @@ rhs(U)
 #ifdef ForcingT
     ForcingTerm ft(reynolds, time);
 #endif
-    // What parameters (the first 2 are reals related to the grid size, but ours is different)
-    // poissonSolver solver();
+
+    poissonSolver solver(nx,1.0,c2d);
     double X[nx * ny * nz];
     double b[nx * ny * nz];
 
@@ -186,9 +184,11 @@ rhs(U)
                 }
             }
         }
-        // solver.setb(b);
+        solver.setB(b);
+
         // SOLVE FOR phi2-pn
-        // solver.solve(X);
+        solver.solve(X);
+
         // UPDATE PRESSURE (not real pressure, but phi2-pn, used to compute the gradient)
         for (index_t k = 0; k < nz; ++k)
         {
@@ -197,7 +197,7 @@ rhs(U)
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i)
                 {
-                    // model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
+                    model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
                 }
             }
         }
@@ -205,22 +205,24 @@ rhs(U)
 
     /// Y2 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        //         for (index_t k = 0; k < nz; ++k)
-        //         {
-        //             for (index_t j = 0; j < ny; ++j)
-        //             {
-        // #pragma omp simd
-        //                 for (index_t i = 0; i < nx; ++i)
-        //                 {
-        //                     model.U(i, j, k) = model_buff.U(i, j, k) /*- mu::d_dx_P(model_buff, i, j, k) / kappa[7]*/;
-        //                     model.V(i, j, k) = model_buff.V(i, j, k) /*- mu::d_dy_P(model_buff, i, j, k) / kappa[7]*/;
-        //                     model.W(i, j, k) = model_buff.W(i, j, k) /*- mu::d_dz_P(model_buff, i, j, k) / kappa[7]*/;
-        //                     // Also update pressure with the real value, i.e. phi2 (model holds pn, model_buff holds phi2-pn)
-        //                     // model.P(i, j, k) += model_buff.P(i, j, k) ;
-        //                 }
-        //             }
-        //         }
+                for (index_t k = 0; k < nz; ++k)
+                {
+                    for (index_t j = 0; j < ny; ++j)
+                    {
+        #pragma omp simd
+                        for (index_t i = 0; i < nx; ++i)
+                        {
+                            model.U(i, j, k) = model_buff.U(i, j, k) - mu::d_dx_P(model_buff, i, j, k) / kappa[7];
+                            model.V(i, j, k) = model_buff.V(i, j, k) - mu::d_dy_P(model_buff, i, j, k) / kappa[7];
+                            model.W(i, j, k) = model_buff.W(i, j, k) - mu::d_dz_P(model_buff, i, j, k) / kappa[7];
+                            // Also update pressure with the real value, i.e. phi2 (model holds pn, model_buff holds phi2-pn)
+                            model.P(i, j, k) += model_buff.P(i, j, k);
+                        }
+                    }
+                }
     }
+    // model.swap(model_buff);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ForcingT
@@ -245,14 +247,14 @@ rhs(U)
 #endif
 
                     const Real r1 = rhs_buff.U(i, j, k);
-                    const Real r2 = rhs_U(model_buff, nu, i, j, k);
+                    const Real r2 = rhs_U(model, nu, i, j, k);
 
                     rhs_buff.U(i, j, k) = (r2 + force2);
 
-                    model.U(i, j, k) = model_buff.U(i, j, k) -
-                                       kappa[1] * r1 +
-                                       kappa[2] * (r2 + force2) -
-                                       kappa[5] * mu::d_dx_P(model_buff, i, j, k);
+                    model_buff.U(i, j, k) = model.U(i, j, k) -
+                                            kappa[1] * r1 +
+                                            kappa[2] * (r2 + force2) -
+                                            kappa[5] * mu::d_dx_P(model, i, j, k);
                 }
             }
         }
@@ -273,14 +275,14 @@ rhs(U)
 #endif
 
                     const Real r1 = rhs_buff.V(i, j, k);
-                    const Real r2 = rhs_V(model_buff, nu, i, j, k);
+                    const Real r2 = rhs_V(model, nu, i, j, k);
 
                     rhs_buff.V(i, j, k) = (r2 + force2);
 
-                    model.V(i, j, k) = model_buff.V(i, j, k) -
-                                       kappa[1] * r1 +
-                                       kappa[2] * (r2 + force2) -
-                                       kappa[5] * mu::d_dy_P(model_buff, i, j, k);
+                    model_buff.V(i, j, k) = model.V(i, j, k) -
+                                            kappa[1] * r1 +
+                                            kappa[2] * (r2 + force2) -
+                                            kappa[5] * mu::d_dy_P(model, i, j, k);
                 }
             }
         }
@@ -301,19 +303,19 @@ rhs(U)
 #endif
 
                     const Real r1 = rhs_buff.W(i, j, k);
-                    const Real r2 = rhs_W(model_buff, nu, i, j, k);
+                    const Real r2 = rhs_W(model, nu, i, j, k);
 
                     rhs_buff.W(i, j, k) = (r2 + force2);
 
-                    model.W(i, j, k) = model_buff.W(i, j, k) -
-                                       kappa[1] * r1 +
-                                       kappa[2] * (r2 + force2) -
-                                       kappa[5] * mu::d_dz_P(model_buff, i, j, k);
+                    model_buff.W(i, j, k) = model.W(i, j, k) -
+                                            kappa[1] * r1 +
+                                            kappa[2] * (r2 + force2) -
+                                            kappa[5] * mu::d_dz_P(model, i, j, k);
                 }
             }
         }
 
-        boundary_cond.apply(model, time + kappa[4]);
+        boundary_cond.apply(model_buff, time + kappa[4]);
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -332,9 +334,11 @@ rhs(U)
                 }
             }
         }
-        // solver.setb(b);
+        solver.setB(b);
+
         // SOLVE FOR phi3-phi2
-        // solver.solve(X);
+        solver.solve(X);
+
         // UPDATE PRESSURE (not real pressure, but phi3-phi2, used to compute the gradient)
         for (index_t k = 0; k < nz; ++k)
         {
@@ -343,31 +347,32 @@ rhs(U)
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i)
                 {
-                    // model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
+                    model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
                 }
             }
         }
     }
     /// Y3 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        //         for (index_t k = 0; k < nz; ++k)
-        //         {
-        //             for (index_t j = 0; j < ny; ++j)
-        //             {
-        // #pragma omp simd
-        //                 for (index_t i = 0; i < nx; ++i)
-        //                 {
-        //                     model.U(i, j, k) = model_buff.U(i, j, k) /*- mu::d_dx_P(model_buff, i, j, k) / kappa[8]*/;
-        //                     model.V(i, j, k) = model_buff.V(i, j, k) /*- mu::d_dy_P(model_buff, i, j, k) / kappa[8]*/;
-        //                     model.W(i, j, k) = model_buff.W(i, j, k) /*- mu::d_dz_P(model_buff, i, j, k) / kappa[8]*/;
-        //                     // Also update pressure with the real value, i.e. phi3 (model holds phi2, model_buff holds phi3-phi2)
-        //                     // model.P(i, j, k) += model_buff.P(i, j, k);
-        //                 }
-        //             }
-        //         }
+                for (index_t k = 0; k < nz; ++k)
+                {
+                    for (index_t j = 0; j < ny; ++j)
+                    {
+        #pragma omp simd
+                        for (index_t i = 0; i < nx; ++i)
+                        {
+                            model.U(i, j, k) = model_buff.U(i, j, k) - mu::d_dx_P(model_buff, i, j, k) / kappa[8];
+                            model.V(i, j, k) = model_buff.V(i, j, k) - mu::d_dy_P(model_buff, i, j, k) / kappa[8];
+                            model.W(i, j, k) = model_buff.W(i, j, k) - mu::d_dz_P(model_buff, i, j, k) / kappa[8];
+                            // Also update pressure with the real value, i.e. phi3 (model holds phi2, model_buff holds phi3-phi2)
+                            model.P(i, j, k) += model_buff.P(i, j, k);
+                        }
+                    }
+                }
     }
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // model.swap(model_buff);
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ForcingT
     ft.set_time(time + kappa[4]);
 #endif
@@ -468,9 +473,11 @@ rhs(U)
                 }
             }
         }
-        // solver.setb(b);
+        solver.setB(b);
+
         // SOLVE FOR pn+1-phi3
-        // solver.solve(X);
+        solver.solve(X);
+
         // UPDATE PRESSURE (not real pressure, but pn+1-phi3, used to compute the gradient)
         for (index_t k = 0; k < nz; ++k)
         {
@@ -479,7 +486,7 @@ rhs(U)
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i)
                 {
-                    // model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
+                    model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
                 }
             }
         }
@@ -487,23 +494,23 @@ rhs(U)
 
     /// un+1 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        //         for (index_t k = 0; k < nz; ++k)
-        //         {
-        //             for (index_t j = 0; j < ny; ++j)
-        //             {
-        // #pragma omp simd
-        //                 for (index_t i = 0; i < nx; ++i)
-        //                 {
-        //                     model.U(i, j, k) = model_buff.U(i, j, k) /*- mu::d_dx_P(model_buff, i, j, k) / kappa[9]*/;
-        //                     model.V(i, j, k) = model_buff.V(i, j, k) /*- mu::d_dy_P(model_buff, i, j, k) / kappa[9]*/;
-        //                     model.W(i, j, k) = model_buff.W(i, j, k) /*- mu::d_dz_P(model_buff, i, j, k) / kappa[9]*/;
-        //                     // Also update pressure with the real value, i.e. phi3 (model holds phi2, model_buff holds phi3-phi2)
-        //                     // model.P(i, j, k) += model_buff.P(i, j, k);
-        //                 }
-        //             }
-        //         }
+                for (index_t k = 0; k < nz; ++k)
+                {
+                    for (index_t j = 0; j < ny; ++j)
+                    {
+        #pragma omp simd
+                        for (index_t i = 0; i < nx; ++i)
+                        {
+                            model.U(i, j, k) = model_buff.U(i, j, k) - mu::d_dx_P(model_buff, i, j, k) / kappa[9];
+                            model.V(i, j, k) = model_buff.V(i, j, k) - mu::d_dy_P(model_buff, i, j, k) / kappa[9];
+                            model.W(i, j, k) = model_buff.W(i, j, k) - mu::d_dz_P(model_buff, i, j, k) / kappa[9];
+                            // Also update pressure with the real value, i.e. phi3 (model holds phi2, model_buff holds phi3-phi2)
+                            model.P(i, j, k) += model_buff.P(i, j, k);
+                        }
+                    }
+                }
     }
-    model.swap(model_buff);
+    // model.swap(model_buff);
 }
 
 #endif // AEROHPC_A_RUNGEKUTTA_H
