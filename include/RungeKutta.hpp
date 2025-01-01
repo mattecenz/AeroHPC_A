@@ -5,7 +5,7 @@
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 #include "mathUtils.hpp"
-#include "poissonSolver.hpp"
+// #include "poissonSolver.hpp"
 
 #ifdef ForcingT
 #define getPhys(i, j, k)                         \
@@ -83,9 +83,9 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
     ForcingTerm ft(reynolds, time);
 #endif
 
-    poissonSolver solver(nx,1.0,c2d);
-    double X[nx * ny * nz];
-    double b[nx * ny * nz];
+    // poissonSolver solver(nx,1.0,c2d);
+    Real X[nx * ny * nz];
+    Real b[nx * ny * nz];
 
     /// Y2* //////////////////////////////////////////////////////////////////////////////////////////////
     {
@@ -180,14 +180,15 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                 {
                     b[i + (j + k * ny) * nx] = kappa[7] * (mu::d_dx_U(model_buff, i, j, k) +
                                                            mu::d_dy_V(model_buff, i, j, k) +
-                                                           mu::d_dz_W(model_buff, i, j, k));
+                                                           mu::d_dz_W(model_buff, i, j, k));          
                 }
             }
         }
-        solver.setB(b);
+
+        // solver.setB(b);
 
         // SOLVE FOR phi2-pn
-        solver.solve(X);
+        // solver.solve(X);
 
         // UPDATE PRESSURE (not real pressure, but phi2-pn, used to compute the gradient)
         for (index_t k = 0; k < nz; ++k)
@@ -197,7 +198,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i)
                 {
-                    model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
+                    model_buff.P(i, j, k) = /*X[i + (j + k * ny) * nx]*/ 0.0;
                 }
             }
         }
@@ -221,7 +222,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                     }
                 }
     }
-    // model.swap(model_buff);
+    model.swap(model_buff);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -334,10 +335,10 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                 }
             }
         }
-        solver.setB(b);
+        // solver.setB(b);
 
         // SOLVE FOR phi3-phi2
-        solver.solve(X);
+        // solver.solve(X);
 
         // UPDATE PRESSURE (not real pressure, but phi3-phi2, used to compute the gradient)
         for (index_t k = 0; k < nz; ++k)
@@ -347,7 +348,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i)
                 {
-                    model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
+                    model_buff.P(i, j, k) = /*X[i + (j + k * ny) * nx]*/ 0.0;
                 }
             }
         }
@@ -371,7 +372,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                 }
     }
 
-    // model.swap(model_buff);
+    model.swap(model_buff);
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ForcingT
     ft.set_time(time + kappa[4]);
@@ -473,10 +474,10 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                 }
             }
         }
-        solver.setB(b);
+        // solver.setB(b);
 
         // SOLVE FOR pn+1-phi3
-        solver.solve(X);
+        // solver.solve(X);
 
         // UPDATE PRESSURE (not real pressure, but pn+1-phi3, used to compute the gradient)
         for (index_t k = 0; k < nz; ++k)
@@ -486,7 +487,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i)
                 {
-                    model_buff.P(i, j, k) = X[i + (j + k * ny) * nx];
+                    model_buff.P(i, j, k) = /*X[i + (j + k * ny) * nx]*/ 0.0;
                 }
             }
         }
@@ -510,7 +511,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                     }
                 }
     }
-    // model.swap(model_buff);
+    model.swap(model_buff);
 }
 
 #endif // AEROHPC_A_RUNGEKUTTA_H
