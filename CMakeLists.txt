@@ -4,17 +4,6 @@ project(AeroHPC_A)
 # C++ Standard
 set(CMAKE_CXX_STANDARD 23)
 
-# Find the MPI compiler
-find_program(MPICXX_EXECUTABLE mpic++)
-
-if (MPICXX_EXECUTABLE)
-    message(STATUS "Found mpic++ at: ${MPICXX_EXECUTABLE}")
-    # Set mpic++ as the default C++ compiler
-    set(CMAKE_CXX_COMPILER ${MPICXX_EXECUTABLE} CACHE FILEPATH "Path to the mpic++ compiler" FORCE)
-else ()
-    message(FATAL_ERROR "mpic++ not found. Please ensure MPI is installed and mpic++ is in your PATH.")
-endif ()
-
 # Optionally set default include and library paths (fallback)
 set(DEFAULT_FFTW_INCLUDE_PATH /usr/local/include)
 set(DEFAULT_FFTW_LIBRARY_PATH /usr/local/lib)
@@ -33,14 +22,25 @@ else()
     set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.a)
 endif()
 
+# Find the MPI compiler
+find_program(MPICXX_EXECUTABLE mpic++)
+
+if (MPICXX_EXECUTABLE)
+    message(STATUS "Found mpic++ at: ${MPICXX_EXECUTABLE}")
+    # Set mpic++ as the default C++ compiler
+    set(CMAKE_CXX_COMPILER ${MPICXX_EXECUTABLE} CACHE FILEPATH "Path to the mpic++ compiler" FORCE)
+else ()
+    message(FATAL_ERROR "mpic++ not found. Please ensure MPI is installed and mpic++ is in your PATH.")
+endif ()
+
 # Example usage message
 message(STATUS "Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 
 # Include header files
-include_directories(
-    ${FFTW_INCLUDE_DIRS}
-    include
-    )
+include_directories(include)
+
+# Add the include directories for FFTW
+include_directories(${FFTW_INCLUDE_DIRS})
 
 # Include source files
 file(GLOB_RECURSE SOURCES "src/*.cpp")
@@ -61,5 +61,5 @@ add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 #ForcingTerm FLAG
 add_definitions(-DForcingT)
 
-# Link the FFTW library and the math library
+# Link the FFTW library
 target_link_libraries(${TARGET_FILE} ${FFTW_LIBRARIES})
