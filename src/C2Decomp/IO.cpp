@@ -1,6 +1,6 @@
 #include "C2Decomp.hpp"
 
-void C2Decomp::writeOne(int ipencil, C2D_DTYPE *var, const std::string& filename) {
+void C2Decomp::writeOne(int ipencil, C2D_DTYPE *var, std::string &filename) {
 
     MPI_Offset disp, filesize;
     MPI_File fh;
@@ -349,7 +349,7 @@ void C2Decomp::writePlane(int ipencil, C2D_DTYPE *var, int iplane, int n, const 
 
 }
 
-void C2Decomp::writeEvery(int ipencil, C2D_DTYPE *var, int iskip, int jskip, int kskip, const std::string &filename, bool from1) {
+void C2Decomp::writeEvery(int ipencil, C2D_DTYPE *var, int iskip, int jskip, int kskip, std::string &filename, bool from1) {
 
     C2D_DTYPE *wk, *wk2;
     MPI_Offset filesize, disp;

@@ -3,9 +3,9 @@
 
 #include "mpi.h"
 
-#if Real == float
+#if REAL_USE_FLOAT
 #define Real_MPI MPI_FLOAT
-#elif Real == double
+#else
 #define Real_MPI MPI_DOUBLE
 #endif
 

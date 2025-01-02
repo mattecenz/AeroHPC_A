@@ -224,7 +224,7 @@ public:
     void memMergeYX(C2D_DTYPE *in, int n1, int n2, int n3, C2D_DTYPE *out, int iproc, int *dist);
 
     //IO
-    void writeOne(int ipencil, C2D_DTYPE *var, std::string filename);
+    void writeOne(int ipencil, C2D_DTYPE *var, std::string &filename);
 
     void writeVar(MPI_File &fh, MPI_Offset &disp, int ipencil, C2D_DTYPE *var);
 
@@ -232,7 +232,7 @@ public:
 
     void writePlane(int ipencil, C2D_DTYPE *var, int iplane, int n, const std::string& filename);
 
-    void writeEvery(int ipencil, C2D_DTYPE *var, int iskip, int jskip, int kskip, std::string filename, bool from1);
+    void writeEvery(int ipencil, C2D_DTYPE *var, int iskip, int jskip, int kskip, std::string &filename, bool from1);
 
     void readOne(int ipencil, C2D_DTYPE *var, const std::string& filename);
 

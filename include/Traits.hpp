@@ -4,10 +4,20 @@
 #include <functional>
 
 /**
- * Typedef for real values
+ * This is the switch for all datatypes (0 for double, 1 for float)
  */
+#define REAL_USE_FLOAT 1
+
+
+#if REAL_USE_FLOAT
 typedef float Real;
+#else
+typedef double Real;
+#endif
+
 #define real(val) static_cast<Real>(val)
+#define real_p(pntr) static_cast<Real*>(pntr)
+
 
 /**
  * Typedef for array indexing
