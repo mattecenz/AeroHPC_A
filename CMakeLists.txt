@@ -4,6 +4,24 @@ project(AeroHPC_A)
 # C++ Standard
 set(CMAKE_CXX_STANDARD 23)
 
+# Optionally set default include and library paths (fallback)
+set(DEFAULT_FFTW_INCLUDE_PATH /usr/local/include)
+set(DEFAULT_FFTW_LIBRARY_PATH /usr/local/lib)
+
+# Try to find FFTW using find_package
+find_package(FFTW QUIET COMPONENTS SINGLE DOUBLE)
+
+# Check if FFTW was found, otherwise use the fallback paths
+if(FFTW_FOUND)
+    message(STATUS "FFTW found via find_package.")
+    set(FFTW_LIBRARIES FFTW::FFTW3 FFTW::FFTW3F)
+    set(FFTW_INCLUDE_DIRS "") # Already handled by FFTW imported targets
+else()
+    message(WARNING "FFTW not found via find_package. Falling back to default paths.")
+    set(FFTW_INCLUDE_DIRS ${DEFAULT_FFTW_INCLUDE_PATH})
+    set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.a)
+endif()
+
 # Find the MPI compiler
 find_program(MPICXX_EXECUTABLE mpic++)
 
@@ -20,6 +38,9 @@ message(STATUS "Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 
 # Include header files
 include_directories(include)
+
+# Add the include directories for FFTW
+include_directories(${FFTW_INCLUDE_DIRS})
 
 # Include source files
 file(GLOB_RECURSE SOURCES "src/*.cpp")
@@ -39,3 +60,6 @@ add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 
 #ForcingTerm FLAG
 add_definitions(-DForcingT)
+
+# Link the FFTW library
+target_link_libraries(${TARGET_FILE} ${FFTW_LIBRARIES})

@@ -28,7 +28,7 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // define T & deltaT  & Re
     constexpr Real T = 1.0;
-    constexpr Real Re = 4000;
+    constexpr Real Re = 4000.0;
     // Define physical size of the problem (just for simplicity)
     constexpr Real phy_dim = 1.0;
 
@@ -79,8 +79,13 @@ Real testSolver(Real deltaT, index_t dim) {
 
     // Define initial pressure function
     // For the moment it does not work so do not care about it
+    // auto initialPres = [](Real x, Real y, Real z) -> Real {
+    //     return x + y + z;
+    // };
+
+    // THIS IS TO TEST IF THE CHANGES TO RUNGE-KUTTA WORK
     auto initialPres = [](Real x, Real y, Real z) -> Real {
-        return x + y + z;
+        return 0;
     };
 
     chrono_start(initT);
@@ -137,7 +142,7 @@ Real testSolver(Real deltaT, index_t dim) {
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries);
+        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries,c2d);
         currentTime += deltaT;
         chrono_stop(rkTime);
 
