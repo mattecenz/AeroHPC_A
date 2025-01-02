@@ -19,7 +19,7 @@ if(FFTW_FOUND)
 else()
     message(WARNING "FFTW not found via find_package. Falling back to default paths.")
     set(FFTW_INCLUDE_DIRS ${DEFAULT_FFTW_INCLUDE_PATH})
-    set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.a)
+    set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.so ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3f.so)
 endif()
 
 # Find the MPI compiler

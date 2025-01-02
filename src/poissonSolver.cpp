@@ -8,7 +8,6 @@ poissonSolver::poissonSolver(int N, Real L, C2Decomp *c2d)
     c2d->allocX(u1);
     c2d->allocY(u2);
     c2d->allocZ(u3);
-    
 
     // Retrieve grid dimensions
     xSize[0] = c2d->xSize[0];
@@ -54,6 +53,7 @@ void poissonSolver::performFFT() {
                 int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
                 fft_inputX[ip] = u1[ii];
             }
+
             fftwr_execute(fftwr_plan_r2r_1d(xSize[0], fft_inputX, fft_outputX, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u1 (you may store real and imaginary parts here)

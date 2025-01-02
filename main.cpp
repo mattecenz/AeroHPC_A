@@ -22,7 +22,7 @@ Real testSolver(Real deltaT, index_t dim) {
     const index_t dim_z = dim;
 
     C2Decomp *c2d;
-    int pRow = 2, pCol = 2;
+    int pRow = size, pCol = 1;
     bool periodicBC[3] = {true, true, true};
     c2d = new C2Decomp(dim_x, dim_y, dim_z, pRow, pCol, periodicBC);
 
@@ -109,11 +109,21 @@ Real testSolver(Real deltaT, index_t dim) {
     if (!rank)
         logger.printTitle("Boundary condition set");
 
+    /// Create the Poisson Solver //////////////////////////////////////////////////////////////////////////
+    poissonSolver p_solver(nx,1.0,c2d);
+
+    if (!rank)
+        logger.printTitle("Poisson solver created");
+
     /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
 
-    // Buffers
+    // Buffers for model data
     GridData modelBuff(modelStructure);
-    GridData rhsBuff(modelStructure);
+    // Buffers for other data
+    GridStructure bufferStructure(nodes, spacing, displacement, 0);
+    GridData rhsBuff(bufferStructure, false);
+    GridData pressureBuff(bufferStructure, false);
+
     if (!rank)
         logger.printTitle("Buffers created");
 
@@ -142,7 +152,7 @@ Real testSolver(Real deltaT, index_t dim) {
     while (currentTime < T) {
         // call RK (obtain model at currentTime + dt)
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, currentTime, mpiBoundaries,c2d);
+        rungeKutta(model, modelBuff, rhsBuff, pressureBuff, Re, deltaT, currentTime, mpiBoundaries, p_solver);
         currentTime += deltaT;
         chrono_stop(rkTime);
 
