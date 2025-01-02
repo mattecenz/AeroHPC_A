@@ -178,7 +178,8 @@ int main(int argc, char **argv) {
 
     // dividing the timestep size to half
     std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    std::vector<index_t> dims = {4, 8, 16, 32, 64};
+    // std::vector<index_t> dims = {4, 8, 16, 32, 64};
+    std::vector<index_t> dims = {4,8};
 
     std::vector<Real> error;
 

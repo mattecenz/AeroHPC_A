@@ -180,11 +180,12 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                 {
                     b[i + (j + k * ny) * nx] = kappa[7] * (mu::d_dx_U(model_buff, i, j, k) +
                                                            mu::d_dy_V(model_buff, i, j, k) +
-                                                           mu::d_dz_W(model_buff, i, j, k));          
+                                                           mu::d_dz_W(model_buff, i, j, k));     
+                                                           
+                    cout << b[i + (j + k * ny) * nx] << " ";
                 }
             }
         }
-
         // solver.setB(b);
 
         // SOLVE FOR phi2-pn
@@ -222,7 +223,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                     }
                 }
     }
-    model.swap(model_buff);
+    // model.swap(model_buff);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -332,6 +333,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                     b[i + (j + k * ny) * nx] = kappa[8] * (mu::d_dx_U(model_buff, i, j, k) +
                                                            mu::d_dy_V(model_buff, i, j, k) +
                                                            mu::d_dz_W(model_buff, i, j, k));
+
+                    cout << b[i + (j + k * ny) * nx] << " ";
                 }
             }
         }
@@ -372,7 +375,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                 }
     }
 
-    model.swap(model_buff);
+    // model.swap(model_buff);
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ForcingT
     ft.set_time(time + kappa[4]);
@@ -471,6 +474,8 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                     b[i + (j + k * ny) * nx] = kappa[9] * (mu::d_dx_U(model_buff, i, j, k) +
                                                            mu::d_dy_V(model_buff, i, j, k) +
                                                            mu::d_dz_W(model_buff, i, j, k));
+
+                    cout << b[i + (j + k * ny) * nx] << " ";
                 }
             }
         }
@@ -511,7 +516,7 @@ void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff, Real 
                     }
                 }
     }
-    model.swap(model_buff);
+    // model.swap(model_buff);
 }
 
 #endif // AEROHPC_A_RUNGEKUTTA_H
