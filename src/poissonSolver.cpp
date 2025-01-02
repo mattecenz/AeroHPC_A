@@ -1,6 +1,6 @@
 #include "poissonSolver.hpp"
 
-poissonSolver::poissonSolver(int N, double L, C2Decomp *c2d)
+poissonSolver::poissonSolver(int N, Real L, C2Decomp *c2d)
     : N(N), L(L), c2d(c2d) {
     dx = L / N;
 
@@ -22,25 +22,24 @@ poissonSolver::poissonSolver(int N, double L, C2Decomp *c2d)
     zSize[2] = c2d->zSize[2];
 
     // Allocate FFT buffers
-    fft_inputX  = (double*)fftw_malloc(sizeof(double) * xSize[0] * xSize[1] * xSize[2]);
-    fft_outputX = (double*)fftw_malloc(sizeof(double) * xSize[0] * xSize[1] * xSize[2]);
+    fft_inputX  = fftwr_malloc(sizeof(Real) * xSize[0] * xSize[1] * xSize[2]);
+    fft_outputX = fftwr_malloc(sizeof(Real) * xSize[0] * xSize[1] * xSize[2]);
 
-    fft_inputY  = (double*)fftw_malloc(sizeof(double) * ySize[0] * ySize[1] * ySize[2]);
-    fft_outputY = (double*)fftw_malloc(sizeof(double) * ySize[0] * ySize[1] * ySize[2]);
+    fft_inputY  = fftwr_malloc(sizeof(Real) * ySize[0] * ySize[1] * ySize[2]);
+    fft_outputY = fftwr_malloc(sizeof(Real) * ySize[0] * ySize[1] * ySize[2]);
 
-    fft_inputZ  = (double*)fftw_malloc(sizeof(double) * zSize[0] * zSize[1] * zSize[2]);
-    fft_outputZ = (double*)fftw_malloc(sizeof(double) * zSize[0] * zSize[1] * zSize[2]);
+    fft_inputZ  = fftwr_malloc(sizeof(Real) * zSize[0] * zSize[1] * zSize[2]);
+    fft_outputZ = fftwr_malloc(sizeof(Real) * zSize[0] * zSize[1] * zSize[2]);
 
 }
 
 poissonSolver::~poissonSolver() {
-
-    fftw_free(u1);
-    fftw_free(u2);
-    fftw_free(u3);
+    fftwr_free(u1);
+    fftwr_free(u2);
+    fftwr_free(u3);
 }
 
-void poissonSolver::setB(double *b) {
+void poissonSolver::setB(Real *b) {
     this->b = b; // Dynamically update `b`
 }
 
@@ -55,7 +54,7 @@ void poissonSolver::performFFT() {
                 int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
                 fft_inputX[ip] = u1[ii];
             }
-            fftw_execute(fftw_plan_r2r_1d(xSize[0], fft_inputX, fft_outputX, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
+            fftwr_execute(fftwr_plan_r2r_1d(xSize[0], fft_inputX, fft_outputX, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u1 (you may store real and imaginary parts here)
             for (int ip = 0; ip < xSize[0]; ++ip) {
@@ -75,7 +74,7 @@ void poissonSolver::performFFT() {
                 int ii = kp * ySize[1] * ySize[0] + jp * ySize[0] + ip;
                 fft_inputY[ip] = u2[ii];
             }
-            fftw_execute(fftw_plan_r2r_1d(ySize[0], fft_inputY, fft_outputY, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
+            fftwr_execute(fftwr_plan_r2r_1d(ySize[0], fft_inputY, fft_outputY, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u2
             for (int jp = 0; jp < ySize[1]; ++jp) {
@@ -95,7 +94,7 @@ void poissonSolver::performFFT() {
                 int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
                 fft_inputZ[ip] = u3[ii];
             }
-            fftw_execute(fftw_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
+            fftwr_execute(fftwr_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u3
             for (int kp = 0; kp < zSize[0]; ++kp) {
@@ -117,7 +116,7 @@ void poissonSolver::performIFFT() {
                 fft_inputZ[ip] = u3[ii];
             }
             // Execute inverse FFT
-            fftw_execute(fftw_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT01, FFTW_ESTIMATE));
+            fftwr_execute(fftwr_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT01, FFTW_ESTIMATE));
 
             // Store the inverse FFT result back into u3
             for (int kp = 0; kp < zSize[0]; ++kp) {
@@ -137,7 +136,7 @@ void poissonSolver::performIFFT() {
                 fft_inputY[ip] = u2[ii];
             }
             // Execute inverse FFT
-            fftw_execute(fftw_plan_r2r_1d(ySize[0], fft_inputY, fft_outputY, FFTW_REDFT01, FFTW_ESTIMATE));
+            fftwr_execute(fftwr_plan_r2r_1d(ySize[0], fft_inputY, fft_outputY, FFTW_REDFT01, FFTW_ESTIMATE));
 
             // Store the inverse FFT result back into u2
             for (int jp = 0; jp < ySize[1]; ++jp) {
@@ -157,7 +156,7 @@ void poissonSolver::performIFFT() {
                 fft_inputX[ip] = u1[ii];
             }
             // Execute inverse FFT
-            fftw_execute(fftw_plan_r2r_1d(xSize[0], fft_inputX, fft_outputX, FFTW_REDFT01, FFTW_ESTIMATE));
+            fftwr_execute(fftwr_plan_r2r_1d(xSize[0], fft_inputX, fft_outputX, FFTW_REDFT01, FFTW_ESTIMATE));
 
             // Store the inverse FFT result back into u1
             for (int ip = 0; ip < xSize[0]; ++ip) {
@@ -178,8 +177,8 @@ void poissonSolver::solveEigenvalues() {
                 int kx = ((c2d->zStart[0] + ip) < N / 2) ? (c2d->zStart[0] + ip) : (c2d->zStart[0] + ip - N);
 
                 size_t idx = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
-                double ksq = -(kx * kx + ky * ky + kz * kz);
-                double eigenvalue = (ksq == 0) ? 1e-10 : ksq;
+                Real ksq = -(kx * kx + ky * ky + kz * kz);
+                Real eigenvalue = (ksq == 0) ? 1e-10 : ksq;
                 u3[idx] /= eigenvalue;
             }
         }
@@ -187,7 +186,7 @@ void poissonSolver::solveEigenvalues() {
 }
 
 
-void poissonSolver::solve(double *X) {
+void poissonSolver::solve(Real *X) {
     
     for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i){
         u1[i] = b[i];
