@@ -23,6 +23,9 @@
     const TFunction v = functions[1]; \
     const TFunction w = functions[2]
 
+#define cast_int(v) static_cast<int>(v)
+
+
 /// NORTH //////////////////////////////////////////////////////////////////////////////////////////////
 namespace north {
     // This lambda defines how the #functions have to be applied to the #grid
@@ -71,11 +74,11 @@ namespace north {
                                            MPI_Request *requestIn, int neigh_rank) {
         // This proc will send his outgoing buffer with the tag #NORTH_BUFFER_TAG
         // (means that the buffer is the top layer of this domain)
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
                   neigh_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
         // This proc will receive into ingoing buffer data with tag #SOUTH_BUFFER_TAG
         // (means that the buffer is the top layer of neighbour domain)
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
                   neigh_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -133,9 +136,9 @@ namespace south {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
                   neigh_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
                   neigh_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -194,9 +197,9 @@ namespace east {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
                   EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
                   WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -251,9 +254,9 @@ namespace west {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
                   WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
                   EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -338,9 +341,9 @@ namespace nhet {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
                   neigh_rank, NORTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
                   neigh_rank, SOUTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -367,9 +370,9 @@ namespace nhwt {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
                   neigh_rank, NORTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
                   neigh_rank, SOUTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -396,9 +399,9 @@ namespace shet {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
                   neigh_rank, SOUTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
                   neigh_rank, NORTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -425,9 +428,9 @@ namespace shwt {
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
                   neigh_rank, SOUTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
                   neigh_rank, NORTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -640,7 +643,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
                                const std::vector<TFunction> &boundaryFunctions) {
 
-#define int(v) static_cast<int>(v)
 
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
     // global position of this process
