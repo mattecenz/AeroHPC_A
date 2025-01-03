@@ -28,6 +28,7 @@ private:
     double *fft_inputX, *fft_inputY, *fft_inputZ;         // FFT input buffer
     double *fft_outputX, *fft_outputY, *fft_outputZ;      // FFT input buffer
 
+public:
     void performFFT();
     void performIFFT();
     void solveEigenvalues();
