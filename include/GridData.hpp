@@ -25,14 +25,9 @@ public:
     const index_t node_dim;
 
     /**
-     * Velocity Data (concatenation of flattened array of all velocity components)
+     * Data (concatenation of flattened array of all velocity components + optional pressure)
      */
-    Real *velocity_data;
-
-    /**
-     * Pressure Data (flattened array of pressure)
-     */
-    Real *pressure_data;
+    Real *data;
 
     GridData() = delete;
 
@@ -49,10 +44,7 @@ public:
                                                                    grid_dim(structure.gx *
                                                                             structure.gy *
                                                                             structure.gz) {
-        velocity_data = new Real[grid_dim * 3];
-        pressure_data = nullptr;
-        if (allocPressure)
-            pressure_data = new Real[grid_dim];
+        data = new Real[grid_dim * (allocPressure ? 4 : 3)];
     }
 
     explicit GridData(const GridStructure &structure) : GridData(structure, true) {}
@@ -73,13 +65,13 @@ inline Real &name(index_t i, index_t j, index_t k) const { \
     return comp[indexing(i,j,k)]; \
 }
 
-    get_component(U, velocity_data)
+    get_component(U, data)
 
-    get_component(V, (&velocity_data[grid_dim]))
+    get_component(V, (&data[grid_dim]))
 
-    get_component(W, (&velocity_data[grid_dim + grid_dim]))
+    get_component(W, (&data[grid_dim * 2]))
 
-    get_component(P, pressure_data)
+    get_component(P, (&data[grid_dim * 3]))
 
     /**
      * Initialize the grid given the initial velocity and pressure function
@@ -90,8 +82,7 @@ inline Real &name(index_t i, index_t j, index_t k) const { \
      * Swap grid data with the given one
      */
     void swap(GridData &other) noexcept {
-        std::swap(velocity_data, other.velocity_data);
-        std::swap(pressure_data, other.pressure_data);
+        std::swap(data, other.data);
     }
 };
 

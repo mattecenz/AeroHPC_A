@@ -38,8 +38,8 @@ public:
                                          _exchanger(exchanger),
                                          _mapper(mapper),
                                          _neigh_rank(neigh_rank),
-                                         _bufferIn(bufferStructure, false),
-                                         _bufferOut(bufferStructure, false){}
+                                         _bufferIn(bufferStructure),
+                                         _bufferOut(bufferStructure){}
 
 
     /**

@@ -32,7 +32,6 @@ namespace north {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const std::vector<TFunction> &functions) {
-
         // Use macro to get some variables
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
@@ -56,6 +55,9 @@ namespace north {
                 grid.V(i, j, k) = 0;
                 grid.W(i, j, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
                                   - grid.W(i, j - 1, k);
+
+                // P derivative has to be 0 in y direction, so the value should be the same
+                grid.P(i, j, k) = grid.P(i, j - 1, k);
             }
     };
     // This lambda defines how the outgoing communication buffer has to be initialized
@@ -66,6 +68,7 @@ namespace north {
             memcpy(&bufferOut.U(0, 0, k), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.V(0, 0, k), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.W(0, 0, k), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.P(0, 0, k), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
@@ -74,11 +77,11 @@ namespace north {
                                            MPI_Request *requestIn, int neigh_rank) {
         // This proc will send his outgoing buffer with the tag #NORTH_BUFFER_TAG
         // (means that the buffer is the top layer of this domain)
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI,
                   neigh_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
         // This proc will receive into ingoing buffer data with tag #SOUTH_BUFFER_TAG
         // (means that the buffer is the top layer of neighbour domain)
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI,
                   neigh_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -94,15 +97,16 @@ namespace north {
             memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.P(-1, j, k), &buffer.P(0, 0, k), sizeof(Real) * grid.structure.gx);
         }
     };
 }
+
 /// SOUTH //////////////////////////////////////////////////////////////////////////////////////////////
 namespace south {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -121,6 +125,8 @@ namespace south {
                 grid.V(i, j - 1, k) = eV(x + sdx, y, z + sdz, currentTime);
                 grid.W(i, j - 1, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
                                       - grid.W(i, j, k);
+
+                grid.P(i, j - 1, k) = grid.P(i, j, k);
             }
     };
 
@@ -131,14 +137,15 @@ namespace south {
             memcpy(&bufferOut.U(0, 0, k), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.V(0, 0, k), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.W(0, 0, k), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.P(0, 0, k), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI,
                   neigh_rank, SOUTH_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI,
                   neigh_rank, NORTH_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -152,15 +159,16 @@ namespace south {
             memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, k), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, k), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.P(-1, j, k), &buffer.P(0, 0, k), sizeof(Real) * grid.structure.gx);
         }
     };
 }
+
 /// EAST ///////////////////////////////////////////////////////////////////////////////////////////////
 namespace east {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -181,6 +189,7 @@ namespace east {
                                   - grid.V(i, j, k - 1);
                 grid.W(i, j, k) = 0;
 
+                grid.P(i, j, k) = grid.P(i, j, k - 1);
             }
     };
 
@@ -192,14 +201,15 @@ namespace east {
             memcpy(&bufferOut.U(0, j, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.V(0, j, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.W(0, j, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.P(0, j, 0), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI, neigh_rank,
                   EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI, neigh_rank,
                   WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -213,15 +223,16 @@ namespace east {
             memcpy(&grid.U(-1, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.V(-1, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.W(-1, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.P(-1, j, k), &buffer.P(0, j, 0), sizeof(Real) * grid.structure.gx);
         }
     };
 }
+
 /// WEST ///////////////////////////////////////////////////////////////////////////////////////////////
 namespace west {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -239,6 +250,8 @@ namespace west {
                 grid.V(i, j, k - 1) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
                                       - grid.V(i, j, k);
                 grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
+
+                grid.P(i, j, k - 1) = grid.P(i, j, k);
             }
     };
 
@@ -249,14 +262,15 @@ namespace west {
             memcpy(&bufferOut.U(0, j, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.V(0, j, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
             memcpy(&bufferOut.W(0, j, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+            memcpy(&bufferOut.P(0, j, 0), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
         }
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI, neigh_rank,
                   WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI, neigh_rank,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI, neigh_rank,
                   EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -270,15 +284,16 @@ namespace west {
             memcpy(&grid.U(-1, j, k), &buffer.U(0, j, 0), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.V(-1, j, k), &buffer.V(0, j, 0), sizeof(Real) * grid.structure.gx);
             memcpy(&grid.W(-1, j, k), &buffer.W(0, j, 0), sizeof(Real) * grid.structure.gx);
+            memcpy(&grid.P(-1, j, k), &buffer.P(0, j, 0), sizeof(Real) * grid.structure.gx);
         }
     };
 }
+
 /// FRONT //////////////////////////////////////////////////////////////////////////////////////////////
 namespace front {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -296,16 +311,17 @@ namespace front {
                                       - grid.V(i, j, k);
                 grid.W(i - 1, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                       - grid.W(i, j, k);
-            }
 
+                grid.P(i - 1, j, k) = grid.P(i, j, k);
+            }
     };
 }
+
 /// BACK ///////////////////////////////////////////////////////////////////////////////////////////////
 namespace back {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -325,9 +341,12 @@ namespace back {
                                   - grid.V(i - 1, j, k);
                 grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                   - grid.W(i - 1, j, k);
+
+                grid.P(i - 1, j, k) = grid.P(i, j, k);
             }
     };
 }
+
 /// NORTH EAST /////////////////////////////////////////////////////////////////////////////////////////
 namespace nhet {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -337,13 +356,14 @@ namespace nhet {
         memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.P(0, 0, 0), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI,
                   neigh_rank, NORTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI,
                   neigh_rank, SOUTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -355,8 +375,10 @@ namespace nhet {
         memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.P(-1, j, k), &buffer.P(0, 0, 0), sizeof(Real) * grid.structure.gx);
     };
 }
+
 /// NORTH WEST /////////////////////////////////////////////////////////////////////////////////////////
 namespace nhwt {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -366,13 +388,14 @@ namespace nhwt {
         memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.P(0, 0, 0), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI,
                   neigh_rank, NORTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI,
                   neigh_rank, SOUTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -384,8 +407,10 @@ namespace nhwt {
         memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.P(-1, j, k), &buffer.P(0, 0, 0), sizeof(Real) * grid.structure.gx);
     };
 }
+
 /// SOUTH EAST /////////////////////////////////////////////////////////////////////////////////////////
 namespace shet {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -395,13 +420,14 @@ namespace shet {
         memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.P(0, 0, 0), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI,
                   neigh_rank, SOUTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI,
                   neigh_rank, NORTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -413,8 +439,10 @@ namespace shet {
         memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.P(-1, j, k), &buffer.P(0, 0, 0), sizeof(Real) * grid.structure.gx);
     };
 }
+
 /// SOUTH WEST /////////////////////////////////////////////////////////////////////////////////////////
 namespace shwt {
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -424,13 +452,14 @@ namespace shwt {
         memcpy(&bufferOut.U(0, 0, 0), &grid.U(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.V(0, 0, 0), &grid.V(-1, j, k), sizeof(Real) * grid.structure.gx);
         memcpy(&bufferOut.W(0, 0, 0), &grid.W(-1, j, k), sizeof(Real) * grid.structure.gx);
+        memcpy(&bufferOut.P(0, 0, 0), &grid.P(-1, j, k), sizeof(Real) * grid.structure.gx);
     };
 
     MPICondition::BufferExchanger exc = [](GridData &bufferOut, GridData &bufferIn, MPI_Request *requestOut,
                                            MPI_Request *requestIn, int neigh_rank) {
-        MPI_Isend(bufferOut.velocity_data, cast_int(bufferOut.node_dim) * 3, Real_MPI,
+        MPI_Isend(bufferOut.data, cast_int(bufferOut.node_dim) * 4, Real_MPI,
                   neigh_rank, SOUTH_WEST_BUFFER_TAG, MPI_COMM_WORLD, requestOut);
-        MPI_Irecv(bufferIn.velocity_data, cast_int(bufferIn.node_dim) * 3, Real_MPI,
+        MPI_Irecv(bufferIn.data, cast_int(bufferIn.node_dim) * 4, Real_MPI,
                   neigh_rank, NORTH_EAST_BUFFER_TAG, MPI_COMM_WORLD, requestIn);
     };
 
@@ -442,6 +471,7 @@ namespace shwt {
         memcpy(&grid.U(-1, j, k), &buffer.U(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.V(-1, j, k), &buffer.V(0, 0, 0), sizeof(Real) * grid.structure.gx);
         memcpy(&grid.W(-1, j, k), &buffer.W(0, 0, 0), sizeof(Real) * grid.structure.gx);
+        memcpy(&grid.P(-1, j, k), &buffer.P(0, 0, 0), sizeof(Real) * grid.structure.gx);
     };
 }
 
@@ -457,7 +487,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     PhysicalCondition::Mapper northFace = [](GridData &grid,
                                              const Real currentTime,
                                              const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -490,7 +519,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     PhysicalCondition::Mapper southFace = [](GridData &grid,
                                              const Real currentTime,
                                              const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -520,7 +548,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     PhysicalCondition::Mapper eastFace = [](GridData &grid,
                                             const Real currentTime,
                                             const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -540,9 +567,7 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
                 grid.V(i, j, k) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
                                   - grid.V(i, j, k - 1);
                 grid.W(i, j, k) = 0;
-
             }
-
     };
 
     eastCond = new PhysicalCondition(eastFace, boundaryFunctions);
@@ -552,7 +577,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     PhysicalCondition::Mapper westFace = [](GridData &grid,
                                             const Real currentTime,
                                             const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -571,7 +595,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
                                       - grid.V(i, j, k);
                 grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
             }
-
     };
 
     westCond = new PhysicalCondition(westFace, boundaryFunctions);
@@ -581,7 +604,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     PhysicalCondition::Mapper frontFace = [](GridData &grid,
                                              const Real currentTime,
                                              const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -600,7 +622,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
                 grid.W(i - 1, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                       - grid.W(i, j, k);
             }
-
     };
 
     frontCond = new PhysicalCondition(frontFace, boundaryFunctions);
@@ -610,7 +631,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
     PhysicalCondition::Mapper backFace = [](GridData &grid,
                                             const Real currentTime,
                                             const std::vector<TFunction> &functions) {
-
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -642,8 +662,6 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
  */
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
                                const std::vector<TFunction> &boundaryFunctions) {
-
-
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
     // global position of this process
     int n_y_proc = decomp.dims[0];
@@ -739,9 +757,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     }
 
 
-    if (!(isOnTop || isOnRight)){
+    if (!(isOnTop || isOnRight)) {
         int nhet_proc_rank;
-        const int coord[] = {this_y_pos + 1,this_z_pos + 1};
+        const int coord[] = {this_y_pos + 1, this_z_pos + 1};
         MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &nhet_proc_rank);
 
         auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
@@ -749,7 +767,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         boundaries.addMPICond(*nhetCond);
     }
 
-    if(!(isOnTop || isOnLeft)){
+    if (!(isOnTop || isOnLeft)) {
         int nhwt_proc_rank;
         const int coord[] = {this_y_pos + 1, this_z_pos - 1};
         MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &nhwt_proc_rank);
@@ -760,7 +778,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         boundaries.addMPICond(*nhwtCond);
     }
 
-    if(!(isOnBottom || isOnRight)){
+    if (!(isOnBottom || isOnRight)) {
         int shet_proc_rank;
         const int coord[] = {this_y_pos - 1, this_z_pos + 1};
         MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &shet_proc_rank);
@@ -770,9 +788,9 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
         boundaries.addMPICond(*shetCond);
     }
 
-    if(!(isOnBottom || isOnLeft)){
+    if (!(isOnBottom || isOnLeft)) {
         int shwt_proc_rank;
-        const int coord[] = {this_y_pos-1,this_z_pos-1};
+        const int coord[] = {this_y_pos - 1, this_z_pos - 1};
         MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &shwt_proc_rank);
 
         auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
