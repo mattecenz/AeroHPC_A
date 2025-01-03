@@ -178,10 +178,14 @@ void poissonSolver::solveEigenvalues() {
             for (int ip = 0; ip < zSize[0]; ++ip) {
                 int kx = ((c2d->zStart[0] + ip) < N / 2) ? (c2d->zStart[0] + ip) : (c2d->zStart[0] + ip - N);
 
-                size_t idx = kp * (zSize[1] * zSize[0]) + jp * zSize[0] + ip;
-                double ksq = -(kx * kx + ky * ky + kz * kz);
-                double eigenvalue = (ksq == 0) ? 1e-10 : ksq;
-                u3[idx] /= eigenvalue;
+                int idx = kp * (zSize[1] * zSize[0]) + jp * zSize[0] + ip;
+                double eigenvalue = -(kx * kx + ky * ky + kz * kz);
+                // std::cout << u3[idx] << " , " << eigenvalue << std::endl;
+
+                // im not sure whether i have to skip the zero eigen value or
+                // divide by a very small number to simmulate zero
+                if (eigenvalue!=0)
+                    u3[idx] = (u3[idx] / eigenvalue);
             }
         }
     }
@@ -197,7 +201,7 @@ void poissonSolver::solve(double *X) {
     performFFT();
 
     // uncomment this later
-    // solveEigenvalues();
+    solveEigenvalues();
 
 
     performIFFT();
