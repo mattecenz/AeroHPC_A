@@ -48,8 +48,11 @@ rhs(W)
 // Runge-Kutta method
 void rungeKutta(GridData &model, GridData &model_buff,
                 GridData &rhs_buff, GridData &pressure_buff,
-                Real reynolds, Real deltat, Real time,
+                Real reynolds, Real deltat, index_t iteration,
                 Boundaries &boundary_cond, poissonSolver &p_solver) {
+
+    const Real time = deltat * real(iteration);
+
     const Real nu = (real(1) / reynolds);
 
     const Real dx = model.structure.dx;
@@ -168,9 +171,8 @@ void rungeKutta(GridData &model, GridData &model_buff,
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
                     b_at(i, j, k) = kappa[7] * (mu::d_dx_U(model_buff, i, j, k)
-                                                     + mu::d_dy_V(model_buff, i, j, k)
-                                                     + mu::d_dz_W(model_buff, i, j, k))
-                    ;
+                                                + mu::d_dy_V(model_buff, i, j, k)
+                                                + mu::d_dz_W(model_buff, i, j, k));
                 }
             }
         }
@@ -181,8 +183,8 @@ void rungeKutta(GridData &model, GridData &model_buff,
         p_solver.solve(X);
     }
 
-    /// Y2 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    {
+    /// Y2 //////////////////////////////////////////////////////////////////////////////////////////////////////////
+    { //TODO separate into 3 loops and skip the boundary layer, since dx on x borders dy on y borders etc are 0
         for (index_t k = 0; k < nz; ++k) {
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
@@ -190,12 +192,14 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     // model_buff.U(i, j, k) -= kappa[0] * X_d_dx_P(i, j, k);
                     // model_buff.V(i, j, k) -= kappa[0] * X_d_dy_P(i, j, k);
                     // model_buff.W(i, j, k) -= kappa[0] * X_d_dz_P(i, j, k);
+                    //
+                    // //TODO the TODO thing does not apply on this, this need to be done also for boundaries
                     // model_buff.P(i, j, k) = X_at(i, j, k) + model.P(i, j, k);
                 }
             }
         }
     }
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ForcingT
     ft.set_time(time + kappa[0]);

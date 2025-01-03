@@ -11,8 +11,10 @@
 
 #if REAL_USE_FLOAT
 typedef float Real;
+#define Real_Dataname "float"
 #else
 typedef double Real;
+#define Real_Dataname "double"
 #endif
 
 #define real(val) static_cast<Real>(val)
