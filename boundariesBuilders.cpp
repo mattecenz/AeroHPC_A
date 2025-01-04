@@ -388,11 +388,11 @@ namespace front {
                     // On x = 0 for ghost point we have exact for U, other approximate
                     grid.U(i, j, k) = eU(x, y + sdy, z + sdz, currentTime);
                     grid.V(i, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
-                                          - grid.V(i, j+1, k);
+                                          - grid.V(i +1, j, k);
                     grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
-                                          - grid.W(i, j+1, k);
+                                          - grid.W(i +1, j, k);
 
-                    grid.P(i, j, k) = grid.P(i, j+1, k);
+                    grid.P(i, j, k) = grid.P(i +1 , j, k);
                 }
         }
     };
