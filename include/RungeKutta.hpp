@@ -26,13 +26,13 @@
 namespace mu = mathUtils;
 
 struct RKConst {
-    static constexpr Real alpha0 = 8.0 / 15.0;
-    static constexpr Real alpha1 = 17.0 / 60.0;
-    static constexpr Real alpha2 = 5.0 / 12.0;
-    static constexpr Real alpha3 = 3.0 / 4.0;
-    static constexpr Real alpha4 = 2.0 / 3.0;
-    static constexpr Real alpha5 = 2.0 / 15.0;
-    static constexpr Real alpha6 = 1.0 / 3.0;
+    static constexpr Real alpha0 = 64.0 / 120.0; // t1
+    static constexpr Real alpha1 = 34.0 / 120.0;
+    static constexpr Real alpha2 = 50.0 / 120.0;
+    static constexpr Real alpha3 = 90.0 / 120.0;
+    static constexpr Real alpha4 = 80.0 / 120.0; // t2
+    static constexpr Real alpha5 = 16.0 / 120.0;
+    static constexpr Real alpha6 = 40.0 / 120.0;
 };
 
 ////RHS function
@@ -91,7 +91,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         RKConst::alpha4 * deltat,
         RKConst::alpha5 * deltat,
         RKConst::alpha6 * deltat,
-        real(1.0 / (RKConst::alpha6 * deltat))
+        real(1.0 / (RKConst::alpha0 * deltat))
     };
 
 #ifdef ForcingT
