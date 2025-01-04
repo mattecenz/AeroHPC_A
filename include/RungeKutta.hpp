@@ -7,6 +7,9 @@
 #include "mathUtils.hpp"
 #include "poissonSolver.hpp"
 
+#include "printBuffer.hpp"
+
+
 #ifdef ForcingT
 #define getPhys(i, j, k)                         \
     Real px = real(i + model.structure.px) * dx; \
@@ -50,6 +53,19 @@ void rungeKutta(GridData &model, GridData &model_buff,
                 GridData &rhs_buff, GridData &pressure_buff,
                 Real reynolds, Real deltat, index_t iteration,
                 Boundaries &boundary_cond, poissonSolver &p_solver) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    std::string dir = "./iterations/" + to_string(iteration) + "/";
+    if (!rank) {
+        create_directories(dir);
+    }
+
+    if (!rank) {
+        std::string nn{dir + "0"};
+        print(model, nn);
+    }
+
     const Real time = deltat * real(iteration);
 
     const Real nu = (real(1) / reynolds);
@@ -153,7 +169,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
+        if (!rank) {
+            std::string nn{dir + "1"};
+            print(model_buff, nn);
+        }
+
         boundary_cond.apply(model_buff, time + kappa[0]);
+
+        if (!rank) {
+            std::string nn{dir + "2"};
+            print(model_buff, nn);
+        }
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +210,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
+        if (!rank) {
+            std::string nn{dir + "3"};
+            print(model_buff, nn);
+        }
+
         boundary_cond.apply(model_buff, time + kappa[0]);
+
+        if (!rank) {
+            std::string nn{dir + "4"};
+            print(model_buff, nn);
+        }
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -203,7 +239,18 @@ void rungeKutta(GridData &model, GridData &model_buff,
                 }
             }
         }
+
+        if (!rank) {
+            std::string nn{dir + "5"};
+            print(model_buff, nn);
+        }
+
         boundary_cond.apply(model_buff, time + kappa[0]);
+
+        if (!rank) {
+            std::string nn{dir + "6"};
+            print(model_buff, nn);
+        }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -285,7 +332,16 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
+        if (!rank) {
+            std::string nn{dir + "7"};
+            print(model, nn);
+        }
         boundary_cond.apply(model, time + kappa[4]);
+
+        if (!rank) {
+            std::string nn{dir + "8"};
+            print(model, nn);
+        }
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -316,7 +372,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
+        if (!rank) {
+            std::string nn{dir + "9"};
+            print(model, nn);
+        }
+
         boundary_cond.apply(model, time + kappa[4]);
+
+        if (!rank) {
+            std::string nn{dir + "10"};
+            print(model, nn);
+        }
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -333,7 +399,18 @@ void rungeKutta(GridData &model, GridData &model_buff,
                 }
             }
         }
+
+        if (!rank) {
+            std::string nn{dir + "11"};
+            print(model, nn);
+        }
+
         boundary_cond.apply(model, time + kappa[4]);
+
+        if (!rank) {
+            std::string nn{dir + "12"};
+            print(model, nn);
+        }
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -358,7 +435,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
                     model_buff.U(i, j, k) = model.U(i, j, k)
                                             - kappa[2] * rhs_buff.U(i, j, k) +
-                                            +kappa[3] * (r + force)
+                                            + kappa[3] * (r + force)
                                             - kappa[6] * mu::d_dx_P(model, i, j, k);
                 }
             }
@@ -406,7 +483,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
+        if (!rank) {
+            std::string nn{dir + "13"};
+            print(model_buff, nn);
+        }
+
         boundary_cond.apply(model_buff, time + deltat);
+
+        if (!rank) {
+            std::string nn{dir + "14"};
+            print(model_buff, nn);
+        }
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -437,7 +524,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
+        if (!rank) {
+            std::string nn{dir + "15"};
+            print(model_buff, nn);
+        }
+
         boundary_cond.apply(model_buff, time + deltat);
+
+        if (!rank) {
+            std::string nn{dir + "16"};
+            print(model_buff, nn);
+        }
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -454,12 +551,22 @@ void rungeKutta(GridData &model, GridData &model_buff,
                 }
             }
         }
+
+        if (!rank) {
+            std::string nn{dir + "17"};
+            print(model_buff, nn);
+        }
+
         boundary_cond.apply(model_buff, time + deltat);
+
+        if (!rank) {
+            std::string nn{dir + "18"};
+            print(model_buff, nn);
+        }
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     model.swap(model_buff);
-
 }
 
 #endif // AEROHPC_A_RUNGEKUTTA_H

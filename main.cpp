@@ -126,7 +126,7 @@ Real runSolver(const int npy, const int npz,
     Real perf;
 
     // Printing variables
-    index_t printIt = 100; // prints every n iterations
+    index_t printIt = 1; // prints every n iterations
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     if (!rank)
@@ -160,7 +160,7 @@ Real runSolver(const int npy, const int npz,
 
     if (!rank)
         logger.closeTable().printTitle("End of computation", compT);
-
+/*
     //TODO to remove
     std::string optional_test = "_" + to_string(nx);
 
@@ -198,7 +198,7 @@ Real runSolver(const int npy, const int npz,
 
     if (!rank)
         logger.printTitle("profile3 written");
-
+*/
     if (!rank)
         logger.closeSection().empty();
 
@@ -214,13 +214,13 @@ void testSolver(const int npy, const int npz) {
     // dividing the timestep size to half
     const std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
     const std::vector<int> nodes = {
-        /*4, */8, 16, /* 32, 64*/
+        /*4, */8, /* 32, 64*/
     };
     const Real dim_x = 1.0;
     const Real dim_y = 1.0;
-    const Real dim_z = 2.0;
+    const Real dim_z = 1.0;
     const Real Re = 1000;
-    const index_t timeSteps = 1000;
+    const index_t timeSteps = 2;
 
 
     std::vector<Real> error;
@@ -261,8 +261,8 @@ void testSolver(const int npy, const int npz) {
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
-    int npy = 2;
-    int npz = 2;
+    int npy = 1;
+    int npz = 1;
 
     testSolver(npy, npz);
 
