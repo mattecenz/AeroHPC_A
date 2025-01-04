@@ -25,40 +25,67 @@
 
 #define cast_int(v) static_cast<int>(v)
 
+#define NORTH_FACE_ID 0
+#define SOUTH_FACE_ID 1
+#define EAST_FACE_ID 2
+#define WEST_FACE_ID 3
+#define FRONT_FACE_ID 4
+#define BACK_FACE_ID 5
+
+typedef std::vector<TFunction> boundaryFaceFunctions;
+typedef std::array<boundaryFaceFunctions, 6> boundaryDomainFunctions;
 
 /// NORTH //////////////////////////////////////////////////////////////////////////////////////////////
 namespace north {
     // This lambda defines how the #functions have to be applied to the #grid
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
-                                        const std::vector<TFunction> &functions) {
-        // Use macro to get some variables
-        getStaggeredSpacing(grid, sdx, sdy, sdz);
-        getExactFunctions(functions, eU, eV, eW);
-
+                                        const boundaryFaceFunctions &functions) {
         // The upper boundary is at the max Y
         const index_t j = grid.structure.ny;
-        const Real y = real(j + grid.structure.py) * grid.structure.dy;
 
-        // apply on face
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i + grid.structure.px) * grid.structure.dx;
-                Real z = real(k + grid.structure.pz) * grid.structure.dz;
+        // PERIODIC CONDITION
+        if (functions.empty()) {
+            const index_t periodic_j = 0;
 
-                // On y = phy_dim for domain point we have exact for V
-                grid.V(i, j - 1, k) = eV(x + sdx, y, z + sdz, currentTime);
-                // For ghost points we have useless V, other approximate
+            // apply on face
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    grid.U(i, j, k) = grid.U(i, periodic_j, k);
+                    grid.V(i, j, k) = grid.V(i, periodic_j, k);
+                    grid.W(i, j, k) = grid.W(i, periodic_j, k);
 
-                grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y, z + sdz, currentTime)
-                                  - grid.U(i, j - 1, k);
-                grid.V(i, j, k) = 0;
-                grid.W(i, j, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
-                                  - grid.W(i, j - 1, k);
+                    grid.P(i, j, k) = grid.P(i, j - 1, k);
+                }
+        }
+        // DIRICHLET CONDITION
+        else {
+            // Use macro to get some variables
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
 
-                // P derivative has to be 0 in y direction, so the value should be the same
-                grid.P(i, j, k) = grid.P(i, j - 1, k);
-            }
+            const Real y = real(j + grid.structure.py) * grid.structure.dy;
+
+            // apply on face
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                    // On y = phy_dim for domain point we have exact for V
+                    grid.V(i, j - 1, k) = eV(x + sdx, y, z + sdz, currentTime);
+                    // For ghost points we have useless V, other approximate
+
+                    grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y, z + sdz, currentTime)
+                                      - grid.U(i, j - 1, k);
+                    grid.V(i, j, k) = 0;
+                    grid.W(i, j, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
+                                      - grid.W(i, j - 1, k);
+
+                    // P derivative has to be 0 in y direction, so the value should be the same
+                    grid.P(i, j, k) = grid.P(i, j - 1, k);
+                }
+        }
     };
     // This lambda defines how the outgoing communication buffer has to be initialized
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -106,28 +133,41 @@ namespace north {
 namespace south {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
-                                        const std::vector<TFunction> &functions) {
-        getStaggeredSpacing(grid, sdx, sdy, sdz);
-        getExactFunctions(functions, eU, eV, eW);
+                                        const boundaryFaceFunctions &functions) {
+        const index_t j = -1;
 
-        // South face has y=0
-        const index_t j = 0;
-        const Real y = real(j + grid.structure.py) * grid.structure.dy;
+        if (functions.empty()) {
+            const index_t periodic_j = grid.structure.ny - 1;
 
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i + grid.structure.px) * grid.structure.dx;
-                Real z = real(k + grid.structure.pz) * grid.structure.dz;
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    grid.U(i, j, k) = grid.U(i, periodic_j, k);
+                    grid.V(i, j, k) = grid.V(i, periodic_j, k);
+                    grid.W(i, j, k) = grid.W(i, periodic_j, k);
+                    grid.P(i, j - 1, k) = grid.P(i, j, k);
+                }
+        } else {
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
 
-                // On y = 0 for ghost point we hae exact for V, other approximate
-                grid.U(i, j - 1, k) = 2 * eU(x + grid.structure.dx, y, z + sdz, currentTime)
-                                      - grid.U(i, j, k);
-                grid.V(i, j - 1, k) = eV(x + sdx, y, z + sdz, currentTime);
-                grid.W(i, j - 1, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
-                                      - grid.W(i, j, k);
+            // South face has y=0
+            const Real y = real((j+1) + grid.structure.py) * grid.structure.dy;
 
-                grid.P(i, j - 1, k) = grid.P(i, j, k);
-            }
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                    // On y = 0 for ghost point we hae exact for V, other approximate
+                    grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y, z + sdz, currentTime)
+                                      - grid.U(i, j + 1, k);
+                    grid.V(i, j, k) = eV(x + sdx, y, z + sdz, currentTime);
+                    grid.W(i, j, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
+                                      - grid.W(i, j + 1, k);
+
+                    grid.P(i, j, k) = grid.P(i, j + 1, k);
+                }
+        }
     };
 
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -168,29 +208,42 @@ namespace south {
 namespace east {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
-                                        const std::vector<TFunction> &functions) {
-        getStaggeredSpacing(grid, sdx, sdy, sdz);
-        getExactFunctions(functions, eU, eV, eW);
-
+                                        const boundaryFaceFunctions &functions) {
         const index_t k = grid.structure.nz;
-        const Real z = real(k + grid.structure.pz) * grid.structure.dz;
 
-        for (index_t j = 0; j < grid.structure.ny; j++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i + grid.structure.px) * grid.structure.dx;
-                Real y = real(j + grid.structure.py) * grid.structure.dy;
+        if (functions.empty()) {
+            const index_t periodic_k = 0;
 
-                // On z = phy_dim for domain point we have exact for W
-                grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
-                // For ghost points we gave useless W, other interpolate
-                grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y + sdy, z, currentTime)
-                                  - grid.U(i, j, k - 1);
-                grid.V(i, j, k) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
-                                  - grid.V(i, j, k - 1);
-                grid.W(i, j, k) = 0;
+            for (index_t j = 0; j < grid.structure.ny; j++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    grid.U(i, j, k) = grid.U(i, j, periodic_k);
+                    grid.V(i, j, k) = grid.V(i, j, periodic_k);
+                    grid.W(i, j, k) = grid.W(i, j, periodic_k);
+                    grid.P(i, j, k) = grid.P(i, j, k - 1);
+                }
+        } else {
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
 
-                grid.P(i, j, k) = grid.P(i, j, k - 1);
-            }
+            const Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+            for (index_t j = 0; j < grid.structure.ny; j++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real y = real(j + grid.structure.py) * grid.structure.dy;
+
+                    // On z = phy_dim for domain point we have exact for W
+                    grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
+                    // For ghost points we gave useless W, other interpolate
+                    grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y + sdy, z, currentTime)
+                                      - grid.U(i, j, k - 1);
+                    grid.V(i, j, k) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
+                                      - grid.V(i, j, k - 1);
+                    grid.W(i, j, k) = 0;
+
+                    grid.P(i, j, k) = grid.P(i, j, k - 1);
+                }
+        }
     };
 
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -232,27 +285,41 @@ namespace east {
 namespace west {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
-                                        const std::vector<TFunction> &functions) {
-        getStaggeredSpacing(grid, sdx, sdy, sdz);
-        getExactFunctions(functions, eU, eV, eW);
+                                        const boundaryFaceFunctions &functions) {
+        const index_t k = -1;
 
-        const index_t k = 0;
-        const Real z = real(k + grid.structure.pz) * grid.structure.dz;
+        if (functions.empty()) {
+            const index_t periodic_k = grid.structure.nz - 1;
 
-        for (index_t j = 0; j < grid.structure.ny; j++)
-            for (index_t i = 0; i < grid.structure.nx; i++) {
-                Real x = real(i + grid.structure.px) * grid.structure.dx;
-                Real y = real(j + grid.structure.py) * grid.structure.dy;
+            for (index_t j = 0; j < grid.structure.ny; j++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    grid.U(i, j, k) = grid.U(i, j, periodic_k);
+                    grid.V(i, j, k) = grid.V(i, j, periodic_k);
+                    grid.W(i, j, k) = grid.W(i, j, periodic_k);
+                    grid.P(i, j, k) = grid.P(i, j, k + 1);
+                }
 
-                // On z = 0 for ghost point we have exact for W, other approximate
-                grid.U(i, j, k - 1) = 2 * eU(x + grid.structure.dx, y + sdy, z, currentTime)
-                                      - grid.U(i, j, k);
-                grid.V(i, j, k - 1) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
-                                      - grid.V(i, j, k);
-                grid.W(i, j, k - 1) = eW(x + sdx, y + sdy, z, currentTime);
+        } else {
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
 
-                grid.P(i, j, k - 1) = grid.P(i, j, k);
-            }
+            const Real z = real((k+1) + grid.structure.pz) * grid.structure.dz;
+
+            for (index_t j = 0; j < grid.structure.ny; j++)
+                for (index_t i = 0; i < grid.structure.nx; i++) {
+                    Real x = real(i + grid.structure.px) * grid.structure.dx;
+                    Real y = real(j + grid.structure.py) * grid.structure.dy;
+
+                    // On z = 0 for ghost point we have exact for W, other approximate
+                    grid.U(i, j, k) = 2 * eU(x + grid.structure.dx, y + sdy, z, currentTime)
+                                      - grid.U(i, j, k + 1);
+                    grid.V(i, j, k) = 2 * eV(x + sdx, y + grid.structure.dy, z, currentTime)
+                                      - grid.V(i, j, k + 1);
+                    grid.W(i, j, k) = eW(x + sdx, y + sdy, z, currentTime);
+
+                    grid.P(i, j, k) = grid.P(i, j, k + 1);
+                }
+        }
     };
 
     MPICondition::BufferInitializer init = [](GridData &grid, GridData &bufferOut) {
@@ -293,27 +360,41 @@ namespace west {
 namespace front {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
-                                        const std::vector<TFunction> &functions) {
-        getStaggeredSpacing(grid, sdx, sdy, sdz);
-        getExactFunctions(functions, eU, eV, eW);
+                                        const boundaryFaceFunctions &functions) {
+        const index_t i = -1;
 
-        const index_t i = 0;
-        const Real x = real(i + grid.structure.px) * grid.structure.dx;
+        if (functions.empty()) {
+            const index_t periodic_i = grid.structure.nx - 1;
 
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t j = 0; j < grid.structure.ny; j++) {
-                Real y = real(j + grid.structure.py) * grid.structure.dy;
-                Real z = real(k + grid.structure.pz) * grid.structure.dz;
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t j = 0; j < grid.structure.ny; j++) {
+                    grid.U(i,j,k) = grid.U(periodic_i, j, k);
+                    grid.V(i,j,k) = grid.V(periodic_i, j, k);
+                    grid.W(i,j,k) = grid.W(periodic_i, j, k);
+                    grid.P(i, j, k) = grid.P(i, j+1, k);
+                }
+        }
+        else{
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
 
-                // On x = 0 for ghost point we have exact for U, other approximate
-                grid.U(i - 1, j, k) = eU(x, y + sdy, z + sdz, currentTime);
-                grid.V(i - 1, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
-                                      - grid.V(i, j, k);
-                grid.W(i - 1, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
-                                      - grid.W(i, j, k);
+            const Real x = real((i+1) + grid.structure.px) * grid.structure.dx;
 
-                grid.P(i - 1, j, k) = grid.P(i, j, k);
-            }
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t j = 0; j < grid.structure.ny; j++) {
+                    Real y = real(j + grid.structure.py) * grid.structure.dy;
+                    Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                    // On x = 0 for ghost point we have exact for U, other approximate
+                    grid.U(i, j, k) = eU(x, y + sdy, z + sdz, currentTime);
+                    grid.V(i, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
+                                          - grid.V(i, j+1, k);
+                    grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
+                                          - grid.W(i, j+1, k);
+
+                    grid.P(i, j, k) = grid.P(i, j+1, k);
+                }
+        }
     };
 }
 
@@ -321,29 +402,45 @@ namespace front {
 namespace back {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
-                                        const std::vector<TFunction> &functions) {
-        getStaggeredSpacing(grid, sdx, sdy, sdz);
-        getExactFunctions(functions, eU, eV, eW);
+                                        const boundaryFaceFunctions &functions) {
 
         const index_t i = grid.structure.nx;
-        const Real x = real(i + grid.structure.px) * grid.structure.dx;
 
-        for (index_t k = 0; k < grid.structure.nz; k++)
-            for (index_t j = 0; j < grid.structure.ny; j++) {
-                Real y = real(j + grid.structure.py) * grid.structure.dy;
-                Real z = real(k + grid.structure.pz) * grid.structure.dz;
+        if (functions.empty()) {
+            const index_t periodic_i = 0;
 
-                // On x = phy_dim for domain point we have exact for U
-                grid.U(i - 1, j, k) = eU(x, y + sdy, z + sdz, currentTime);
-                // For ghost point we have useless U, other approximate
-                grid.U(i, j, k) = 0;
-                grid.V(i, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
-                                  - grid.V(i - 1, j, k);
-                grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
-                                  - grid.W(i - 1, j, k);
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t j = 0; j < grid.structure.ny; j++) {
+                    grid.U(i, j, k) = grid.U(periodic_i, j, k);
+                    grid.V(i, j, k) = grid.V(periodic_i, j, k);
+                    grid.W(i, j, k) = grid.W(periodic_i, j, k);
 
-                grid.P(i - 1, j, k) = grid.P(i, j, k);
-            }
+                    grid.P(i - 1, j, k) = grid.P(i, j, k);
+                }
+        }
+        else {
+            getStaggeredSpacing(grid, sdx, sdy, sdz);
+            getExactFunctions(functions, eU, eV, eW);
+
+            const Real x = real(i + grid.structure.px) * grid.structure.dx;
+
+            for (index_t k = 0; k < grid.structure.nz; k++)
+                for (index_t j = 0; j < grid.structure.ny; j++) {
+                    Real y = real(j + grid.structure.py) * grid.structure.dy;
+                    Real z = real(k + grid.structure.pz) * grid.structure.dz;
+
+                    // On x = phy_dim for domain point we have exact for U
+                    grid.U(i - 1, j, k) = eU(x, y + sdy, z + sdz, currentTime);
+                    // For ghost point we have useless U, other approximate
+                    grid.U(i, j, k) = 0;
+                    grid.V(i, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
+                                      - grid.V(i - 1, j, k);
+                    grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
+                                      - grid.W(i - 1, j, k);
+
+                    grid.P(i - 1, j, k) = grid.P(i, j, k);
+                }
+        }
     };
 }
 
@@ -479,14 +576,14 @@ namespace shwt {
 /**
  * Builds boundary conditions for a unique space (unused)
  */
-inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction> &boundaryFunctions) {
+inline void buildBoundaries(Boundaries &boundaries, const boundaryDomainFunctions &boundaryFunctions) {
     Condition *northCond, *southCond, *eastCond, *westCond, *frontCond, *backCond;
 
     /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
     // North
     PhysicalCondition::Mapper northFace = [](GridData &grid,
                                              const Real currentTime,
-                                             const std::vector<TFunction> &functions) {
+                                             const boundaryFaceFunctions &functions) {
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -512,13 +609,13 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
             }
     };
 
-    northCond = new PhysicalCondition(northFace, boundaryFunctions);
+    northCond = new PhysicalCondition(northFace, boundaryFunctions[NORTH_FACE_ID]);
     boundaries.addCond(*northCond);
 
     // South
     PhysicalCondition::Mapper southFace = [](GridData &grid,
                                              const Real currentTime,
-                                             const std::vector<TFunction> &functions) {
+                                             const boundaryFaceFunctions &functions) {
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -541,13 +638,13 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
             }
     };
 
-    southCond = new PhysicalCondition(southFace, boundaryFunctions);
+    southCond = new PhysicalCondition(southFace, boundaryFunctions[SOUTH_FACE_ID]);
     boundaries.addCond(*southCond);
 
     // East
     PhysicalCondition::Mapper eastFace = [](GridData &grid,
                                             const Real currentTime,
-                                            const std::vector<TFunction> &functions) {
+                                            const boundaryFaceFunctions &functions) {
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -570,13 +667,13 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
             }
     };
 
-    eastCond = new PhysicalCondition(eastFace, boundaryFunctions);
+    eastCond = new PhysicalCondition(eastFace, boundaryFunctions[EAST_FACE_ID]);
     boundaries.addCond(*eastCond);
 
     // West
     PhysicalCondition::Mapper westFace = [](GridData &grid,
                                             const Real currentTime,
-                                            const std::vector<TFunction> &functions) {
+                                            const boundaryFaceFunctions &functions) {
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -597,13 +694,13 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
             }
     };
 
-    westCond = new PhysicalCondition(westFace, boundaryFunctions);
+    westCond = new PhysicalCondition(westFace, boundaryFunctions[WEST_FACE_ID]);
     boundaries.addCond(*westCond);
 
     // Front
     PhysicalCondition::Mapper frontFace = [](GridData &grid,
                                              const Real currentTime,
-                                             const std::vector<TFunction> &functions) {
+                                             const boundaryFaceFunctions &functions) {
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -624,13 +721,13 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
             }
     };
 
-    frontCond = new PhysicalCondition(frontFace, boundaryFunctions);
+    frontCond = new PhysicalCondition(frontFace, boundaryFunctions[FRONT_FACE_ID]);
     boundaries.addCond(*frontCond);
 
     // Back
     PhysicalCondition::Mapper backFace = [](GridData &grid,
                                             const Real currentTime,
-                                            const std::vector<TFunction> &functions) {
+                                            const boundaryFaceFunctions &functions) {
         getStaggeredSpacing(grid, sdx, sdy, sdz);
         getExactFunctions(functions, eU, eV, eW);
 
@@ -653,7 +750,7 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
             }
     };
 
-    backCond = new PhysicalCondition(backFace, boundaryFunctions);
+    backCond = new PhysicalCondition(backFace, boundaryFunctions[BACK_FACE_ID]);
     boundaries.addCond(*backCond);
 }
 
@@ -661,7 +758,7 @@ inline void buildBoundaries(Boundaries &boundaries, const std::vector<TFunction>
  * Builds boundary conditions for a partitioned space
  */
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
-                               const std::vector<TFunction> &boundaryFunctions) {
+                               const boundaryDomainFunctions &boundaryFunctions) {
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
     // global position of this process
     int n_y_proc = decomp.dims[0];
@@ -681,7 +778,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     if (isOnTop) {
         // The processor is on top of global domain, it has to apply on the upper face the physical BC
         // Build the #condition that will associate the mapper (#face) to the corresponding #BC_functions
-        auto *northCond = new PhysicalCondition(north::face, boundaryFunctions);
+        auto *northCond = new PhysicalCondition(north::face, boundaryFunctions[NORTH_FACE_ID]);
         // Add the #condition to the collection
         boundaries.addCond(*northCond);
     } else {
@@ -705,7 +802,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // SOUTH (MIN Y)
     if (isOnBottom) {
         // The processor is on bottom of global domain, it has to apply on the lower face the physical BC
-        auto southCond = new PhysicalCondition(south::face, boundaryFunctions);
+        auto southCond = new PhysicalCondition(south::face, boundaryFunctions[SOUTH_FACE_ID]);
         boundaries.addCond(*southCond);
     } else {
         // The processor is not on bottom of the global domain,
@@ -723,7 +820,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // EAST (MAX Z)
     if (isOnRight) {
         // The processor is at the right of global domain, it has to apply on the right face the physical BC
-        auto eastCond = new PhysicalCondition(east::face, boundaryFunctions);
+        auto eastCond = new PhysicalCondition(east::face, boundaryFunctions[EAST_FACE_ID]);
         boundaries.addCond(*eastCond);
     } else {
         // The processor is not on the right of the global domain,
@@ -741,7 +838,7 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // WEST (MIN Z)
     if (isOnLeft) {
         // The processor is on left of global domain, it has to apply on the left face the physical BC
-        auto westCond = new PhysicalCondition(west::face, boundaryFunctions);
+        auto westCond = new PhysicalCondition(west::face, boundaryFunctions[WEST_FACE_ID]);
         boundaries.addCond(*westCond);
     } else {
         // The processor is not on the left of the global domain,
@@ -801,10 +898,10 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     // Font and back faces are always physical boundaries in pencil domain decomposition
 
     // FRONT (MIN X)
-    auto frontCond = new PhysicalCondition(front::face, boundaryFunctions);
+    auto frontCond = new PhysicalCondition(front::face, boundaryFunctions[FRONT_FACE_ID]);
     boundaries.addCond(*frontCond);
 
     // BACK (MAX X)
-    auto backCond = new PhysicalCondition(back::face, boundaryFunctions);
+    auto backCond = new PhysicalCondition(back::face, boundaryFunctions[BACK_FACE_ID]);
     boundaries.addCond(*backCond);
 }

@@ -82,16 +82,16 @@ Real runSolver(const int npy, const int npz,
         logger.printTitle("Grid initialized", initT);
 
     /// Define boundaries condition functions //////////////////////////////////////////////////////////////
-    const std::vector<TFunction> boundaryFunctions = std::vector{
-        ExactSolution::u,
-        ExactSolution::v,
-        ExactSolution::w
+    const boundaryDomainFunctions boundaryDomainFunctions = {
+        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
+        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
+        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
+        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
+        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
+        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w}
     };
-
-    //MPI STUFFS
-
     MPIBoundaries mpiBoundaries;
-    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryFunctions);
+    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryDomainFunctions);
 
     if (!rank)
         logger.printTitle("Boundary condition set");
