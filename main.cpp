@@ -15,8 +15,8 @@ using namespace std;
 Real runSolver(const int npy, const int npz,
                const int nx, const int ny, const int nz,
                const Real dim_x, const Real dim_y, const Real dim_z,
-               const Real deltaT, const index_t nTimeSteps, const Real Re,
-               const std::string &exportFileName, const std::string &exportFileDescription) {
+               const Real deltaT, const index_t nTimeSteps, const Real Re) {
+
     int size, rank;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -90,6 +90,8 @@ Real runSolver(const int npy, const int npz,
         boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
         boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w}
     };
+
+
     MPIBoundaries mpiBoundaries;
     buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryDomainFunctions);
 
@@ -159,13 +161,43 @@ Real runSolver(const int npy, const int npz,
     if (!rank)
         logger.closeTable().printTitle("End of computation", compT);
 
+    //TODO to remove
+    std::string optional_test = "_" + to_string(nx);
 
-    std::vector<Real> points, vel, pres;
-    extractData(model, points, vel, pres);
-    writeVtkFile(exportFileName, exportFileDescription, points, vel, pres);
+    std::string exportFaceFilename = "solution" + optional_test + ".vtk";
+    std::string exportFaceDescription = "test";
+    std::vector<Real> face_points, face_vel, face_pres;
+    extractFaceData(model, face_points, face_vel, face_pres);
+    writeVtkFile(exportFaceFilename, exportFaceDescription, face_points, face_vel, face_pres);
 
     if (!rank)
-        logger.printTitle("Output written");
+        logger.printTitle("solution written");
+
+    std::array<Real, 3> point = {0.5, 0.5, 1};
+
+    std::string exportLine1Filename = "profile1" + optional_test + ".dat";
+    std::vector<Real> line1_points, line1_vel, line1_pres;
+    extractLineData(model, line1_points, line1_vel, line1_pres, 0, point);
+    writeDatFile(exportLine1Filename, line1_points, line1_vel, line1_pres);
+
+    if (!rank)
+        logger.printTitle("profile1 written");
+
+    std::string exportLine2Filename = "profile2" + optional_test + ".dat";
+    std::vector<Real> line2_points, line2_vel, line2_pres;
+    extractLineData(model, line2_points, line2_vel, line2_pres, 1, point);
+    writeDatFile(exportLine2Filename, line2_points, line2_vel, line2_pres);
+
+    if (!rank)
+        logger.printTitle("profile2 written");
+
+    std::string exportLine3Filename = "profile3" + optional_test + ".dat";
+    std::vector<Real> line3_points, line3_vel, line3_pres;
+    extractLineData(model, line3_points, line3_vel, line3_pres, 2, point);
+    writeDatFile(exportLine3Filename, line3_points, line3_vel, line3_pres);
+
+    if (!rank)
+        logger.printTitle("profile3 written");
 
     if (!rank)
         logger.closeSection().empty();
@@ -186,7 +218,7 @@ void testSolver(const int npy, const int npz) {
     };
     const Real dim_x = 1.0;
     const Real dim_y = 1.0;
-    const Real dim_z = 1.0;
+    const Real dim_z = 2.0;
     const Real Re = 1000;
     const index_t timeSteps = 1000;
 
@@ -207,9 +239,7 @@ void testSolver(const int npy, const int npz) {
         Real l2norm = runSolver(npy, npz,
                                 n, n, n,
                                 dim_x, dim_y, dim_z,
-                                deltaT, timeSteps, Re,
-                                "test_" + std::to_string(n) + ".vtk",
-                                "Test result of grid " + std::to_string(n) + ".vtk");
+                                deltaT, timeSteps, Re);
         error.push_back(l2norm);
     }
 

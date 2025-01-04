@@ -6,30 +6,155 @@
 #include <mpi.h>
 #include <string>
 #include <vector>
+#include <sstream>
 
-void extractData(const GridData &model,
-                 std::vector<Real> &point_coord,
-                 std::vector<Real> &velocity_data,
-                 std::vector<Real> &pressure_data) {
-    Real dx = model.structure.dx;
-    Real dy = model.structure.dy;
-    Real dz = model.structure.dz;
+inline void extractFaceData(const GridData &model,
+                            std::vector<Real> &point_coord,
+                            std::vector<Real> &velocity_data,
+                            std::vector<Real> &pressure_data) {
+    const Real dx = model.structure.dx;
+    const Real dy = model.structure.dy;
+    const Real dz = model.structure.dz;
 
-    index_t nx = model.structure.nx;
-    index_t ny = model.structure.ny;
-    index_t nz = model.structure.nz;
+    const index_t nx = model.structure.nx;
+    const index_t ny = model.structure.ny;
+    const index_t nz = model.structure.nz;
 
-    Real origin_x = model.structure.px * dx;
-    Real origin_y = model.structure.py * dy;
-    Real origin_z = model.structure.pz * dz;
+    const Real origin_x = real(model.structure.px) * dx;
+    const Real origin_y = real(model.structure.py) * dy;
+    const Real origin_z = real(model.structure.pz) * dz;
 
-
-    for (index_t i = 0; i < nx; i++) {
+    if (origin_x == 0) {
         for (index_t j = 0; j < ny; j++) {
             for (index_t k = 0; k < nz; k++) {
-                point_coord.push_back(origin_x + i * dx);
-                point_coord.push_back(origin_y + j * dy);
-                point_coord.push_back(origin_z + k * dz);
+                point_coord.push_back(origin_x + 0 * dx);
+                point_coord.push_back(origin_y + real(j) * dy);
+                point_coord.push_back(origin_z + real(k) * dz);
+                velocity_data.push_back(model.U(0, j, k));
+                velocity_data.push_back(model.V(0, j, k));
+                velocity_data.push_back(model.W(0, j, k));
+                pressure_data.push_back(model.P(0, j, k));
+            }
+        }
+    }
+
+    if (origin_y == 0) {
+        for (index_t i = 0; i < nx; i++) {
+            for (index_t k = 0; k < nz; k++) {
+                point_coord.push_back(origin_x + real(i) * dx);
+                point_coord.push_back(origin_y + 0 * dy);
+                point_coord.push_back(origin_z + real(k) * dz);
+                velocity_data.push_back(model.U(i, 0, k));
+                velocity_data.push_back(model.V(i, 0, k));
+                velocity_data.push_back(model.W(i, 0, k));
+                pressure_data.push_back(model.P(i, 0, k));
+            }
+        }
+    }
+
+    if (origin_z == 0) {
+        for (index_t i = 0; i < nx; i++) {
+            for (index_t j = 0; j < ny; j++) {
+                point_coord.push_back(origin_x + real(i) * dx);
+                point_coord.push_back(origin_y + real(j) * dy);
+                point_coord.push_back(origin_z + 0 * dz);
+                velocity_data.push_back(model.U(i, j, 0));
+                velocity_data.push_back(model.V(i, j, 0));
+                velocity_data.push_back(model.W(i, j, 0));
+                pressure_data.push_back(model.P(i, j, 0));
+            }
+        }
+    }
+}
+
+inline void extractLineData(const GridData &model,
+                            std::vector<Real> &point_coord,
+                            std::vector<Real> &velocity_data,
+                            std::vector<Real> &pressure_data,
+                            const int axis,
+                            const std::array<Real, 3> &point) {
+
+    const Real dx = model.structure.dx;
+    const Real dy = model.structure.dy;
+    const Real dz = model.structure.dz;
+
+    const index_t nx = model.structure.nx;
+    const index_t ny = model.structure.ny;
+    const index_t nz = model.structure.nz;
+
+    /// Get point index if it is in this domain
+    const index_t px = model.structure.px;
+    const index_t py = model.structure.py;
+    const index_t pz = model.structure.pz;
+
+    const Real origin_x = real(px) * dx;
+    const Real origin_y = real(py) * dy;
+    const Real origin_z = real(pz) * dz;
+
+    const Real end_x = origin_x + real(nx) * dx;
+    const Real end_y = origin_y + real(ny) * dy;
+    const Real end_z = origin_z + real(nz) * dz;
+
+    const bool is_in_x_range = (point[0] >= origin_x && point[0] <= end_x);
+    const bool is_in_y_range = (point[1] >= origin_y && point[1] <= end_y);
+    const bool is_in_z_range = (point[2] >= origin_z && point[2] <= end_z);
+
+
+    // If ask for x-axis then the point should be in range of y and z
+    if (axis == 0 && is_in_y_range && is_in_z_range) {
+        const Real off_y = point[1] - origin_y;
+        const Real off_z = point[2] - origin_z;
+
+        const auto j = static_cast<index_t>(ceil(off_y / dy));
+        const auto k = static_cast<index_t>(ceil(off_z / dz));
+
+        if ( j >= 0 && j < ny && k >= 0 && k < nz ) {
+            for (index_t i = 0; i < nx; i++) {
+                point_coord.push_back(origin_x + real(i) * dx);
+                point_coord.push_back(origin_y + real(j) * dy);
+                point_coord.push_back(origin_z + real(k) * dz);
+                velocity_data.push_back(model.U(i, j, k));
+                velocity_data.push_back(model.V(i, j, k));
+                velocity_data.push_back(model.W(i, j, k));
+                pressure_data.push_back(model.P(i, j, k));
+            }
+        }
+    }
+
+    // If ask for y-axis then the point should be in range of x and z
+    if (axis == 1 && is_in_x_range && is_in_z_range) {
+        const Real off_x = point[0] - origin_x;
+        const Real off_z = point[2] - origin_z;
+
+        const auto i = static_cast<index_t>(ceil(off_x / dx));
+        const auto k = static_cast<index_t>(ceil(off_z / dz));
+
+        if ( i >= 0 && i < nx && k >= 0 && k < nz ) {
+            for (index_t j = 0; j < ny; j++) {
+                point_coord.push_back(origin_x + real(i) * dx);
+                point_coord.push_back(origin_y + real(j) * dy);
+                point_coord.push_back(origin_z + real(k) * dz);
+                velocity_data.push_back(model.U(i, j, k));
+                velocity_data.push_back(model.V(i, j, k));
+                velocity_data.push_back(model.W(i, j, k));
+                pressure_data.push_back(model.P(i, j, k));
+            }
+        }
+    }
+
+    // If ask for z-axis then the point should be in range of x and y
+    if (axis == 2 && is_in_x_range && is_in_y_range) {
+        const Real off_x = point[0] - origin_x;
+        const Real off_y = point[1] - origin_y;
+
+        const auto i = static_cast<index_t>(ceil(off_x / dx));
+        const auto j = static_cast<index_t>(ceil(off_y / dy));
+
+        if ( i >= 0 && i < nx && j >= 0 && j < ny ) {
+            for (index_t k = 0; k < nz; k++) {
+                point_coord.push_back(origin_x + real(i) * dx);
+                point_coord.push_back(origin_y + real(j) * dy);
+                point_coord.push_back(origin_z + real(k) * dz);
                 velocity_data.push_back(model.U(i, j, k));
                 velocity_data.push_back(model.V(i, j, k));
                 velocity_data.push_back(model.W(i, j, k));
@@ -52,8 +177,7 @@ void writeVtkFile(
     const std::string &description,
     std::vector<Real> &point_values,
     std::vector<Real> &velocity_values,
-    std::vector<Real> &pressure_values)
-{
+    std::vector<Real> &pressure_values) {
     const int local_n = static_cast<int>(point_values.size() / 3);
 
     for (float &point_value: point_values)
@@ -71,7 +195,7 @@ void writeVtkFile(
     MPI_File file;
     MPI_Status status;
 
-    const unsigned long datasize = sizeof(Real);
+    constexpr unsigned long datasize = sizeof(Real);
     const MPI_Datatype mpi_datatype = Real_MPI;
     const std::string &type = Real_Dataname;
 
@@ -164,6 +288,62 @@ void writeVtkFile(
 
     MPI_File_write_at(file, offset + temp_local_offset, pressure_values.data(), local_n, mpi_datatype, &status);
 
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Close the file
+    MPI_File_close(&file);
+}
+
+void writeDatFile(
+    const std::string &filename,
+    std::vector<Real> &point_values,
+    std::vector<Real> &velocity_values,
+    std::vector<Real> &pressure_values) {
+    const int local_n = static_cast<int>(point_values.size() / 3);
+
+    /*
+    for (float &point_value: point_values)
+        swap_endian(point_value);
+
+    for (float &velocity_value: velocity_values)
+        swap_endian(velocity_value);
+
+    for (float &pressure_value: pressure_values)
+        swap_endian(pressure_value);
+    */
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    MPI_File file;
+    MPI_Status status;
+
+    int n = 0;
+    MPI_Reduce(&local_n, &n, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD); // Broadcast n to all processes
+
+    // Calculate ASCII header and section sizes (constant across all processes)
+    MPI_Offset offset = 0;
+
+    // Open the file for writing
+    MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+
+    std::stringstream ss;
+    ss << std::scientific << std::setprecision(8);
+
+    for (int i = 0; i < local_n; i++) {
+        ss << point_values[i * 3] << " " << point_values[i * 3 + 1] << " " << point_values[i * 3 + 2];
+        ss << " " << velocity_values[i * 3] << " " << velocity_values[i * 3 + 1] << " " << velocity_values[i * 3 + 2];
+        ss << " " << pressure_values[i * 3] << "\n";
+    }
+
+    const std::string str = ss.str();
+    const size_t size = str.size();
+    // WRITE POINT SECTION //////////////////////////////////////////////////////////////////////////////////////////////
+    MPI_Exscan(&size, &offset, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    if (rank == 0) offset = 0;
+
+    MPI_File_write_at(file, offset, str.c_str(), str.size(), MPI_CHAR, &status);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Close the file
