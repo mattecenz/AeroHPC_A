@@ -144,7 +144,7 @@ namespace south {
                     grid.U(i, j, k) = grid.U(i, periodic_j, k);
                     grid.V(i, j, k) = grid.V(i, periodic_j, k);
                     grid.W(i, j, k) = grid.W(i, periodic_j, k);
-                    grid.P(i, j - 1, k) = grid.P(i, j, k);
+                    grid.P(i, j, k) = grid.P(i, j + 1, k);
                 }
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
@@ -298,7 +298,6 @@ namespace west {
                     grid.W(i, j, k) = grid.W(i, j, periodic_k);
                     grid.P(i, j, k) = grid.P(i, j, k + 1);
                 }
-
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
             getExactFunctions(functions, eU, eV, eW);
@@ -368,13 +367,12 @@ namespace front {
 
             for (index_t k = 0; k < grid.structure.nz; k++)
                 for (index_t j = 0; j < grid.structure.ny; j++) {
-                    grid.U(i,j,k) = grid.U(periodic_i, j, k);
-                    grid.V(i,j,k) = grid.V(periodic_i, j, k);
-                    grid.W(i,j,k) = grid.W(periodic_i, j, k);
-                    grid.P(i, j, k) = grid.P(i, j+1, k);
+                    grid.U(i, j, k) = grid.U(periodic_i, j, k);
+                    grid.V(i, j, k) = grid.V(periodic_i, j, k);
+                    grid.W(i, j, k) = grid.W(periodic_i, j, k);
+                    grid.P(i, j, k) = grid.P(i + 1, j, k);
                 }
-        }
-        else{
+        } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
             getExactFunctions(functions, eU, eV, eW);
 
@@ -388,11 +386,11 @@ namespace front {
                     // On x = 0 for ghost point we have exact for U, other approximate
                     grid.U(i, j, k) = eU(x, y + sdy, z + sdz, currentTime);
                     grid.V(i, j, k) = 2 * eV(x, y + grid.structure.dy, z + sdz, currentTime)
-                                          - grid.V(i +1, j, k);
+                                      - grid.V(i + 1, j, k);
                     grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
-                                          - grid.W(i +1, j, k);
+                                      - grid.W(i + 1, j, k);
 
-                    grid.P(i, j, k) = grid.P(i +1 , j, k);
+                    grid.P(i, j, k) = grid.P(i + 1, j, k);
                 }
         }
     };
@@ -403,7 +401,6 @@ namespace back {
     PhysicalCondition::Mapper face = [](GridData &grid,
                                         const Real currentTime,
                                         const boundaryFaceFunctions &functions) {
-
         const index_t i = grid.structure.nx;
 
         if (functions.empty()) {
@@ -415,10 +412,9 @@ namespace back {
                     grid.V(i, j, k) = grid.V(periodic_i, j, k);
                     grid.W(i, j, k) = grid.W(periodic_i, j, k);
 
-                    grid.P(i - 1, j, k) = grid.P(i, j, k);
+                    grid.P(i, j, k) = grid.P(i - 1, j, k);
                 }
-        }
-        else {
+        } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
             getExactFunctions(functions, eU, eV, eW);
 
@@ -438,7 +434,7 @@ namespace back {
                     grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                       - grid.W(i - 1, j, k);
 
-                    grid.P(i - 1, j, k) = grid.P(i, j, k);
+                    grid.P(i, j, k) = grid.P(i - 1, j, k);
                 }
         }
     };
