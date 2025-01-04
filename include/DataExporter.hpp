@@ -11,7 +11,9 @@
 inline void extractFaceData(const GridData &model,
                             std::vector<Real> &point_coord,
                             std::vector<Real> &velocity_data,
-                            std::vector<Real> &pressure_data) {
+                            std::vector<Real> &pressure_data,
+                            const std::array<Real, 3> &point) {
+
     const Real dx = model.structure.dx;
     const Real dy = model.structure.dy;
     const Real dz = model.structure.dz;
@@ -20,48 +22,72 @@ inline void extractFaceData(const GridData &model,
     const index_t ny = model.structure.ny;
     const index_t nz = model.structure.nz;
 
-    const Real origin_x = real(model.structure.px) * dx;
-    const Real origin_y = real(model.structure.py) * dy;
-    const Real origin_z = real(model.structure.pz) * dz;
+    /// Get point index if it is in this domain
+    const index_t px = model.structure.px;
+    const index_t py = model.structure.py;
+    const index_t pz = model.structure.pz;
 
-    if (origin_x == 0) {
+    const Real origin_x = real(px) * dx;
+    const Real origin_y = real(py) * dy;
+    const Real origin_z = real(pz) * dz;
+
+    const Real end_x = origin_x + real(nx) * dx;
+    const Real end_y = origin_y + real(ny) * dy;
+    const Real end_z = origin_z + real(nz) * dz;
+
+    const bool is_in_x_range = (point[0] >= origin_x && point[0] <= end_x);
+    const bool is_in_y_range = (point[1] >= origin_y && point[1] <= end_y);
+    const bool is_in_z_range = (point[2] >= origin_z && point[2] <= end_z);
+
+
+    if (is_in_x_range) {
+        const Real off_x = point[0] - origin_x;
+
+        const auto i = static_cast<index_t>(ceil(off_x / dx));
+
         for (index_t j = 0; j < ny; j++) {
             for (index_t k = 0; k < nz; k++) {
-                point_coord.push_back(origin_x + 0 * dx);
+                point_coord.push_back(origin_x + i * dx);
                 point_coord.push_back(origin_y + real(j) * dy);
                 point_coord.push_back(origin_z + real(k) * dz);
-                velocity_data.push_back(model.U(0, j, k));
-                velocity_data.push_back(model.V(0, j, k));
-                velocity_data.push_back(model.W(0, j, k));
-                pressure_data.push_back(model.P(0, j, k));
+                velocity_data.push_back(model.U(i, j, k));
+                velocity_data.push_back(model.V(i, j, k));
+                velocity_data.push_back(model.W(i, j, k));
+                pressure_data.push_back(model.P(i, j, k));
             }
         }
     }
 
-    if (origin_y == 0) {
+    if (is_in_y_range) {
+        const Real off_y = point[1] - origin_y;
+        const auto j = static_cast<index_t>(ceil(off_y / dy));
+
         for (index_t i = 0; i < nx; i++) {
             for (index_t k = 0; k < nz; k++) {
                 point_coord.push_back(origin_x + real(i) * dx);
-                point_coord.push_back(origin_y + 0 * dy);
+                point_coord.push_back(origin_y + j * dy);
                 point_coord.push_back(origin_z + real(k) * dz);
-                velocity_data.push_back(model.U(i, 0, k));
-                velocity_data.push_back(model.V(i, 0, k));
-                velocity_data.push_back(model.W(i, 0, k));
-                pressure_data.push_back(model.P(i, 0, k));
+                velocity_data.push_back(model.U(i, j, k));
+                velocity_data.push_back(model.V(i, j, k));
+                velocity_data.push_back(model.W(i, j, k));
+                pressure_data.push_back(model.P(i, j, k));
             }
         }
     }
 
-    if (origin_z == 0) {
+    if (is_in_z_range) {
+        const Real off_z = point[2] - origin_z;
+        const auto k = static_cast<index_t>(ceil(off_z / dz));
+
         for (index_t i = 0; i < nx; i++) {
             for (index_t j = 0; j < ny; j++) {
                 point_coord.push_back(origin_x + real(i) * dx);
                 point_coord.push_back(origin_y + real(j) * dy);
-                point_coord.push_back(origin_z + 0 * dz);
-                velocity_data.push_back(model.U(i, j, 0));
-                velocity_data.push_back(model.V(i, j, 0));
-                velocity_data.push_back(model.W(i, j, 0));
-                pressure_data.push_back(model.P(i, j, 0));
+                point_coord.push_back(origin_z + k * dz);
+                velocity_data.push_back(model.U(i, j, k));
+                velocity_data.push_back(model.V(i, j, k));
+                velocity_data.push_back(model.W(i, j, k));
+                pressure_data.push_back(model.P(i, j, k));
             }
         }
     }
