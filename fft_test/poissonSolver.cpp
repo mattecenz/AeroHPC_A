@@ -52,14 +52,18 @@ void poissonSolver::performFFT() {
     for (int jp = 0; jp < xSize[1]; ++jp) {
         for (int kp = 0; kp < xSize[2]; ++kp) {
             for (int ip = 0; ip < xSize[0]; ++ip) {
-                int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                // int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
+
                 fft_inputX[ip] = u1[ii];
             }
             fftw_execute(fftw_plan_r2r_1d(xSize[0], fft_inputX, fft_outputX, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u1 
             for (int ip = 0; ip < xSize[0]; ++ip) {
-                int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                // int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
+
                 u1[ii] = fft_outputX[ip];
             }
         }
@@ -72,14 +76,18 @@ void poissonSolver::performFFT() {
     for (int kp = 0; kp < ySize[2]; ++kp) {
         for (int ip = 0; ip < ySize[0]; ++ip) {
             for (int jp = 0; jp < ySize[1]; ++jp) {
-                int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                // int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                int ii = kp * ySize[1] * ySize[0] + jp * ySize[0] + ip;
+
                 fft_inputY[jp] = u2[ii];
             }
             fftw_execute(fftw_plan_r2r_1d(ySize[0], fft_inputY, fft_outputY, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u2
             for (int jp = 0; jp < ySize[1]; ++jp) {
-                int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                // int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                int ii = kp * ySize[1] * ySize[0] + jp * ySize[0] + ip;
+
                 u2[ii] = fft_outputY[jp];
             }
         }
@@ -92,14 +100,18 @@ void poissonSolver::performFFT() {
     for (int jp = 0; jp < zSize[1]; ++jp) {
         for (int ip = 0; ip < zSize[0]; ++ip) {
             for (int kp = 0; kp < zSize[2]; ++kp) {
-                int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                // int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
+
                 fft_inputZ[kp] = u3[ii];
             }
             fftw_execute(fftw_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u3
             for (int kp = 0; kp < zSize[0]; ++kp) {
-                int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                // int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
+
                 u3[ii] = fft_outputZ[kp];
             }
         }
@@ -113,7 +125,9 @@ void poissonSolver::performIFFT() {
     for (int jp = 0; jp < zSize[1]; ++jp) {
         for (int ip = 0; ip < zSize[0]; ++ip) {
             for (int kp = 0; kp < zSize[2]; ++kp) {
-                int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                // int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
+
                 fft_inputZ[kp] = u3[ii];
             }
             // Execute inverse FFT
@@ -121,7 +135,9 @@ void poissonSolver::performIFFT() {
 
             // Store the inverse FFT result back into u3
             for (int kp = 0; kp < zSize[0]; ++kp) {
-                int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                // int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
+                int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
+
                 u3[ii] = fft_outputZ[kp];
             }
         }
@@ -133,7 +149,9 @@ void poissonSolver::performIFFT() {
     for (int kp = 0; kp < ySize[2]; ++kp) {
         for (int ip = 0; ip < ySize[0]; ++ip) {
             for (int jp = 0; jp < ySize[1]; ++jp) {
-                int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                // int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                int ii = kp * ySize[1] * ySize[0] + jp * ySize[0] + ip;
+
                 fft_inputY[jp] = u2[ii];
             }
             // Execute inverse FFT
@@ -141,7 +159,9 @@ void poissonSolver::performIFFT() {
 
             // Store the inverse FFT result back into u2
             for (int jp = 0; jp < ySize[1]; ++jp) {
-                int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                // int ii = ip * ySize[2] * ySize[1] + jp * ySize[2] + kp;
+                int ii = kp * ySize[1] * ySize[0] + jp * ySize[0] + ip;
+
                 u2[ii] = fft_outputY[jp];
             }
         }
@@ -153,7 +173,9 @@ void poissonSolver::performIFFT() {
     for (int jp = 0; jp < xSize[1]; ++jp) {
         for (int kp = 0; kp < xSize[2]; ++kp) {
             for (int ip = 0; ip < xSize[0]; ++ip) {
-                int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                // int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
+
                 fft_inputX[ip] = u1[ii];
             }
             // Execute inverse FFT
@@ -161,7 +183,9 @@ void poissonSolver::performIFFT() {
 
             // Store the inverse FFT result back into u1
             for (int ip = 0; ip < xSize[0]; ++ip) {
-                int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                // int ii = ip * xSize[2] * xSize[1] + jp * xSize[2] + kp;
+                int ii = kp * xSize[1] * xSize[0] + jp * xSize[0] + ip;
+
                 u1[ii] = fft_outputX[ip];
             }
         }
@@ -197,21 +221,24 @@ void poissonSolver::solveEigenvalues() {
 
 void poissonSolver::solve(double *X) {
     
+    // Initialize u1 with b (rhs)
     for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i){
         u1[i] = b[i];
     }
 
+    // perform forward FFT
     performFFT();
 
-    // uncomment this later
+    // Solve eigenvalues
     solveEigenvalues();
 
-
+    // Perform inverse FFT
     performIFFT();
 
     // Store the result in X
     for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
-        int scaling_fact = 8 * (N*N*N);
+        // double check the normalization factor
+        int scaling_fact = 8*(N*N*N);
         X[i] = u1[i]/scaling_fact;
     }
 }

@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     	cout << endl;
     }
 
-    int N = 100;
+    int N = 20;
     double L = 1.0;
     const double dx = L / N;
     int pRow = 0, pCol=0;
