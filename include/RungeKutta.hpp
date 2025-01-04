@@ -7,7 +7,21 @@
 #include "mathUtils.hpp"
 #include "poissonSolver.hpp"
 
+
+///TODO TO REMOVE ONLY FOR DEBUG
 #include "printBuffer.hpp"
+
+#define b_print(buff, dir, n) \
+if (!rank) { \
+    std::string nn{dir + to_string(n)}; \
+    print(buff, nn); \
+}
+
+#define c_dir(dir) \
+if (!rank) {\
+    create_directories(dir); \
+}
+///////////////////////////////
 
 
 #ifdef ForcingT
@@ -26,13 +40,15 @@
 namespace mu = mathUtils;
 
 struct RKConst {
-    static constexpr Real alpha0 = 64.0 / 120.0; // t1
+    static constexpr Real alpha0 = 64.0 / 120.0;
     static constexpr Real alpha1 = 34.0 / 120.0;
     static constexpr Real alpha2 = 50.0 / 120.0;
-    static constexpr Real alpha3 = 90.0 / 120.0;
-    static constexpr Real alpha4 = 80.0 / 120.0; // t2
-    static constexpr Real alpha5 = 16.0 / 120.0;
-    static constexpr Real alpha6 = 40.0 / 120.0;
+    static constexpr Real alpha3 = alpha2 - alpha1;
+    static constexpr Real alpha4 = 50.0 / 120.0;
+    static constexpr Real alpha5 = 90.0 / 120.0;
+    static constexpr Real alpha6 = alpha5 - alpha4;
+    static constexpr Real beta0 = 64.0 / 120.0;
+    static constexpr Real beta1 = 80.0 / 120.0;
 };
 
 ////RHS function
@@ -57,14 +73,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::string dir = "./iterations/" + to_string(iteration) + "/";
-    if (!rank) {
-        create_directories(dir);
-    }
 
-    if (!rank) {
-        std::string nn{dir + "0"};
-        print(model, nn);
-    }
+    c_dir(dir);
+    b_print(model, dir, 0);
 
     const Real time = deltat * real(iteration);
 
@@ -83,16 +94,20 @@ void rungeKutta(GridData &model, GridData &model_buff,
     const index_t nz = model.structure.nz;
 
     // kappa -> weighted_deltat
-    std::array<const Real, 8> kappa{
-        RKConst::alpha0 * deltat,
-        RKConst::alpha1 * deltat,
-        RKConst::alpha2 * deltat,
-        RKConst::alpha3 * deltat,
-        RKConst::alpha4 * deltat,
-        RKConst::alpha5 * deltat,
-        RKConst::alpha6 * deltat,
-        real(1.0 / (RKConst::alpha0 * deltat))
-    };
+    const Real k_0 = RKConst::alpha0 * deltat;
+    const Real k_1 = RKConst::alpha1 * deltat;
+    const Real k_2 = RKConst::alpha2 * deltat;
+    const Real k_3 = RKConst::alpha3 * deltat;
+    const Real k_4 = RKConst::alpha4 * deltat;
+    const Real k_5 = RKConst::alpha5 * deltat;
+    const Real k_6 = RKConst::alpha6 * deltat;
+    const Real inv_k_0 = real(1.0) / k_0;
+    const Real inv_k_3 = real(1.0) / k_3;
+    const Real inv_k_6 = real(1.0) / k_6;
+    const Real t_0 = time + RKConst::beta0 * deltat;
+    const Real t_1 = time + RKConst::beta1 * deltat;
+    const Real t_2 = time + deltat;
+
 
 #ifdef ForcingT
     ForcingTerm ft(reynolds, time);
@@ -121,8 +136,8 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     rhs_buff.U(i, j, k) = (r + force);
 
                     model_buff.U(i, j, k) = model.U(i, j, k)
-                                            + kappa[0] * (r + force)
-                                            - kappa[0] * mu::d_dx_P(model, i, j, k);
+                                            + k_0 * (r + force)
+                                            - k_0 * mu::d_dx_P(model, i, j, k);
                 }
             }
         }
@@ -142,8 +157,8 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     rhs_buff.V(i, j, k) = (r + force);
 
                     model_buff.V(i, j, k) = model.V(i, j, k)
-                                            + kappa[0] * (r + force)
-                                            - kappa[0] * mu::d_dy_P(model, i, j, k);
+                                            + k_0 * (r + force)
+                                            - k_0 * mu::d_dy_P(model, i, j, k);
                 }
             }
         }
@@ -163,23 +178,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     rhs_buff.W(i, j, k) = (r + force);
 
                     model_buff.W(i, j, k) = model.W(i, j, k)
-                                            + kappa[0] * (r + force)
-                                            - kappa[0] * mu::d_dz_P(model, i, j, k);
+                                            + k_0 * (r + force)
+                                            - k_0 * mu::d_dz_P(model, i, j, k);
                 }
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "1"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 1);
 
-        boundary_cond.apply(model_buff, time + kappa[0]);
+        boundary_cond.apply(model_buff, t_0);
 
-        if (!rank) {
-            std::string nn{dir + "2"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 2);
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -189,9 +198,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = kappa[7] * (mu::d_dx_U(model_buff, i, j, k)
-                                                + mu::d_dy_V(model_buff, i, j, k)
-                                                + mu::d_dz_W(model_buff, i, j, k));
+                    b_at(i, j, k) = inv_k_0 * (mu::d_dx_U(model_buff, i, j, k)
+                                               + mu::d_dy_V(model_buff, i, j, k)
+                                               + mu::d_dz_W(model_buff, i, j, k));
                 }
             }
         }
@@ -210,17 +219,11 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "3"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 3);
 
-        boundary_cond.apply(model_buff, time + kappa[0]);
+        boundary_cond.apply(model_buff, t_0);
 
-        if (!rank) {
-            std::string nn{dir + "4"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 4);
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -231,31 +234,25 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    model_buff.U(i, j, k) -= kappa[0] * mu::d_dx_P(model_buff, i, j, k);
-                    model_buff.V(i, j, k) -= kappa[0] * mu::d_dy_P(model_buff, i, j, k);
-                    model_buff.W(i, j, k) -= kappa[0] * mu::d_dz_P(model_buff, i, j, k);
+                    model_buff.U(i, j, k) -= k_0 * mu::d_dx_P(model_buff, i, j, k);
+                    model_buff.V(i, j, k) -= k_0 * mu::d_dy_P(model_buff, i, j, k);
+                    model_buff.W(i, j, k) -= k_0 * mu::d_dz_P(model_buff, i, j, k);
 
                     model_buff.P(i, j, k) += model.P(i, j, k);
                 }
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "5"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 5);
 
-        boundary_cond.apply(model_buff, time + kappa[0]);
+        boundary_cond.apply(model_buff, t_0);
 
-        if (!rank) {
-            std::string nn{dir + "6"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 6);
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ForcingT
-    ft.set_time(time + kappa[0]);
+    ft.set_time(t_0);
 #endif
 
     /// Y3* //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,9 +274,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     rhs_buff.U(i, j, k) = (r2 + force2);
 
                     model.U(i, j, k) = model_buff.U(i, j, k)
-                                       - kappa[1] * r1
-                                       + kappa[2] * (r2 + force2)
-                                       - kappa[5] * mu::d_dx_P(model_buff, i, j, k);
+                                       - k_1 * r1
+                                       + k_2 * (r2 + force2)
+                                       - k_3 * mu::d_dx_P(model_buff, i, j, k);
                 }
             }
         }
@@ -301,9 +298,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     rhs_buff.V(i, j, k) = (r2 + force2);
 
                     model.V(i, j, k) = model_buff.V(i, j, k)
-                                       - kappa[1] * r1
-                                       + kappa[2] * (r2 + force2)
-                                       - kappa[5] * mu::d_dy_P(model_buff, i, j, k);
+                                       - k_1 * r1
+                                       + k_2 * (r2 + force2)
+                                       - k_3 * mu::d_dy_P(model_buff, i, j, k);
                 }
             }
         }
@@ -325,23 +322,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     rhs_buff.W(i, j, k) = (r2 + force2);
 
                     model.W(i, j, k) = model_buff.W(i, j, k)
-                                       - kappa[1] * r1
-                                       + kappa[2] * (r2 + force2)
-                                       - kappa[5] * mu::d_dz_P(model_buff, i, j, k);
+                                       - k_1 * r1
+                                       + k_2 * (r2 + force2)
+                                       - k_3 * mu::d_dz_P(model_buff, i, j, k);
                 }
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "7"};
-            print(model, nn);
-        }
-        boundary_cond.apply(model, time + kappa[4]);
+        b_print(model, dir, 7);
+        boundary_cond.apply(model, t_1);
 
-        if (!rank) {
-            std::string nn{dir + "8"};
-            print(model, nn);
-        }
+        b_print(model, dir, 8);
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -351,9 +342,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = kappa[7] * (mu::d_dx_U(model, i, j, k)
-                                                + mu::d_dy_V(model, i, j, k)
-                                                + mu::d_dz_W(model, i, j, k));
+                    b_at(i, j, k) = inv_k_3 * (mu::d_dx_U(model, i, j, k)
+                                               + mu::d_dy_V(model, i, j, k)
+                                               + mu::d_dz_W(model, i, j, k));
                 }
             }
         }
@@ -372,17 +363,11 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "9"};
-            print(model, nn);
-        }
+        b_print(model, dir, 9);
 
-        boundary_cond.apply(model, time + kappa[4]);
+        boundary_cond.apply(model, t_1);
 
-        if (!rank) {
-            std::string nn{dir + "10"};
-            print(model, nn);
-        }
+        b_print(model, dir, 10);
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -392,30 +377,24 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    model.U(i, j, k) -= kappa[0] * mu::d_dx_P(model, i, j, k);
-                    model.V(i, j, k) -= kappa[0] * mu::d_dy_P(model, i, j, k);
-                    model.W(i, j, k) -= kappa[0] * mu::d_dz_P(model, i, j, k);
+                    model.U(i, j, k) -= k_3 * mu::d_dx_P(model, i, j, k);
+                    model.V(i, j, k) -= k_3 * mu::d_dy_P(model, i, j, k);
+                    model.W(i, j, k) -= k_3 * mu::d_dz_P(model, i, j, k);
                     model.P(i, j, k) += model_buff.P(i, j, k);
                 }
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "11"};
-            print(model, nn);
-        }
+        b_print(model, dir, 11);
 
-        boundary_cond.apply(model, time + kappa[4]);
+        boundary_cond.apply(model, t_1);
 
-        if (!rank) {
-            std::string nn{dir + "12"};
-            print(model, nn);
-        }
+        b_print(model, dir, 12);
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifdef ForcingT
-    ft.set_time(time + kappa[4]);
+    ft.set_time(time + t_1);
 #endif
 
     /// u(n+1)* //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -434,9 +413,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     const Real r = rhs_U(model, nu, i, j, k);
 
                     model_buff.U(i, j, k) = model.U(i, j, k)
-                                            - kappa[2] * rhs_buff.U(i, j, k) +
-                                            + kappa[3] * (r + force)
-                                            - kappa[6] * mu::d_dx_P(model, i, j, k);
+                                            - k_4 * rhs_buff.U(i, j, k) +
+                                            +k_5 * (r + force)
+                                            - k_6 * mu::d_dx_P(model, i, j, k);
                 }
             }
         }
@@ -455,9 +434,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     const Real r = rhs_V(model, nu, i, j, k);
 
                     model_buff.V(i, j, k) = model.V(i, j, k)
-                                            - kappa[2] * rhs_buff.V(i, j, k)
-                                            + kappa[3] * (r + force)
-                                            - kappa[6] * mu::d_dy_P(model, i, j, k);
+                                            - k_4 * rhs_buff.V(i, j, k)
+                                            + k_5 * (r + force)
+                                            - k_6 * mu::d_dy_P(model, i, j, k);
                 }
             }
         }
@@ -476,24 +455,18 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     const Real r = rhs_W(model, nu, i, j, k);
 
                     model_buff.W(i, j, k) = model.W(i, j, k)
-                                            - kappa[2] * rhs_buff.W(i, j, k)
-                                            + kappa[3] * (r + force)
-                                            - kappa[6] * mu::d_dz_P(model, i, j, k);
+                                            - k_4 * rhs_buff.W(i, j, k)
+                                            + k_5 * (r + force)
+                                            - k_6 * mu::d_dz_P(model, i, j, k);
                 }
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "13"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 13);
 
-        boundary_cond.apply(model_buff, time + deltat);
+        boundary_cond.apply(model_buff, t_2);
 
-        if (!rank) {
-            std::string nn{dir + "14"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 14);
     }
 
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
@@ -503,9 +476,9 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = kappa[7] * (mu::d_dx_U(model_buff, i, j, k) +
-                                                mu::d_dy_V(model_buff, i, j, k) +
-                                                mu::d_dz_W(model_buff, i, j, k));
+                    b_at(i, j, k) = inv_k_6 * (mu::d_dx_U(model_buff, i, j, k) +
+                                               mu::d_dy_V(model_buff, i, j, k) +
+                                               mu::d_dz_W(model_buff, i, j, k));
                 }
             }
         }
@@ -524,17 +497,11 @@ void rungeKutta(GridData &model, GridData &model_buff,
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "15"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 15);
 
-        boundary_cond.apply(model_buff, time + deltat);
+        boundary_cond.apply(model_buff, t_2);
 
-        if (!rank) {
-            std::string nn{dir + "16"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 16);
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -544,25 +511,19 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    model_buff.U(i, j, k) -= kappa[6] * mu::d_dx_P(model_buff, i, j, k);
-                    model_buff.V(i, j, k) -= kappa[6] * mu::d_dy_P(model_buff, i, j, k);
-                    model_buff.W(i, j, k) -= kappa[6] * mu::d_dz_P(model_buff, i, j, k);
+                    model_buff.U(i, j, k) -= k_6 * mu::d_dx_P(model_buff, i, j, k);
+                    model_buff.V(i, j, k) -= k_6 * mu::d_dy_P(model_buff, i, j, k);
+                    model_buff.W(i, j, k) -= k_6 * mu::d_dz_P(model_buff, i, j, k);
                     model_buff.P(i, j, k) += model.P(i, j, k);
                 }
             }
         }
 
-        if (!rank) {
-            std::string nn{dir + "17"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 17);
 
-        boundary_cond.apply(model_buff, time + deltat);
+        boundary_cond.apply(model_buff, t_2);
 
-        if (!rank) {
-            std::string nn{dir + "18"};
-            print(model_buff, nn);
-        }
+        b_print(model_buff, dir, 18);
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
