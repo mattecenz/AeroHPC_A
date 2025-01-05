@@ -222,13 +222,13 @@ void writeVtkFile(
     std::vector<Real> &pressure_values) {
     const int local_n = static_cast<int>(point_values.size() / 3);
 
-    for (float &point_value: point_values)
+    for (Real &point_value: point_values)
         swap_endian(point_value);
 
-    for (float &velocity_value: velocity_values)
+    for (Real &velocity_value: velocity_values)
         swap_endian(velocity_value);
 
-    for (float &pressure_value: pressure_values)
+    for (Real &pressure_value: pressure_values)
         swap_endian(pressure_value);
 
     int rank;
