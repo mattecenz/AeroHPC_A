@@ -32,6 +32,7 @@ inline void extractFaceData(const GridData &model,
                             std::vector<Real> &point_coord,
                             std::vector<Real> &velocity_data,
                             std::vector<Real> &pressure_data,
+                            const std::array<Real, 3> &origin_point,
                             const std::array<Real, 3> &point) {
     const Real dx = model.structure.dx;
     const Real dy = model.structure.dy;
@@ -46,9 +47,9 @@ inline void extractFaceData(const GridData &model,
     const index_t py = model.structure.py;
     const index_t pz = model.structure.pz;
 
-    const Real origin_x = real(px) * dx;
-    const Real origin_y = real(py) * dy;
-    const Real origin_z = real(pz) * dz;
+    const Real origin_x = real(px) * dx + origin_point[0];
+    const Real origin_y = real(py) * dy + origin_point[1];
+    const Real origin_z = real(pz) * dz + origin_point[2];
 
     const Real end_x = origin_x + real(nx) * dx;
     const Real end_y = origin_y + real(ny) * dy;
@@ -117,6 +118,7 @@ inline void extractLineData(const GridData &model,
                             std::vector<Real> &velocity_data,
                             std::vector<Real> &pressure_data,
                             const int axis,
+                            const std::array<Real, 3> &origin_point,
                             const std::array<Real, 3> &point) {
     const Real dx = model.structure.dx;
     const Real dy = model.structure.dy;
@@ -131,9 +133,9 @@ inline void extractLineData(const GridData &model,
     const index_t py = model.structure.py;
     const index_t pz = model.structure.pz;
 
-    const Real origin_x = real(px) * dx;
-    const Real origin_y = real(py) * dy;
-    const Real origin_z = real(pz) * dz;
+    const Real origin_x = real(px) * dx + origin_point[0];
+    const Real origin_y = real(py) * dy + origin_point[1];
+    const Real origin_z = real(pz) * dz + origin_point[2];
 
     const Real end_x = origin_x + real(nx) * dx;
     const Real end_y = origin_y + real(ny) * dy;

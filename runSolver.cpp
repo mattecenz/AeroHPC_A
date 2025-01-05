@@ -14,7 +14,10 @@ inline Real runSolver(const int rank, const int size,
                const int npy, const int npz,
                const int nx, const int ny, const int nz,
                const Real dim_x, const Real dim_y, const Real dim_z,
-               const Real deltaT, const index_t nTimeSteps, const Real Re) {
+               const Real deltaT, const index_t nTimeSteps, const Real Re,
+               const boundaryDomainFunctions &boundaryDF,
+               const Real origin_x, const Real origin_y, const Real origin_z,
+               const Real extr_px, const Real extr_py, const Real extr_pz) {
 
     C2Decomp *c2d;
     bool periodicBC[3] = {true, true, true};
@@ -77,18 +80,8 @@ inline Real runSolver(const int rank, const int size,
         logger.printTitle("Grid initialized", initT);
 
     /// Define boundaries condition functions //////////////////////////////////////////////////////////////
-    const boundaryDomainFunctions boundaryDomainFunctions = {
-        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u,ExactSolution::v,ExactSolution::w}
-    };
-
-
     MPIBoundaries mpiBoundaries;
-    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryDomainFunctions);
+    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryDF);
 
     if (!rank)
         logger.printTitle("Boundary condition set");
@@ -155,49 +148,47 @@ inline Real runSolver(const int rank, const int size,
 
     if (!rank)
         logger.closeTable().printTitle("End of computation", compT);
-/*
-    //TODO to remove
-    std::string optional_test = "_" + to_string(nx);
 
     GridData interpolated_model(modelStructure);
-
     interpData(model, interpolated_model);
 
-    std::string exportFaceFilename = "solution" + optional_test + ".vtk";
+    std::array<Real, 3> originPoint = {origin_x, origin_y, origin_z};
+
+    std::string exportFaceFilename = "solution.vtk";
     std::string exportFaceDescription = "test";
     std::vector<Real> face_points, face_vel, face_pres;
-    extractFaceData(interpolated_model, face_points, face_vel, face_pres, {0,0,1});
+    extractFaceData(interpolated_model, face_points, face_vel, face_pres, originPoint, {0,0,0});
     writeVtkFile(exportFaceFilename, exportFaceDescription, face_points, face_vel, face_pres);
 
     if (!rank)
         logger.printTitle("solution written");
 
-    std::array<Real, 3> point = {0.5, 0.5, 1};
+    std::array<Real, 3> point = {extr_px, extr_py, extr_pz};
 
-    std::string exportLine1Filename = "profile1" + optional_test + ".dat";
+    std::string exportLine1Filename = "profile1.dat";
     std::vector<Real> line1_points, line1_vel, line1_pres;
-    extractLineData(interpolated_model, line1_points, line1_vel, line1_pres, 0, point);
+    extractLineData(interpolated_model, line1_points, line1_vel, line1_pres, 0, originPoint, point);
     writeDatFile(exportLine1Filename, line1_points, line1_vel, line1_pres);
 
     if (!rank)
         logger.printTitle("profile1 written");
 
-    std::string exportLine2Filename = "profile2" + optional_test + ".dat";
+    std::string exportLine2Filename = "profile2.dat";
     std::vector<Real> line2_points, line2_vel, line2_pres;
-    extractLineData(interpolated_model, line2_points, line2_vel, line2_pres, 1, point);
+    extractLineData(interpolated_model, line2_points, line2_vel, line2_pres, 1, originPoint, point);
     writeDatFile(exportLine2Filename, line2_points, line2_vel, line2_pres);
 
     if (!rank)
         logger.printTitle("profile2 written");
 
-    std::string exportLine3Filename = "profile3" + optional_test + ".dat";
+    std::string exportLine3Filename = "profile3.dat";
     std::vector<Real> line3_points, line3_vel, line3_pres;
-    extractLineData(interpolated_model, line3_points, line3_vel, line3_pres, 2, point);
+    extractLineData(interpolated_model, line3_points, line3_vel, line3_pres, 2, originPoint, point);
     writeDatFile(exportLine3Filename, line3_points, line3_vel, line3_pres);
 
     if (!rank)
         logger.printTitle("profile3 written");
-*/
+
     if (!rank)
         logger.closeSection().empty();
 
