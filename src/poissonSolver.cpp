@@ -106,7 +106,7 @@ void poissonSolver::performFFT() {
             fftwr_execute(fftwr_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT10, FFTW_ESTIMATE));  // Execute FFT on each slice
 
             // Store the FFT result back into u3
-            for (int kp = 0; kp < zSize[0]; ++kp) {
+            for (int kp = 0; kp < zSize[2]; ++kp) {
                 // int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
                 int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
 
@@ -132,7 +132,7 @@ void poissonSolver::performIFFT() {
             fftwr_execute(fftwr_plan_r2r_1d(zSize[0], fft_inputZ, fft_outputZ, FFTW_REDFT01, FFTW_ESTIMATE));
 
             // Store the inverse FFT result back into u3
-            for (int kp = 0; kp < zSize[0]; ++kp) {
+            for (int kp = 0; kp < zSize[2]; ++kp) {
                 // int ii = ip * zSize[2] * zSize[1] + jp * zSize[2] + kp;
                 int ii = kp * zSize[1] * zSize[0] + jp * zSize[0] + ip;
 
