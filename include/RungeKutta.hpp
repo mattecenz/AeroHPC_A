@@ -10,19 +10,21 @@
 
 ///TODO TO REMOVE ONLY FOR DEBUG
 #include "printBuffer.hpp"
-
+#ifdef DEBUG_PRINT_BUFFERS
 #define b_print(buff, dir, n) \
 if (!rank) { \
     std::string nn{dir + to_string(n)}; \
     print(buff, nn); \
 }
-
 #define c_dir(dir) \
 if (!rank) {\
     create_directories(dir); \
 }
+#else
+#define b_print(a,b,c) //
+#define c_dir(a) //
+#endif
 ///////////////////////////////
-
 
 #ifdef ForcingT
 #define getPhys(i, j, k)                         \
@@ -137,7 +139,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
                     model_buff.U(i, j, k) = model.U(i, j, k)
                                             + k_0 * (r + force)
-                                            - k_0 * mu::d_dx_P(model, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                            - k_0 * mu::dp_dx_U(model, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -158,7 +163,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
                     model_buff.V(i, j, k) = model.V(i, j, k)
                                             + k_0 * (r + force)
-                                            - k_0 * mu::d_dy_P(model, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                            - k_0 * mu::dp_dy_V(model, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -179,7 +187,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
                     model_buff.W(i, j, k) = model.W(i, j, k)
                                             + k_0 * (r + force)
-                                            - k_0 * mu::d_dz_P(model, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                            - k_0 * mu::dp_dz_W(model, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -191,6 +202,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         b_print(model_buff, dir, 2);
     }
 
+#ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
         // COMPUTE B TERM
@@ -198,9 +210,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = inv_k_0 * (mu::d_dx_U(model_buff, i, j, k)
-                                               + mu::d_dy_V(model_buff, i, j, k)
-                                               + mu::d_dz_W(model_buff, i, j, k));
+                    b_at(i, j, k) = inv_k_0 * mu::vel_div(model_buff, i, j, k);
                 }
             }
         }
@@ -234,10 +244,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    model_buff.U(i, j, k) -= k_0 * mu::d_dx_P(model_buff, i, j, k);
-                    model_buff.V(i, j, k) -= k_0 * mu::d_dy_P(model_buff, i, j, k);
-                    model_buff.W(i, j, k) -= k_0 * mu::d_dz_P(model_buff, i, j, k);
+                    model_buff.U(i, j, k) -= k_0 * mu::dp_dx_U(model_buff, i, j, k);
+                    model_buff.V(i, j, k) -= k_0 * mu::dp_dy_V(model_buff, i, j, k);
+                    model_buff.W(i, j, k) -= k_0 * mu::dp_dz_W(model_buff, i, j, k);
+                }
+            }
+        }
 
+        for (index_t k = 0; k < nz; ++k) {
+            for (index_t j = 0; j < ny; ++j) {
+#pragma omp simd
+                for (index_t i = 0; i < nx; ++i) {
                     model_buff.P(i, j, k) += model.P(i, j, k);
                 }
             }
@@ -250,6 +267,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         b_print(model_buff, dir, 6);
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
 
 #ifdef ForcingT
     ft.set_time(t_0);
@@ -276,7 +294,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     model.U(i, j, k) = model_buff.U(i, j, k)
                                        - k_1 * r1
                                        + k_2 * (r2 + force2)
-                                       - k_3 * mu::d_dx_P(model_buff, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                       - k_3 * mu::dp_dx_U(model_buff, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -300,7 +321,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     model.V(i, j, k) = model_buff.V(i, j, k)
                                        - k_1 * r1
                                        + k_2 * (r2 + force2)
-                                       - k_3 * mu::d_dy_P(model_buff, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                       - k_3 * mu::dp_dy_V(model_buff, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -324,17 +348,22 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     model.W(i, j, k) = model_buff.W(i, j, k)
                                        - k_1 * r1
                                        + k_2 * (r2 + force2)
-                                       - k_3 * mu::d_dz_P(model_buff, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                       - k_3 * mu::dp_dz_W(model_buff, i, j, k)
+#endif
+                            ;
                 }
             }
         }
 
         b_print(model, dir, 7);
+
         boundary_cond.apply(model, t_1);
 
         b_print(model, dir, 8);
     }
 
+#ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
         // COMPUTE B TERM
@@ -342,9 +371,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = inv_k_3 * (mu::d_dx_U(model, i, j, k)
-                                               + mu::d_dy_V(model, i, j, k)
-                                               + mu::d_dz_W(model, i, j, k));
+                    b_at(i, j, k) = inv_k_3 * mu::vel_div(model, i, j, k);
                 }
             }
         }
@@ -377,9 +404,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    model.U(i, j, k) -= k_3 * mu::d_dx_P(model, i, j, k);
-                    model.V(i, j, k) -= k_3 * mu::d_dy_P(model, i, j, k);
-                    model.W(i, j, k) -= k_3 * mu::d_dz_P(model, i, j, k);
+                    model.U(i, j, k) -= k_3 * mu::dp_dx_U(model, i, j, k);
+                    model.V(i, j, k) -= k_3 * mu::dp_dy_V(model, i, j, k);
+                    model.W(i, j, k) -= k_3 * mu::dp_dz_W(model, i, j, k);
+                }
+            }
+        }
+
+        for (index_t k = 0; k < nz; ++k) {
+            for (index_t j = 0; j < ny; ++j) {
+#pragma omp simd
+                for (index_t i = 0; i < nx; ++i) {
                     model.P(i, j, k) += model_buff.P(i, j, k);
                 }
             }
@@ -392,9 +427,11 @@ void rungeKutta(GridData &model, GridData &model_buff,
         b_print(model, dir, 12);
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
+
 
 #ifdef ForcingT
-    ft.set_time(time + t_1);
+    ft.set_time(t_1);
 #endif
 
     /// u(n+1)* //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -413,9 +450,12 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     const Real r = rhs_U(model, nu, i, j, k);
 
                     model_buff.U(i, j, k) = model.U(i, j, k)
-                                            - k_4 * rhs_buff.U(i, j, k) +
-                                            +k_5 * (r + force)
-                                            - k_6 * mu::d_dx_P(model, i, j, k);
+                                            - k_4 * rhs_buff.U(i, j, k)
+                                            + k_5 * (r + force)
+#ifdef ENABLE_PRESSURE
+                                            - k_6 * mu::dp_dx_U(model, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -436,7 +476,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     model_buff.V(i, j, k) = model.V(i, j, k)
                                             - k_4 * rhs_buff.V(i, j, k)
                                             + k_5 * (r + force)
-                                            - k_6 * mu::d_dy_P(model, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                            - k_6 * mu::dp_dy_V(model, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -457,7 +500,10 @@ void rungeKutta(GridData &model, GridData &model_buff,
                     model_buff.W(i, j, k) = model.W(i, j, k)
                                             - k_4 * rhs_buff.W(i, j, k)
                                             + k_5 * (r + force)
-                                            - k_6 * mu::d_dz_P(model, i, j, k);
+#ifdef ENABLE_PRESSURE
+                                            - k_6 * mu::dp_dz_W(model, i, j, k)
+#endif
+                            ;
                 }
             }
         }
@@ -469,6 +515,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         b_print(model_buff, dir, 14);
     }
 
+#ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
         // COMPUTE B TERM
@@ -476,14 +523,13 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = inv_k_6 * (mu::d_dx_U(model_buff, i, j, k) +
-                                               mu::d_dy_V(model_buff, i, j, k) +
-                                               mu::d_dz_W(model_buff, i, j, k));
+                    b_at(i, j, k) = inv_k_6 * mu::vel_div(model_buff, i, j, k);
                 }
             }
         }
 
         p_solver.setB(b);
+
 
         // SOLVE FOR pn+1-phi3
         p_solver.solve(X);
@@ -511,9 +557,17 @@ void rungeKutta(GridData &model, GridData &model_buff,
             for (index_t j = 0; j < ny; ++j) {
 #pragma omp simd
                 for (index_t i = 0; i < nx; ++i) {
-                    model_buff.U(i, j, k) -= k_6 * mu::d_dx_P(model_buff, i, j, k);
-                    model_buff.V(i, j, k) -= k_6 * mu::d_dy_P(model_buff, i, j, k);
-                    model_buff.W(i, j, k) -= k_6 * mu::d_dz_P(model_buff, i, j, k);
+                    model_buff.U(i, j, k) -= k_6 * mu::dp_dx_U(model_buff, i, j, k);
+                    model_buff.V(i, j, k) -= k_6 * mu::dp_dy_V(model_buff, i, j, k);
+                    model_buff.W(i, j, k) -= k_6 * mu::dp_dz_W(model_buff, i, j, k);
+                }
+            }
+        }
+
+        for (index_t k = 0; k < nz; ++k) {
+            for (index_t j = 0; j < ny; ++j) {
+#pragma omp simd
+                for (index_t i = 0; i < nx; ++i) {
                     model_buff.P(i, j, k) += model.P(i, j, k);
                 }
             }
@@ -526,6 +580,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         b_print(model_buff, dir, 18);
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#endif
 
     model.swap(model_buff);
 }

@@ -61,5 +61,8 @@ add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
 #ForcingTerm FLAG
 add_definitions(-DForcingT)
 
+add_definitions(-DENABLE_PRESSURE)
+add_definitions(-DDEBUG_PRINT_BUFFERS)
+
 # Link the FFTW library
 target_link_libraries(${TARGET_FILE} ${FFTW_LIBRARIES})
