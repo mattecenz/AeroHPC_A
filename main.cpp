@@ -164,10 +164,14 @@ Real runSolver(const int npy, const int npz,
     //TODO to remove
     std::string optional_test = "_" + to_string(nx);
 
+    GridData interpolated_model(modelStructure);
+
+    interpData(model, interpolated_model);
+
     std::string exportFaceFilename = "solution" + optional_test + ".vtk";
     std::string exportFaceDescription = "test";
     std::vector<Real> face_points, face_vel, face_pres;
-    extractFaceData(model, face_points, face_vel, face_pres);
+    extractFaceData(interpolated_model, face_points, face_vel, face_pres, {0,0,1});
     writeVtkFile(exportFaceFilename, exportFaceDescription, face_points, face_vel, face_pres);
 
     if (!rank)
@@ -177,7 +181,7 @@ Real runSolver(const int npy, const int npz,
 
     std::string exportLine1Filename = "profile1" + optional_test + ".dat";
     std::vector<Real> line1_points, line1_vel, line1_pres;
-    extractLineData(model, line1_points, line1_vel, line1_pres, 0, point);
+    extractLineData(interpolated_model, line1_points, line1_vel, line1_pres, 0, point);
     writeDatFile(exportLine1Filename, line1_points, line1_vel, line1_pres);
 
     if (!rank)
@@ -185,7 +189,7 @@ Real runSolver(const int npy, const int npz,
 
     std::string exportLine2Filename = "profile2" + optional_test + ".dat";
     std::vector<Real> line2_points, line2_vel, line2_pres;
-    extractLineData(model, line2_points, line2_vel, line2_pres, 1, point);
+    extractLineData(interpolated_model, line2_points, line2_vel, line2_pres, 1, point);
     writeDatFile(exportLine2Filename, line2_points, line2_vel, line2_pres);
 
     if (!rank)
@@ -193,7 +197,7 @@ Real runSolver(const int npy, const int npz,
 
     std::string exportLine3Filename = "profile3" + optional_test + ".dat";
     std::vector<Real> line3_points, line3_vel, line3_pres;
-    extractLineData(model, line3_points, line3_vel, line3_pres, 2, point);
+    extractLineData(interpolated_model, line3_points, line3_vel, line3_pres, 2, point);
     writeDatFile(exportLine3Filename, line3_points, line3_vel, line3_pres);
 
     if (!rank)

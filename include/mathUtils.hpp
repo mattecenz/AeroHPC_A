@@ -9,6 +9,46 @@
 #include "GridData.hpp"
 
 namespace mathUtils {
+
+#define interp(C) inline Real intp_##C(const GridData &grid, const int i, const int j, const int k) { \
+    const int U = 0; \
+    const int V = 1; \
+    const int W = 2; \
+    if constexpr (C == 0) { \
+        return (grid.U(i, j, k) + grid.U(i - 1, j, k)) / 2; \
+    } else if constexpr (C == 1) { \
+        return (grid.V(i, j, k) + grid.U(i, j - 1, k)) / 2; \
+    } else { \
+        return (grid.W(i, j, k) + grid.W(i, j, k - 1)) / 2; \
+    } \
+}
+
+    interp(U)
+
+    interp(V)
+
+    interp(W)
+
+
+    inline Real vel_div(const GridData &grid, int i, int j, int k) {
+        return (grid.U(i, j, k) - grid.U(i - 1, j, k)) / grid.structure.dx
+               + (grid.V(i, j, k) - grid.V(i, j - 1, k)) / grid.structure.dy
+               + (grid.W(i, j, k) - grid.W(i, j, k - 1)) / grid.structure.dz;
+    }
+
+    inline Real dp_dx_U(const GridData &grid, int i, int j, int k) {
+        return (grid.P(i + 1, j, k) - grid.P(i, j, k)) / grid.structure.dx;
+    }
+
+    inline Real dp_dy_V(const GridData &grid, int i, int j, int k) {
+        return (grid.P(i, j + 1, k) - grid.P(i, j, k)) / grid.structure.dy;
+    }
+
+    inline Real dp_dz_W(const GridData &grid, int i, int j, int k) {
+        return (grid.P(i, j, k + 1) - grid.P(i, j, k)) / grid.structure.dz;
+    }
+
+
     /**
     @param[in] model Model containing both the staggered grid and the spacing
     @param[in] c Component whose derivative has to be computed

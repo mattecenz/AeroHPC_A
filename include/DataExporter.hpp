@@ -7,13 +7,30 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include "mathUtils.hpp"
+
+inline void interpData(const GridData &model,
+                       const GridData &interp_model) {
+    int nx = model.structure.nx;
+    int ny = model.structure.ny;
+    int nz = model.structure.nz;
+
+    for (index_t i = 0; i < nx; i++) {
+        for (index_t j = 0; j < ny; j++) {
+            for (index_t k = 0; k < nz; k++) {
+                interp_model.U(i, j, k) = mu::intp_U(model, i, j, k);
+                interp_model.V(i, j, k) = mu::intp_V(model, i, j, k);
+                interp_model.W(i, j, k) = mu::intp_W(model, i, j, k);
+            }
+        }
+    }
+}
 
 inline void extractFaceData(const GridData &model,
                             std::vector<Real> &point_coord,
                             std::vector<Real> &velocity_data,
                             std::vector<Real> &pressure_data,
                             const std::array<Real, 3> &point) {
-
     const Real dx = model.structure.dx;
     const Real dy = model.structure.dy;
     const Real dz = model.structure.dz;
@@ -99,7 +116,6 @@ inline void extractLineData(const GridData &model,
                             std::vector<Real> &pressure_data,
                             const int axis,
                             const std::array<Real, 3> &point) {
-
     const Real dx = model.structure.dx;
     const Real dy = model.structure.dy;
     const Real dz = model.structure.dz;
@@ -134,7 +150,7 @@ inline void extractLineData(const GridData &model,
         const auto j = static_cast<index_t>(ceil(off_y / dy));
         const auto k = static_cast<index_t>(ceil(off_z / dz));
 
-        if ( j >= 0 && j < ny && k >= 0 && k < nz ) {
+        if (j >= 0 && j < ny && k >= 0 && k < nz) {
             for (index_t i = 0; i < nx; i++) {
                 point_coord.push_back(origin_x + real(i) * dx);
                 point_coord.push_back(origin_y + real(j) * dy);
@@ -155,7 +171,7 @@ inline void extractLineData(const GridData &model,
         const auto i = static_cast<index_t>(ceil(off_x / dx));
         const auto k = static_cast<index_t>(ceil(off_z / dz));
 
-        if ( i >= 0 && i < nx && k >= 0 && k < nz ) {
+        if (i >= 0 && i < nx && k >= 0 && k < nz) {
             for (index_t j = 0; j < ny; j++) {
                 point_coord.push_back(origin_x + real(i) * dx);
                 point_coord.push_back(origin_y + real(j) * dy);
@@ -176,7 +192,7 @@ inline void extractLineData(const GridData &model,
         const auto i = static_cast<index_t>(ceil(off_x / dx));
         const auto j = static_cast<index_t>(ceil(off_y / dy));
 
-        if ( i >= 0 && i < nx && j >= 0 && j < ny ) {
+        if (i >= 0 && i < nx && j >= 0 && j < ny) {
             for (index_t k = 0; k < nz; k++) {
                 point_coord.push_back(origin_x + real(i) * dx);
                 point_coord.push_back(origin_y + real(j) * dy);
