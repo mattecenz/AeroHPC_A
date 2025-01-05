@@ -8,6 +8,8 @@
 #include <vector>
 #include <sstream>
 #include "mathUtils.hpp"
+#include <cmath>
+#include <iomanip>
 
 inline void interpData(const GridData &model,
                        const GridData &interp_model) {
@@ -18,9 +20,9 @@ inline void interpData(const GridData &model,
     for (index_t i = 0; i < nx; i++) {
         for (index_t j = 0; j < ny; j++) {
             for (index_t k = 0; k < nz; k++) {
-                interp_model.U(i, j, k) = mu::intp_U(model, i, j, k);
-                interp_model.V(i, j, k) = mu::intp_V(model, i, j, k);
-                interp_model.W(i, j, k) = mu::intp_W(model, i, j, k);
+                interp_model.U(i, j, k) = mathUtils::intp_U(model, i, j, k);
+                interp_model.V(i, j, k) = mathUtils::intp_V(model, i, j, k);
+                interp_model.W(i, j, k) = mathUtils::intp_W(model, i, j, k);
             }
         }
     }
