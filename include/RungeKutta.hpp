@@ -8,7 +8,7 @@
 #include "poissonSolver.hpp"
 
 
-///TODO TO REMOVE ONLY FOR DEBUG
+/// TODO TO REMOVE ONLY FOR DEBUG ///////////////////////////////////////////////////
 #include "printBuffer.hpp"
 #ifdef DEBUG_PRINT_BUFFERS
 #define b_print(buff, dir, n) \
@@ -24,22 +24,143 @@ if (!rank) {\
 #define b_print(a,b,c) //
 #define c_dir(a) //
 #endif
-///////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 
+
+namespace mu = mathUtils;
+
+////RHS function
+#define rhs(C)                                                                                            \
+inline Real rhs_##C(GridData &grid, const Real nu, const index_t i, const index_t j, const index_t k) \
+{                                                                                                     \
+return -mu::conv_##C(grid, i, j, k) + nu * mu::lap_##C(grid, i, j, k);                            \
+}
+
+rhs(U)
+
+rhs(V)
+
+rhs(W)
+
+
+/// FORCING TERM ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ForcingT
 #define getPhys(i, j, k)                         \
     Real px = real(i + model.structure.px) * dx; \
     Real py = real(j + model.structure.py) * dy; \
     Real pz = real(k + model.structure.pz) * dz
-
-#define getForceU(ftt) ftt.computeGx(px + dx, py + sdy, pz + sdz)
-
-#define getForceV(ftt) ftt.computeGy(px + sdx, py + dy, pz + sdz)
-
-#define getForceW(ftt) ftt.computeGz(px + sdx, py + sdy, pz + dz)
+#define getForceU(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGx(px + dx, py + sdy, pz + sdz)
+#define getForceV(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGy(px + sdx, py + dy, pz + sdz)
+#define getForceW(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGz(px + sdx, py + sdy, pz + dz)
+#else
+#define getForceU(force, i, j, k) constexpr Real force = 0
+#define getForceV(force, i, j, k) constexpr Real force = 0
+#define getForceW(force, i, j, k) constexpr Real force = 0
 #endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace mu = mathUtils;
+/// PRESSURE TERM //////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef ENABLE_PRESSURE
+#define getPressureGradU(d_press, buff, i, j, k) const Real d_press = mu::dp_dx_U(buff, i, j, k)
+#define getPressureGradV(d_press, buff, i, j, k) const Real d_press = mu::dp_dy_V(buff, i, j, k)
+#define getPressureGradW(d_press, buff, i, j, k) const Real d_press = mu::dp_dz_W(buff, i, j, k)
+#else
+#define getPressureGradU(d_press, buff, i, j, k) constexpr Real d_press = 0
+#define getPressureGradV(d_press, buff, i, j, k) constexpr Real d_press = 0
+#define getPressureGradW(d_press, buff, i, j, k) constexpr Real d_press = 0
+#endif
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/// RK STEPS ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+#define ITERATE_OVER_ALL_POINTS_START(i,j,k)    \
+for (index_t k = 0; k < nz; ++k) {              \
+    for (index_t j = 0; j < ny; ++j) {          \
+        for (index_t i = 0; i < nx; ++i) {
+#define ITERATE_OVER_ALL_POINTS_END()           \
+        }                                       \
+    }                                           \
+}
+
+#define Y2star(C, Y2star, U_N)                      \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
+    getForce##C(force, i, j, k);                    \
+    getPressureGrad##C(d_press, U_N, i, j, k);      \
+    const Real r = rhs_##C(U_N, nu, i, j, k);       \
+    rhs_buff.C(i, j, k) = (r + force);              \
+    Y2star.C(i, j, k) = U_N.C(i, j, k)              \
+                            + k_0 * (r + force)     \
+                            - k_0 * d_press;        \
+ITERATE_OVER_ALL_POINTS_END()
+
+#define Y2(Y2, Y2star, U_N)                                                 \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
+    Y2.U(i, j, k) = Y2star.U(i, j, k) - k_0 * mu::dp_dx_U(Y2star, i, j, k); \
+    Y2.V(i, j, k) = Y2star.V(i, j, k) - k_0 * mu::dp_dy_V(Y2star, i, j, k); \
+    Y2.W(i, j, k) = Y2star.W(i, j, k) - k_0 * mu::dp_dz_W(Y2star, i, j, k); \
+ITERATE_OVER_ALL_POINTS_END()                                               \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
+    Y2.P(i, j, k) = Y2star.P(i, j, k) + U_N.P(i, j, k);                     \
+ITERATE_OVER_ALL_POINTS_END()
+
+#define Y3star(C, Y3star, Y2)                           \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                  \
+    getForce##C(force, i, j, k);                        \
+    getPressureGrad##C(d_press, Y2, i, j, k);           \
+    const Real r1 = rhs_buff.C(i, j, k);                \
+    const Real r2 = rhs_##C(Y2, nu, i, j, k);           \
+    rhs_buff.C(i, j, k) = (r2 + force);                 \
+    Y3star.C(i, j, k) = Y2.C(i, j, k)                   \
+                       - k_1 * r1                       \
+                       + k_2 * (r2 + force)             \
+                       - k_3 * d_press;                 \
+ITERATE_OVER_ALL_POINTS_END()
+
+#define Y3(Y3, Y3star, Y2)                                                  \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
+    Y3.U(i, j, k) = Y3star.U(i, j, k) - k_3 * mu::dp_dx_U(Y3star, i, j, k); \
+    Y3.V(i, j, k) = Y3star.V(i, j, k) - k_3 * mu::dp_dy_V(Y3star, i, j, k); \
+    Y3.W(i, j, k) = Y3star.W(i, j, k) - k_3 * mu::dp_dz_W(Y3star, i, j, k); \
+ITERATE_OVER_ALL_POINTS_END()                                               \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
+    Y3.P(i, j, k) = Y3star.P(i, j, k) + Y2.P(i, j, k);                      \
+ITERATE_OVER_ALL_POINTS_END()
+
+
+#define U_N1star(C, U_N1, Y3)                           \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                  \
+    getForce##C(force, i, j, k);                        \
+    getPressureGrad##C(d_press, Y3, i, j, k);           \
+    const Real r = rhs_##C(Y3, nu, i, j, k);            \
+    U_N1.C(i, j, k) = Y3.C(i, j, k)                     \
+                            - k_4 * rhs_buff.C(i, j, k) \
+                            + k_5 * (r + force)         \
+                            - k_6 * d_press;            \
+ITERATE_OVER_ALL_POINTS_END()
+
+#define U_N1(U_N1, U_N1star, Y3)                                                    \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
+    U_N1.U(i, j, k) = U_N1star.U(i, j, k) - k_6 * mu::dp_dx_U(U_N1star, i, j, k);   \
+    U_N1.V(i, j, k) = U_N1star.V(i, j, k) - k_6 * mu::dp_dy_V(U_N1star, i, j, k);   \
+    U_N1.W(i, j, k) = U_N1star.W(i, j, k) - k_6 * mu::dp_dz_W(U_N1star, i, j, k);   \
+ITERATE_OVER_ALL_POINTS_END()                                                       \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
+    U_N1.P(i, j, k) = U_N1star.P(i, j, k) + Y3.P(i, j, k);                          \
+ITERATE_OVER_ALL_POINTS_END()
+
+
+#define Load_B(constant, b_buffer, velocity_in)                          \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                       \
+    b_buffer.V(i, j, k) = constant * mu::vel_div(velocity_in, i, j, k);  \
+ITERATE_OVER_ALL_POINTS_END()
+
+#define Unload_X(X_buffer, pressure_out)         \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
+    pressure_out.P(i, j, k) = X_buffer.U(i, j, k); \
+ITERATE_OVER_ALL_POINTS_END()
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 struct RKConst {
     static constexpr Real alpha0 = 64.0 / 120.0;
@@ -52,19 +173,6 @@ struct RKConst {
     static constexpr Real beta0 = 64.0 / 120.0;
     static constexpr Real beta1 = 80.0 / 120.0;
 };
-
-////RHS function
-#define rhs(C)                                                                                            \
-    inline Real rhs_##C(GridData &grid, const Real nu, const index_t i, const index_t j, const index_t k) \
-    {                                                                                                     \
-        return -mu::conv_##C(grid, i, j, k) + nu * mu::lap_##C(grid, i, j, k);                            \
-    }
-
-rhs(U)
-
-rhs(V)
-
-rhs(W)
 
 // Runge-Kutta method
 void rungeKutta(GridData &model, GridData &model_buff,
@@ -116,149 +224,43 @@ void rungeKutta(GridData &model, GridData &model_buff,
 #endif
 
     // Convert pressure_buff from velocity convention to X and b convention
-#define X_at(i,j,k) pressure_buff.U(i,j,k)
-#define b_at(i,j,k) pressure_buff.V(i,j,k)
 #define X (&pressure_buff.U(0,0,0))
 #define b (&pressure_buff.V(0,0,0))
 
     /// Y2* //////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force = getForceU(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r = rhs_U(model, nu, i, j, k);
-                    rhs_buff.U(i, j, k) = (r + force);
-
-                    model_buff.U(i, j, k) = model.U(i, j, k)
-                                            + k_0 * (r + force)
-#ifdef ENABLE_PRESSURE
-                                            - k_0 * mu::dp_dx_U(model, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force = getForceV(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r = rhs_V(model, nu, i, j, k);
-                    rhs_buff.V(i, j, k) = (r + force);
-
-                    model_buff.V(i, j, k) = model.V(i, j, k)
-                                            + k_0 * (r + force)
-#ifdef ENABLE_PRESSURE
-                                            - k_0 * mu::dp_dy_V(model, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force = getForceW(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r = rhs_W(model, nu, i, j, k);
-                    rhs_buff.W(i, j, k) = (r + force);
-
-                    model_buff.W(i, j, k) = model.W(i, j, k)
-                                            + k_0 * (r + force)
-#ifdef ENABLE_PRESSURE
-                                            - k_0 * mu::dp_dz_W(model, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
+        Y2star(U, model_buff, model);
+        Y2star(V, model_buff, model);
+        Y2star(W, model_buff, model);
 
         b_print(model_buff, dir, 1);
-
         boundary_cond.apply(model_buff, t_0);
-
         b_print(model_buff, dir, 2);
     }
 
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        // COMPUTE B TERM
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = inv_k_0 * mu::vel_div(model_buff, i, j, k);
-                }
-            }
-        }
+        Load_B(inv_k_0, pressure_buff, model_buff)
 
         p_solver.setB(b);
-
         // SOLVE FOR phi2-pn
         p_solver.solve(X);
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-                memcpy(&model_buff.P(0, j, k), &X_at(0, j, k), sizeof(Real) * nx);
-            }
-        }
+        Unload_X(pressure_buff, model_buff)
 
         b_print(model_buff, dir, 3);
-
         boundary_cond.apply(model_buff, t_0);
-
         b_print(model_buff, dir, 4);
     }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
     /// Y2 //////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    model_buff.U(i, j, k) -= k_0 * mu::dp_dx_U(model_buff, i, j, k);
-                    model_buff.V(i, j, k) -= k_0 * mu::dp_dy_V(model_buff, i, j, k);
-                    model_buff.W(i, j, k) -= k_0 * mu::dp_dz_W(model_buff, i, j, k);
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    model_buff.P(i, j, k) += model.P(i, j, k);
-                }
-            }
-        }
+        Y2(model_buff, model_buff, model);
 
         b_print(model_buff, dir, 5);
 
@@ -266,7 +268,6 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
         b_print(model_buff, dir, 6);
     }
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif
 
 #ifdef ForcingT
@@ -275,158 +276,42 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
     /// Y3* //////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force2 = getForceU(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r1 = rhs_buff.U(i, j, k);
-                    const Real r2 = rhs_U(model_buff, nu, i, j, k);
-
-                    rhs_buff.U(i, j, k) = (r2 + force2);
-
-                    model.U(i, j, k) = model_buff.U(i, j, k)
-                                       - k_1 * r1
-                                       + k_2 * (r2 + force2)
-#ifdef ENABLE_PRESSURE
-                                       - k_3 * mu::dp_dx_U(model_buff, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force2 = getForceV(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r1 = rhs_buff.V(i, j, k);
-                    const Real r2 = rhs_V(model_buff, nu, i, j, k);
-
-                    rhs_buff.V(i, j, k) = (r2 + force2);
-
-                    model.V(i, j, k) = model_buff.V(i, j, k)
-                                       - k_1 * r1
-                                       + k_2 * (r2 + force2)
-#ifdef ENABLE_PRESSURE
-                                       - k_3 * mu::dp_dy_V(model_buff, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force2 = getForceW(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r1 = rhs_buff.W(i, j, k);
-                    const Real r2 = rhs_W(model_buff, nu, i, j, k);
-
-                    rhs_buff.W(i, j, k) = (r2 + force2);
-
-                    model.W(i, j, k) = model_buff.W(i, j, k)
-                                       - k_1 * r1
-                                       + k_2 * (r2 + force2)
-#ifdef ENABLE_PRESSURE
-                                       - k_3 * mu::dp_dz_W(model_buff, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
+        Y3star(U, model, model_buff);
+        Y3star(V, model, model_buff);
+        Y3star(W, model, model_buff);
 
         b_print(model, dir, 7);
-
         boundary_cond.apply(model, t_1);
-
         b_print(model, dir, 8);
     }
 
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        // COMPUTE B TERM
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = inv_k_3 * mu::vel_div(model, i, j, k);
-                }
-            }
-        }
+        Load_B(inv_k_3, pressure_buff, model)
 
         p_solver.setB(b);
-
         // SOLVE FOR phi3-phi2
         p_solver.solve(X);
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-                memcpy(&model.P(0, j, k), &X_at(0, j, k), sizeof(Real) * nx);
-            }
-        }
+        Unload_X(pressure_buff, model)
 
         b_print(model, dir, 9);
-
         boundary_cond.apply(model, t_1);
-
         b_print(model, dir, 10);
     }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /// Y3 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    model.U(i, j, k) -= k_3 * mu::dp_dx_U(model, i, j, k);
-                    model.V(i, j, k) -= k_3 * mu::dp_dy_V(model, i, j, k);
-                    model.W(i, j, k) -= k_3 * mu::dp_dz_W(model, i, j, k);
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    model.P(i, j, k) += model_buff.P(i, j, k);
-                }
-            }
-        }
+        Y3(model, model, model_buff);
 
         b_print(model, dir, 11);
-
         boundary_cond.apply(model, t_1);
-
         b_print(model, dir, 12);
     }
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif
 
 
@@ -436,142 +321,38 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
     /// u(n+1)* //////////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force = getForceU(ft);
-#else
-                    constexpr Real force = 0;
-#endif
+        U_N1star(U, model_buff, model);
+        U_N1star(V, model_buff, model);
+        U_N1star(W, model_buff, model);
 
-                    const Real r = rhs_U(model, nu, i, j, k);
-
-                    model_buff.U(i, j, k) = model.U(i, j, k)
-                                            - k_4 * rhs_buff.U(i, j, k)
-                                            + k_5 * (r + force)
-#ifdef ENABLE_PRESSURE
-                                            - k_6 * mu::dp_dx_U(model, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force = getForceV(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r = rhs_V(model, nu, i, j, k);
-
-                    model_buff.V(i, j, k) = model.V(i, j, k)
-                                            - k_4 * rhs_buff.V(i, j, k)
-                                            + k_5 * (r + force)
-#ifdef ENABLE_PRESSURE
-                                            - k_6 * mu::dp_dy_V(model, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-#ifdef ForcingT
-                    getPhys(i, j, k);
-                    const Real force = getForceW(ft);
-#else
-                    constexpr Real force = 0;
-#endif
-
-                    const Real r = rhs_W(model, nu, i, j, k);
-
-                    model_buff.W(i, j, k) = model.W(i, j, k)
-                                            - k_4 * rhs_buff.W(i, j, k)
-                                            + k_5 * (r + force)
-#ifdef ENABLE_PRESSURE
-                                            - k_6 * mu::dp_dz_W(model, i, j, k)
-#endif
-                            ;
-                }
-            }
-        }
 
         b_print(model_buff, dir, 13);
-
         boundary_cond.apply(model_buff, t_2);
-
         b_print(model_buff, dir, 14);
     }
 
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        // COMPUTE B TERM
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    b_at(i, j, k) = inv_k_6 * mu::vel_div(model_buff, i, j, k);
-                }
-            }
-        }
+        Load_B(inv_k_6, pressure_buff, model_buff)
 
         p_solver.setB(b);
-
-
         // SOLVE FOR pn+1-phi3
         p_solver.solve(X);
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-                memcpy(&model_buff.P(0, j, k), &X_at(0, j, k), sizeof(Real) * nx);
-            }
-        }
+        Unload_X(pressure_buff, model_buff)
 
         b_print(model_buff, dir, 15);
-
         boundary_cond.apply(model_buff, t_2);
-
         b_print(model_buff, dir, 16);
     }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /// un+1 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    model_buff.U(i, j, k) -= k_6 * mu::dp_dx_U(model_buff, i, j, k);
-                    model_buff.V(i, j, k) -= k_6 * mu::dp_dy_V(model_buff, i, j, k);
-                    model_buff.W(i, j, k) -= k_6 * mu::dp_dz_W(model_buff, i, j, k);
-                }
-            }
-        }
-
-        for (index_t k = 0; k < nz; ++k) {
-            for (index_t j = 0; j < ny; ++j) {
-#pragma omp simd
-                for (index_t i = 0; i < nx; ++i) {
-                    model_buff.P(i, j, k) += model.P(i, j, k);
-                }
-            }
-        }
+        U_N1(model_buff, model_buff, model);
 
         b_print(model_buff, dir, 17);
 
@@ -579,7 +360,6 @@ void rungeKutta(GridData &model, GridData &model_buff,
 
         b_print(model_buff, dir, 18);
     }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #endif
 
     model.swap(model_buff);
