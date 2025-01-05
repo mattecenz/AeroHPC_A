@@ -149,16 +149,15 @@ ITERATE_OVER_ALL_POINTS_START(i, j, k)                                          
 ITERATE_OVER_ALL_POINTS_END()
 
 
-#define Load_B(constant, b_buffer, velocity_in)                          \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                       \
-    b_buffer.V(i, j, k) = constant * mu::vel_div(velocity_in, i, j, k);  \
+#define Load_B(constant, b_buffer, velocity_in)                                     \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
+    b_buffer.V(i, j, k) = constant * mu::vel_div(velocity_in, i, j, k);             \
 ITERATE_OVER_ALL_POINTS_END()
 
-#define Unload_X(X_buffer, pressure_out)         \
+#define Unload_X(X_buffer, pressure_out)            \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
-    pressure_out.P(i, j, k) = X_buffer.U(i, j, k); \
+    pressure_out.P(i, j, k) = X_buffer.V(i, j, k);  \
 ITERATE_OVER_ALL_POINTS_END()
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -175,10 +174,10 @@ struct RKConst {
 };
 
 // Runge-Kutta method
-void rungeKutta(GridData &model, GridData &model_buff,
-                GridData &rhs_buff, GridData &pressure_buff,
-                Real reynolds, Real deltat, index_t iteration,
-                Boundaries &boundary_cond, poissonSolver &p_solver) {
+inline void rungeKutta(GridData &model, GridData &model_buff,
+                       GridData &rhs_buff, GridData &pressure_buff,
+                       Real reynolds, Real deltat, index_t iteration,
+                       Boundaries &boundary_cond, poissonSolver &p_solver) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -243,9 +242,8 @@ void rungeKutta(GridData &model, GridData &model_buff,
     {
         Load_B(inv_k_0, pressure_buff, model_buff)
 
-        p_solver.setB(b);
         // SOLVE FOR phi2-pn
-        p_solver.solve(X);
+        p_solver.solve(b);
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
@@ -263,9 +261,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         Y2(model_buff, model_buff, model);
 
         b_print(model_buff, dir, 5);
-
         boundary_cond.apply(model_buff, t_0);
-
         b_print(model_buff, dir, 6);
     }
 #endif
@@ -290,9 +286,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
     {
         Load_B(inv_k_3, pressure_buff, model)
 
-        p_solver.setB(b);
-        // SOLVE FOR phi3-phi2
-        p_solver.solve(X);
+        p_solver.solve(b);
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,9 +330,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
     {
         Load_B(inv_k_6, pressure_buff, model_buff)
 
-        p_solver.setB(b);
-        // SOLVE FOR pn+1-phi3
-        p_solver.solve(X);
+        p_solver.solve(b);
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
@@ -355,9 +347,7 @@ void rungeKutta(GridData &model, GridData &model_buff,
         U_N1(model_buff, model_buff, model);
 
         b_print(model_buff, dir, 17);
-
         boundary_cond.apply(model_buff, t_2);
-
         b_print(model_buff, dir, 18);
     }
 #endif

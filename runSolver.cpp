@@ -95,7 +95,7 @@ inline Real runSolver(const int rank, const int size,
 
     /// Create the Poisson Solver //////////////////////////////////////////////////////////////////////////
     //TODO modify parameters to a more general definition
-    poissonSolver p_solver(nx, 1.0, c2d);
+    poissonSolver p_solver(nx, ny, nz, 1.0, c2d);
 
     if (!rank)
         logger.printTitle("Poisson solver created");
