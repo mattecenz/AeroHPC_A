@@ -95,9 +95,9 @@ ITERATE_OVER_ALL_POINTS_END()
 
 #define Y2(Y2, Y2star, U_N)                                                 \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
-    Y2.U(i, j, k) = Y2star.U(i, j, k) - k_0 * mu::dp_dx_U(Y2star, i, j, k); \
-    Y2.V(i, j, k) = Y2star.V(i, j, k) - k_0 * mu::dp_dy_V(Y2star, i, j, k); \
-    Y2.W(i, j, k) = Y2star.W(i, j, k) - k_0 * mu::dp_dz_W(Y2star, i, j, k); \
+    Y2.U(i, j, k) = Y2star.U(i, j, k) - deltat * mu::dp_dx_U(Y2star, i, j, k); \
+    Y2.V(i, j, k) = Y2star.V(i, j, k) - deltat * mu::dp_dy_V(Y2star, i, j, k); \
+    Y2.W(i, j, k) = Y2star.W(i, j, k) - deltat * mu::dp_dz_W(Y2star, i, j, k); \
 ITERATE_OVER_ALL_POINTS_END()                                               \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
     Y2.P(i, j, k) = Y2star.P(i, j, k) + U_N.P(i, j, k);                     \
@@ -118,9 +118,9 @@ ITERATE_OVER_ALL_POINTS_END()
 
 #define Y3(Y3, Y3star, Y2)                                                  \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
-    Y3.U(i, j, k) = Y3star.U(i, j, k) - k_3 * mu::dp_dx_U(Y3star, i, j, k); \
-    Y3.V(i, j, k) = Y3star.V(i, j, k) - k_3 * mu::dp_dy_V(Y3star, i, j, k); \
-    Y3.W(i, j, k) = Y3star.W(i, j, k) - k_3 * mu::dp_dz_W(Y3star, i, j, k); \
+    Y3.U(i, j, k) = Y3star.U(i, j, k) - deltat * mu::dp_dx_U(Y3star, i, j, k); \
+    Y3.V(i, j, k) = Y3star.V(i, j, k) - deltat * mu::dp_dy_V(Y3star, i, j, k); \
+    Y3.W(i, j, k) = Y3star.W(i, j, k) - deltat * mu::dp_dz_W(Y3star, i, j, k); \
 ITERATE_OVER_ALL_POINTS_END()                                               \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
     Y3.P(i, j, k) = Y3star.P(i, j, k) + Y2.P(i, j, k);                      \
@@ -140,9 +140,9 @@ ITERATE_OVER_ALL_POINTS_END()
 
 #define U_N1(U_N1, U_N1star, Y3)                                                    \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
-    U_N1.U(i, j, k) = U_N1star.U(i, j, k) - k_6 * mu::dp_dx_U(U_N1star, i, j, k);   \
-    U_N1.V(i, j, k) = U_N1star.V(i, j, k) - k_6 * mu::dp_dy_V(U_N1star, i, j, k);   \
-    U_N1.W(i, j, k) = U_N1star.W(i, j, k) - k_6 * mu::dp_dz_W(U_N1star, i, j, k);   \
+    U_N1.U(i, j, k) = U_N1star.U(i, j, k) - deltat * mu::dp_dx_U(U_N1star, i, j, k);   \
+    U_N1.V(i, j, k) = U_N1star.V(i, j, k) - deltat * mu::dp_dy_V(U_N1star, i, j, k);   \
+    U_N1.W(i, j, k) = U_N1star.W(i, j, k) - deltat * mu::dp_dz_W(U_N1star, i, j, k);   \
 ITERATE_OVER_ALL_POINTS_END()                                                       \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
     U_N1.P(i, j, k) = U_N1star.P(i, j, k) + Y3.P(i, j, k);                          \
@@ -235,7 +235,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(inv_k_0, rhs_buff, model_buff)
+        Load_B(deltat, rhs_buff, model_buff)
 
         // SOLVE FOR phi2-pn
         p_solver.solve(&rhs_buff.P(0,0,0));
@@ -279,7 +279,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(inv_k_3, rhs_buff, model)
+        Load_B(deltat, rhs_buff, model)
 
         p_solver.solve(&rhs_buff.P(0,0,0));
     }
@@ -323,7 +323,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(inv_k_6, rhs_buff, model_buff)
+        Load_B(deltat, rhs_buff, model_buff)
 
         p_solver.solve(&rhs_buff.P(0,0,0));
     }
