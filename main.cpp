@@ -126,7 +126,8 @@ Real runSolver(const int npy, const int npz,
     Real perf;
 
     // Printing variables
-    index_t printIt = 1; // prints every n iterations
+    index_t maxTablePrintLine = 10;
+    index_t printIt = ceil(real(nTimeSteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     if (!rank)
