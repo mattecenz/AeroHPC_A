@@ -10,7 +10,7 @@
 
 namespace mathUtils {
 
-#define interp(C) inline Real intp_##C(const GridData &grid, const int i, const int j, const int k) { \
+#define interpolate(C) inline Real intp_##C(const GridData &grid, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \
@@ -23,11 +23,11 @@ namespace mathUtils {
     } \
 }
 
-    interp(U)
+    interpolate(U)
 
-    interp(V)
+    interpolate(V)
 
-    interp(W)
+    interpolate(W)
 
 
     inline Real vel_div(const GridData &grid, int i, int j, int k) {
@@ -66,8 +66,6 @@ namespace mathUtils {
 
     d_dx(W)
 
-    d_dx(P)
-
     /**
     @param[in] model Model containing both the staggered grid and the spacing
     @param[in] i,j,k Coordinates in the staggered grid corresponding to the component
@@ -83,8 +81,6 @@ namespace mathUtils {
     d_dy(V)
 
     d_dy(W)
-
-    d_dy(P)
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -102,8 +98,6 @@ namespace mathUtils {
     d_dz(V)
 
     d_dz(W)
-
-    d_dz(P)
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
