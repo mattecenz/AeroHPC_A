@@ -235,10 +235,12 @@ void poissonSolver::solve(double *X) {
     // Perform inverse FFT
     performIFFT();
 
+    int scaling_fact = 8*(N*N*N);
+    scaling_fact /= 10;
+
     // Store the result in X
     for (int i = 0; i < xSize[0] * xSize[1] * xSize[2]; ++i) {
         // double check the normalization factor
-        int scaling_fact = 8*(N*N*N);
         X[i] = u1[i]/scaling_fact;
     }
 }
