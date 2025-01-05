@@ -80,9 +80,9 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < xsize; ++i) {
         for (int j = 0; j < ysize; ++j) {
             for (int k = 0; k < zsize; ++k) {
-                double xi = (xstart + i) * dx * M_PI;
-                double yj = (ystart + j) * dx * M_PI;
-                double zk = (zstart + k) * dx * M_PI;
+                double xi = (xstart + i) * dx * 2 * M_PI;
+                double yj = (ystart + j) * dx * 2 * M_PI;
+                double zk = (zstart + k) * dx * 2 * M_PI;
                 int index = k * (ysize * xsize) + j * xsize + i;
                 b[index] = - 3 * cos(xi) * cos(yj) * cos(zk);
                 exact_x[index] = cos(xi) * cos(yj) * cos(zk);
@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
                 for (int j=0; j<ysize; ++j){
                     for (int k=0; k<zsize; ++k){
                         int index = k * (ysize * xsize) + j * xsize + i;
-                        // cout << "rank: " << rrank << " i: " << i << ", j: " << j << ", k: " << k << "\t b = " << b[index] << "\t x = " << X[index] << "\tfact: " << X[index]/b[index]<< endl;
-                        cout << "rank: " << rrank << " i: " << i << ", j: " << j << ", k: " << k << "\t b = " << b[index] << "\t x = " << X[index] << "\texact_x: " << exact_x[index]<< "\tdiff: " << exact_x[index] - X[index] << endl;
+                        cout << "rank: " << rrank << " i: " << i << ", j: " << j << ", k: " << k << "\t b = " << b[index] << "\t x = " << X[index] << "\tfact: " << X[index]/b[index]<< endl;
+                        // cout << "rank: " << rrank << " i: " << i << ", j: " << j << ", k: " << k << "\t b = " << b[index] << "\t x = " << X[index] << "\texact_x: " << exact_x[index]<< "\tdiff: " << exact_x[index] - X[index] << endl;
                     }
                 }
             }

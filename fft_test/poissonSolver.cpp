@@ -230,7 +230,7 @@ void poissonSolver::solve(double *X) {
     performFFT();
 
     // Solve eigenvalues
-    solveEigenvalues();
+    // solveEigenvalues();
 
     // Perform inverse FFT
     performIFFT();
