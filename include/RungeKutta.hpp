@@ -151,12 +151,12 @@ ITERATE_OVER_ALL_POINTS_END()
 
 #define Load_B(constant, b_buffer, velocity_in)                                     \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
-    b_buffer.V(i, j, k) = constant * mu::vel_div(velocity_in, i, j, k);             \
+    b_buffer.P(i, j, k) = constant * mu::vel_div(velocity_in, i, j, k);             \
 ITERATE_OVER_ALL_POINTS_END()
 
-#define Unload_X(X_buffer, pressure_out)            \
+#define Unload_B(b_buffer, pressure_out)            \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
-    pressure_out.P(i, j, k) = X_buffer.V(i, j, k);  \
+    pressure_out.P(i, j, k) = b_buffer.P(i, j, k);  \
 ITERATE_OVER_ALL_POINTS_END()
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -174,8 +174,7 @@ struct RKConst {
 };
 
 // Runge-Kutta method
-inline void rungeKutta(GridData &model, GridData &model_buff,
-                       GridData &rhs_buff, GridData &pressure_buff,
+inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
                        Real reynolds, Real deltat, index_t iteration,
                        Boundaries &boundary_cond, poissonSolver &p_solver) {
     int rank;
@@ -222,10 +221,6 @@ inline void rungeKutta(GridData &model, GridData &model_buff,
     ForcingTerm ft(reynolds, time);
 #endif
 
-    // Convert pressure_buff from velocity convention to X and b convention
-#define X (&pressure_buff.U(0,0,0))
-#define b (&pressure_buff.V(0,0,0))
-
     /// Y2* //////////////////////////////////////////////////////////////////////////////////////////////
     {
         Y2star(U, model_buff, model);
@@ -240,15 +235,15 @@ inline void rungeKutta(GridData &model, GridData &model_buff,
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(inv_k_0, pressure_buff, model_buff)
+        Load_B(inv_k_0, rhs_buff, model_buff)
 
         // SOLVE FOR phi2-pn
-        p_solver.solve(b);
+        p_solver.solve(&rhs_buff.P(0,0,0));
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
-        Unload_X(pressure_buff, model_buff)
+        Unload_B(rhs_buff, model_buff)
 
         b_print(model_buff, dir, 3);
         boundary_cond.apply(model_buff, t_0);
@@ -284,14 +279,14 @@ inline void rungeKutta(GridData &model, GridData &model_buff,
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(inv_k_3, pressure_buff, model)
+        Load_B(inv_k_3, rhs_buff, model)
 
-        p_solver.solve(b);
+        p_solver.solve(&rhs_buff.P(0,0,0));
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
-        Unload_X(pressure_buff, model)
+        Unload_B(rhs_buff, model)
 
         b_print(model, dir, 9);
         boundary_cond.apply(model, t_1);
@@ -328,14 +323,14 @@ inline void rungeKutta(GridData &model, GridData &model_buff,
 #ifdef ENABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(inv_k_6, pressure_buff, model_buff)
+        Load_B(inv_k_6, rhs_buff, model_buff)
 
-        p_solver.solve(b);
+        p_solver.solve(&rhs_buff.P(0,0,0));
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
-        Unload_X(pressure_buff, model_buff)
+        Unload_B(rhs_buff, model_buff)
 
         b_print(model_buff, dir, 15);
         boundary_cond.apply(model_buff, t_2);

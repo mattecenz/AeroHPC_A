@@ -106,8 +106,7 @@ inline Real runSolver(const int rank, const int size,
     GridData modelBuff(modelStructure);
     // Buffers for other data
     GridStructure bufferStructure(nodes, spacing, displacement, 0);
-    GridData rhsBuff(bufferStructure, false);
-    GridData pressureBuff(bufferStructure, false);
+    GridData rhsBuff(bufferStructure);
 
     if (!rank)
         logger.printTitle("Buffers created");
@@ -134,7 +133,7 @@ inline Real runSolver(const int rank, const int size,
     for (index_t step = 0; step < nTimeSteps; ++step) {
 
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, pressureBuff, Re, deltaT, step, mpiBoundaries, p_solver);
+        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, step, mpiBoundaries, p_solver);
         chrono_stop(rkTime);
 
         if (!((step + 1)  % printIt) || step == nTimeSteps - 1) // prints every n iteration or if is the last one
