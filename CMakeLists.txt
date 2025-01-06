@@ -21,19 +21,33 @@ else()
     set(DEFAULT_FFTW_LIBRARY_PATH ${FFTW_LIBRARY_PATH})
 endif()
 
+# Enable use of Float values instead of Doubles
+if (DEFINED USE_FLOAT)
+    add_compile_definitions(REAL_USE_FLOAT=${USE_FLOAT})
+endif ()
+
 # Try to find FFTW using find_package
 find_package(FFTW QUIET COMPONENTS SINGLE DOUBLE)
 
 # Check if FFTW was found, otherwise use the fallback paths
 if (FFTW_FOUND)
     message(STATUS "FFTW found via find_package.")
-    set(FFTW_LIBRARIES FFTW::FFTW3 FFTW::FFTW3F)
     set(FFTW_INCLUDE_DIRS "") # Already handled by FFTW imported targets
+    if(USE_FLOAT)
+        set(FFTW_LIBRARIES FFTW::FFTW3F)
+    else ()
+        set(FFTW_LIBRARIES FFTW::FFTW3)
+    endif ()
 else ()
     message(WARNING "FFTW not found via find_package. Falling back to default paths.")
     set(FFTW_INCLUDE_DIRS ${DEFAULT_FFTW_INCLUDE_PATH})
-    set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.so ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3f.so)
+    if(USE_FLOAT)
+        set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3f.so)
+    else ()
+        set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.so)
+    endif ()
 endif ()
+message(STATUS "Using fftw .so : ${FFTW_LIBRARIES}")
 
 # Find the MPI compiler
 find_program(MPICXX_EXECUTABLE mpic++)
@@ -46,7 +60,6 @@ else ()
     message(FATAL_ERROR "mpic++ not found. Please ensure MPI is installed and mpic++ is in your PATH.")
 endif ()
 
-# Example usage message
 message(STATUS "Using C++ compiler: ${CMAKE_CXX_COMPILER}")
 
 # Include header files

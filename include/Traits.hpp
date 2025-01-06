@@ -3,12 +3,6 @@
 
 #include <functional>
 
-/**
- * This is the switch for all datatypes (0 for double, 1 for float)
- */
-#define REAL_USE_FLOAT 1
-
-
 #if REAL_USE_FLOAT
 typedef float Real;
 #define Real_Dataname "float"
