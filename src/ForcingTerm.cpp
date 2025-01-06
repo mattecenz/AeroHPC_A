@@ -2,7 +2,7 @@
 
 #define pw2(a) ((a)*(a))
 
-#ifdef ENABLE_PRESSURE
+#ifndef DISABLE_PRESSURE
 Real ForcingTerm::computeGx(Real x, Real y, Real z) const {
     return -2 * M_PI * sin(time) * sin(2 * M_PI * x) * cos(2 * M_PI * y) * cos(2 * M_PI * z)
            - pw2(sin(time)) * sin(x) * pw2(sin(y)) * pw2(sin(z)) * cos(x)

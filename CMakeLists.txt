@@ -5,22 +5,35 @@ project(AeroHPC_A)
 set(CMAKE_CXX_STANDARD 23)
 
 # Optionally set default include and library paths (fallback)
-set(DEFAULT_FFTW_INCLUDE_PATH /usr/local/include)
-set(DEFAULT_FFTW_LIBRARY_PATH /usr/local/lib)
+if (NOT DEFINED FFTW_INCLUDE_PATH)
+    message(STATUS "Default fftw include path: /usr/local/include")
+    set(DEFAULT_FFTW_INCLUDE_PATH /usr/local/include)
+else()
+    message(STATUS "Custom fftw include path: ${FFTW_INCLUDE_PATH}")
+    set(DEFAULT_FFTW_INCLUDE_PATH ${FFTW_INCLUDE_PATH})
+endif ()
+
+if (NOT DEFINED FFTW_LIBRARY_PATH)
+    message(STATUS "Default fftw library path: /usr/local/lib")
+    set(DEFAULT_FFTW_LIBRARY_PATH /usr/local/lib)
+else()
+    message(STATUS "Custom fftw library path: ${FFTW_LIBRARY_PATH}")
+    set(DEFAULT_FFTW_LIBRARY_PATH ${FFTW_LIBRARY_PATH})
+endif()
 
 # Try to find FFTW using find_package
 find_package(FFTW QUIET COMPONENTS SINGLE DOUBLE)
 
 # Check if FFTW was found, otherwise use the fallback paths
-if(FFTW_FOUND)
+if (FFTW_FOUND)
     message(STATUS "FFTW found via find_package.")
     set(FFTW_LIBRARIES FFTW::FFTW3 FFTW::FFTW3F)
     set(FFTW_INCLUDE_DIRS "") # Already handled by FFTW imported targets
-else()
+else ()
     message(WARNING "FFTW not found via find_package. Falling back to default paths.")
     set(FFTW_INCLUDE_DIRS ${DEFAULT_FFTW_INCLUDE_PATH})
     set(FFTW_LIBRARIES ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3.so ${DEFAULT_FFTW_LIBRARY_PATH}/libfftw3f.so)
-endif()
+endif ()
 
 # Find the MPI compiler
 find_program(MPICXX_EXECUTABLE mpic++)
@@ -46,23 +59,33 @@ include_directories(${FFTW_INCLUDE_DIRS})
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # Main file name
-set(MAIN_FILE "main.cpp")
+if (DEFINED MAKE_TEST)
+    add_compile_definitions(TEST=1)
+    add_compile_definitions(ForcingT=1)
+
+    add_compile_definitions(DISABLE_PRESSURE=${DISABLE_PRESSURE})
+    add_compile_definitions(DEBUG_PRINT_BUFFERS=${DEBUG_PRINT_BUFFERS})
+
+    message(STATUS "main file: test.cpp")
+    set(MAIN_FILE "test.cpp")
+else ()
+    message(STATUS "main file: main.cpp")
+    set(MAIN_FILE "main.cpp")
+endif ()
 
 # Target file name
 set(TARGET_FILE "AeroHPC_A")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto -Ofast -funroll-all-loops -fopenmp-simd -ffast-math ")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -mtune=native -fopenmp-simd -fopt-info-all\
-#         -funroll-loops  -flto  -flto=auto -fno-signed-zeros -fno-trapping-math -ffinite-math-only -ffast-math -fpermissive \
-#         -faggressive-loop-optimizations -funsafe-math-optimizations -ftree-vectorizer-verbose=2")
+if (DEFINED AGGRESSIVE_OPTIMIZATION)
+    message(STATUS "Aggressive optimizations activated")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native -mtune=native -fopenmp-simd -fopt-info-all\
+         -funroll-loops  -flto  -flto=auto -fno-signed-zeros -fno-trapping-math -ffinite-math-only -ffast-math -fpermissive \
+         -faggressive-loop-optimizations -funsafe-math-optimizations -ftree-vectorizer-verbose=2")
+else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto -Ofast -funroll-all-loops -fopenmp-simd -ffast-math ")
+endif ()
 
 add_executable("${TARGET_FILE}" "${MAIN_FILE}" ${SOURCES})
-
-#ForcingTerm FLAG
-add_definitions(-DForcingT)
-
-add_definitions(-DENABLE_PRESSURE)
-add_definitions(-DDEBUG_PRINT_BUFFERS)
 
 # Link the FFTW library
 target_link_libraries(${TARGET_FILE} ${FFTW_LIBRARIES})

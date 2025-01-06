@@ -87,7 +87,6 @@ inline Real runSolver(const int rank, const int size,
         logger.printTitle("Boundary condition set");
 
     /// Create the Poisson Solver //////////////////////////////////////////////////////////////////////////
-    //TODO modify parameters to a more general definition
     poissonSolver p_solver(nx, ny, nz, sx, sy, sz, c2d);
 
     if (!rank)

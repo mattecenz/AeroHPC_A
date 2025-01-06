@@ -7,25 +7,7 @@
 #include "mathUtils.hpp"
 #include "poissonSolver.hpp"
 
-
-/// TODO TO REMOVE ONLY FOR DEBUG ///////////////////////////////////////////////////
 #include "printBuffer.hpp"
-#ifdef DEBUG_PRINT_BUFFERS
-#define b_print(buff, dir, n) \
-if (!rank) { \
-    std::string nn{dir + to_string(n)}; \
-    print(buff, nn); \
-}
-#define c_dir(dir) \
-if (!rank) {\
-    create_directories(dir); \
-}
-#else
-#define b_print(a,b,c) //
-#define c_dir(a) //
-#endif
-/////////////////////////////////////////////////////////////////////////////////////
-
 
 namespace mu = mathUtils;
 
@@ -60,7 +42,7 @@ rhs(W)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// PRESSURE TERM //////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ENABLE_PRESSURE
+#ifndef DISABLE_PRESSURE
 #define getPressureGradU(d_press, buff, i, j, k) const Real d_press = mu::dp_dx_U(buff, i, j, k)
 #define getPressureGradV(d_press, buff, i, j, k) const Real d_press = mu::dp_dy_V(buff, i, j, k)
 #define getPressureGradW(d_press, buff, i, j, k) const Real d_press = mu::dp_dz_W(buff, i, j, k)
@@ -232,7 +214,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         b_print(model_buff, dir, 2);
     }
 
-#ifdef ENABLE_PRESSURE
+#ifndef DISABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
         Load_B(deltat, rhs_buff, model_buff)
@@ -276,7 +258,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         b_print(model, dir, 8);
     }
 
-#ifdef ENABLE_PRESSURE
+#ifndef DISABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
         Load_B(deltat, rhs_buff, model)
@@ -320,7 +302,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         b_print(model_buff, dir, 14);
     }
 
-#ifdef ENABLE_PRESSURE
+#ifndef DISABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
         Load_B(deltat, rhs_buff, model_buff)

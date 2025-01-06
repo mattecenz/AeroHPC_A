@@ -80,4 +80,19 @@ void print(GridData &grid, std::string &filename) {
     }
 }
 
+#ifdef DEBUG_PRINT_BUFFERS
+#define b_print(buff, dir, n) \
+if (!rank) { \
+std::string nn{dir + to_string(n)}; \
+print(buff, nn); \
+}
+#define c_dir(dir) \
+if (!rank) {\
+create_directories(dir); \
+}
+#else
+#define b_print(a,b,c) //
+#define c_dir(a) //
+#endif
+
 #endif

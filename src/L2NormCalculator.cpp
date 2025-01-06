@@ -1,6 +1,31 @@
 #include "L2NormCalculator.hpp"
 #include <cmath> // For std::sqrt
 
+Real ExactSolution::u(Real x, Real y, Real z, Real t) {
+#ifdef TEST
+    return std::sin(x) * std::cos(y) * std::sin(z) * std::sin(t);
+#else
+    return 0;
+#endif
+}
+
+Real ExactSolution::v(Real x, Real y, Real z, Real t) {
+#ifdef TEST
+    return std::cos(x) * std::sin(y) * std::sin(z) * std::sin(t);
+#else
+    return 0;
+#endif
+}
+
+Real ExactSolution::w(Real x, Real y, Real z, Real t) {
+#ifdef TEST
+    return 2 * std::cos(x) * std::cos(y) * std::cos(z) * std::sin(t);
+#else
+    return 0;
+#endif
+}
+
+
 Real computeL2Norm(const GridData &grid, Real time) {
     Real sum = 0.0;
     Real sum_exact = 0.0;
@@ -45,5 +70,4 @@ Real computeL2Norm(const GridData &grid, Real time) {
     }
 
     return sum * (grid.structure.dx * grid.structure.dy * grid.structure.dz);
-    //  /std::sqrt(sum_exact * (grid.structure.dx * grid.structure.dy * grid.structure.dz));
 }
