@@ -43,10 +43,10 @@ namespace north {
                                         const boundaryFaceFunctions &functions) {
         // The upper boundary is at the max Y
         const index_t j = grid.structure.ny;
+        const index_t periodic_j = 0;
 
         // PERIODIC CONDITION
         if (functions.empty()) {
-            const index_t periodic_j = 0;
 
             // apply on face
             for (index_t k = 0; k < grid.structure.nz; k++)
@@ -55,7 +55,7 @@ namespace north {
                     grid.V(i, j, k) = grid.V(i, periodic_j, k);
                     grid.W(i, j, k) = grid.W(i, periodic_j, k);
 
-                    grid.P(i, j, k) = grid.P(i, j - 1, k);
+                    grid.P(i, j, k) = grid.P(i, periodic_j, k);
                 }
         }
         // DIRICHLET CONDITION
@@ -83,7 +83,7 @@ namespace north {
                                       - grid.W(i, j - 1, k);
 
                     // P derivative has to be 0 in y direction, so the value should be the same
-                    grid.P(i, j, k) = grid.P(i, j - 1, k);
+                    grid.P(i, j, k) = grid.P(i, periodic_j, k);
                 }
         }
     };
@@ -135,16 +135,16 @@ namespace south {
                                         const Real currentTime,
                                         const boundaryFaceFunctions &functions) {
         const index_t j = -1;
+        const index_t periodic_j = grid.structure.ny - 1;
 
         if (functions.empty()) {
-            const index_t periodic_j = grid.structure.ny - 1;
 
             for (index_t k = 0; k < grid.structure.nz; k++)
                 for (index_t i = 0; i < grid.structure.nx; i++) {
                     grid.U(i, j, k) = grid.U(i, periodic_j, k);
                     grid.V(i, j, k) = grid.V(i, periodic_j, k);
                     grid.W(i, j, k) = grid.W(i, periodic_j, k);
-                    grid.P(i, j, k) = grid.P(i, j + 1, k);
+                    grid.P(i, j, k) = grid.P(i, periodic_j, k);
                 }
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
@@ -165,7 +165,7 @@ namespace south {
                     grid.W(i, j, k) = 2 * eW(x + sdx, y, z + grid.structure.dz, currentTime)
                                       - grid.W(i, j + 1, k);
 
-                    grid.P(i, j, k) = grid.P(i, j + 1, k);
+                    grid.P(i, j, k) = grid.P(i, periodic_j, k);
                 }
         }
     };
@@ -210,16 +210,16 @@ namespace east {
                                         const Real currentTime,
                                         const boundaryFaceFunctions &functions) {
         const index_t k = grid.structure.nz;
+        const index_t periodic_k = 0;
 
         if (functions.empty()) {
-            const index_t periodic_k = 0;
 
             for (index_t j = 0; j < grid.structure.ny; j++)
                 for (index_t i = 0; i < grid.structure.nx; i++) {
                     grid.U(i, j, k) = grid.U(i, j, periodic_k);
                     grid.V(i, j, k) = grid.V(i, j, periodic_k);
                     grid.W(i, j, k) = grid.W(i, j, periodic_k);
-                    grid.P(i, j, k) = grid.P(i, j, k - 1);
+                    grid.P(i, j, k) = grid.P(i, j, periodic_k);
                 }
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
@@ -241,7 +241,7 @@ namespace east {
                                       - grid.V(i, j, k - 1);
                     grid.W(i, j, k) = 0;
 
-                    grid.P(i, j, k) = grid.P(i, j, k - 1);
+                    grid.P(i, j, k) = grid.P(i, j, periodic_k);
                 }
         }
     };
@@ -287,16 +287,16 @@ namespace west {
                                         const Real currentTime,
                                         const boundaryFaceFunctions &functions) {
         const index_t k = -1;
+        const index_t periodic_k = grid.structure.nz - 1;
 
         if (functions.empty()) {
-            const index_t periodic_k = grid.structure.nz - 1;
 
             for (index_t j = 0; j < grid.structure.ny; j++)
                 for (index_t i = 0; i < grid.structure.nx; i++) {
                     grid.U(i, j, k) = grid.U(i, j, periodic_k);
                     grid.V(i, j, k) = grid.V(i, j, periodic_k);
                     grid.W(i, j, k) = grid.W(i, j, periodic_k);
-                    grid.P(i, j, k) = grid.P(i, j, k + 1);
+                    grid.P(i, j, k) = grid.P(i, j, periodic_k);
                 }
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
@@ -316,7 +316,7 @@ namespace west {
                                       - grid.V(i, j, k + 1);
                     grid.W(i, j, k) = eW(x + sdx, y + sdy, z, currentTime);
 
-                    grid.P(i, j, k) = grid.P(i, j, k + 1);
+                    grid.P(i, j, k) = grid.P(i, j, periodic_k);
                 }
         }
     };
@@ -361,16 +361,15 @@ namespace front {
                                         const Real currentTime,
                                         const boundaryFaceFunctions &functions) {
         const index_t i = -1;
+        const index_t periodic_i = grid.structure.nx - 1;
 
         if (functions.empty()) {
-            const index_t periodic_i = grid.structure.nx - 1;
-
             for (index_t k = 0; k < grid.structure.nz; k++)
                 for (index_t j = 0; j < grid.structure.ny; j++) {
                     grid.U(i, j, k) = grid.U(periodic_i, j, k);
                     grid.V(i, j, k) = grid.V(periodic_i, j, k);
                     grid.W(i, j, k) = grid.W(periodic_i, j, k);
-                    grid.P(i, j, k) = grid.P(i + 1, j, k);
+                    grid.P(i, j, k) = grid.P(periodic_i, j, k);
                 }
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
@@ -390,7 +389,7 @@ namespace front {
                     grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                       - grid.W(i + 1, j, k);
 
-                    grid.P(i, j, k) = grid.P(i + 1, j, k);
+                    grid.P(i, j, k) = grid.P(periodic_i, j, k);
                 }
         }
     };
@@ -402,9 +401,9 @@ namespace back {
                                         const Real currentTime,
                                         const boundaryFaceFunctions &functions) {
         const index_t i = grid.structure.nx;
+        const index_t periodic_i = 0;
 
         if (functions.empty()) {
-            const index_t periodic_i = 0;
 
             for (index_t k = 0; k < grid.structure.nz; k++)
                 for (index_t j = 0; j < grid.structure.ny; j++) {
@@ -412,7 +411,7 @@ namespace back {
                     grid.V(i, j, k) = grid.V(periodic_i, j, k);
                     grid.W(i, j, k) = grid.W(periodic_i, j, k);
 
-                    grid.P(i, j, k) = grid.P(i - 1, j, k);
+                    grid.P(i, j, k) = grid.P(periodic_i, j, k);
                 }
         } else {
             getStaggeredSpacing(grid, sdx, sdy, sdz);
@@ -434,7 +433,7 @@ namespace back {
                     grid.W(i, j, k) = 2 * eW(x, y + sdy, z + grid.structure.dz, currentTime)
                                       - grid.W(i - 1, j, k);
 
-                    grid.P(i, j, k) = grid.P(i - 1, j, k);
+                    grid.P(i, j, k) = grid.P(periodic_i, j, k);
                 }
         }
     };
