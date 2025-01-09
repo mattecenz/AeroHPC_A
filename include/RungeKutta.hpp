@@ -1,11 +1,12 @@
 #ifndef AEROHPC_A_RUNGEKUTTA_H
 #define AEROHPC_A_RUNGEKUTTA_H
 
-#include "SolverData.hpp"
+#include "data/SolverData.hpp"
+#include "equations/MomentumEquation.hpp"
+#include "equations/PressureEquation.hpp"
+
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
-#include "MomentumEquation.hpp"
-#include "PressureEquation.hpp"
 
 #include "printBuffer.hpp"
 

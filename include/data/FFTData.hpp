@@ -2,7 +2,7 @@
 #define FFTDATA_HPP
 
 #include "Traits.hpp"
-#include "Parameters.hpp"
+#include "data/Parameters.hpp"
 #include "C2Decomp.hpp"
 #include "fftw3.h"
 

@@ -1,7 +1,7 @@
 #ifndef PRESSURESOLVER_HPP
 #define PRESSURESOLVER_HPP
 
-#include "SolverData.hpp"
+#include "data/SolverData.hpp"
 
 #define xDirXSize c2D.xSize[0]
 #define xDirYSize c2D.xSize[1]

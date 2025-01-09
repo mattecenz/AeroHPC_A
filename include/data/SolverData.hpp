@@ -1,11 +1,12 @@
 #ifndef SOLVERDATA_HPP
 #define SOLVERDATA_HPP
 
-#include "Parameters.hpp"
+#include "data/Parameters.hpp"
+#include "data/RKData.hpp"
+#include "data/FFTData.hpp"
+#include "data/Constants.hpp"
 #include "C2Decomp.hpp"
-#include "RKData.hpp"
-#include "FFTData.hpp"
-#include "Constants.hpp"
+
 
 #define params_ptr _params
 #define c2D_ptr _c2D

@@ -2,9 +2,9 @@
 #define MOMENTUMEQUATION_HPP
 
 #include "Traits.hpp"
-#include "SolverData.hpp"
-#include "mathUtils.hpp"
-#include "macroUtils.hpp"
+#include "data/SolverData.hpp"
+#include "utils/mathUtils.hpp"
+#include "utils/macroUtils.hpp"
 
 namespace mu = mathUtils;
 

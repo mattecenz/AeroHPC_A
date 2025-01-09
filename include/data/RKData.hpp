@@ -2,7 +2,7 @@
 #define RKDATA_HPP
 
 #include "Traits.hpp"
-#include "Parameters.hpp"
+#include "data/Parameters.hpp"
 
 #define VELOCITY_COMPONENTS 3
 

@@ -2,7 +2,7 @@
 #define PRESSUREEQUATION_HPP
 
 #include "PressureSolver.hpp"
-#include "macroUtils.hpp"
+#include "utils/macroUtils.hpp"
 
 #define Y2(Y2, Y2star, PHI_2, PHI_2_P_N, P_N)                                           \
 {ITERATE_DOMAIN_VELOCITY(i, j, k)                                                       \

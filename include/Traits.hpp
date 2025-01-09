@@ -45,4 +45,22 @@ typedef Real (*Function)(Real x, Real y, Real z);
 typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 
 
+#include "mpi.h"
+
+#if REAL_USE_FLOAT
+#define Real_MPI MPI_FLOAT
+#else
+#define Real_MPI MPI_DOUBLE
+#endif
+
+#define NORTH_BUFFER_TAG 0
+#define SOUTH_BUFFER_TAG 1
+#define WEST_BUFFER_TAG 2
+#define EAST_BUFFER_TAG 3
+#define NORTH_EAST_BUFFER_TAG 4
+#define NORTH_WEST_BUFFER_TAG 5
+#define SOUTH_EAST_BUFFER_TAG 6
+#define SOUTH_WEST_BUFFER_TAG 7
+
+
 #endif //AEROHPC_A_TRAITS_H
