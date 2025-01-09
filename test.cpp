@@ -7,6 +7,9 @@
 #include "SolverData.hpp"
 
 int testSolver(const int rank, const int size) {
+
+    Real c =
+
     const int npy = 1;
     const int npz = 1;
 
@@ -40,13 +43,10 @@ int testSolver(const int rank, const int size) {
         4, 8, 16
     };
 
-    velocity_buffer
-
-
 
     // wrt dim
-    for (int n: nodes) {
-        initInfo(dim_x, dim_y, dim_z,
+    for (index_t n : nodes) {
+        initData(dim_x, dim_y, dim_z,
                  origin_x, origin_y, origin_z,
                  deltaT, timeSteps, Re,
                  n, n, n,
@@ -56,6 +56,9 @@ int testSolver(const int rank, const int size) {
         Real l2norm = runSolver(rank, size,
                                 boundaryDomainFunctions,
                                 0.0, 0.0, 0.0);
+
+        destroyData();
+
         error.push_back(l2norm);
     }
 

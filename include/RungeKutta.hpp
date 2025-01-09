@@ -1,28 +1,28 @@
 #ifndef AEROHPC_A_RUNGEKUTTA_H
 #define AEROHPC_A_RUNGEKUTTA_H
 
-#include "GridData.hpp"
+#include "SolverData.hpp"
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 #include "mathUtils.hpp"
-#include "poissonSolver.hpp"
+#include "PressureSolver.hpp"
 
 #include "printBuffer.hpp"
 
 namespace mu = mathUtils;
 
 ////RHS function
-#define rhs(C)                                                                                            \
-inline Real rhs_##C(GridData &grid, const Real nu, const index_t i, const index_t j, const index_t k) \
+#define compute_rhs(C)                                                                                            \
+inline Real compute_rhs_##C(Real *data, const Real nu, const index_t i, const index_t j, const index_t k) \
 {                                                                                                     \
-return -mu::conv_##C(grid, i, j, k) + nu * mu::lap_##C(grid, i, j, k);                            \
+return -mu::conv_##C(data, i, j, k) + nu * mu::lap_##C(data, i, j, k);                            \
 }
 
-rhs(U)
+compute_rhs(U)
 
-rhs(V)
+compute_rhs(V)
 
-rhs(W)
+compute_rhs(W)
 
 
 /// FORCING TERM ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,15 +156,10 @@ struct RKConst {
 };
 
 // Runge-Kutta method
-inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
-                       Real reynolds, Real deltat, index_t iteration,
-                       Boundaries &boundary_cond, poissonSolver &p_solver) {
+inline void rungeKutta(const Real time) {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    std::string dir = "./iterations/" + to_string(iteration) + "/";
-
-    c_dir(dir);
     b_print(model, dir, 0);
 
     const Real time = deltat * real(iteration);
@@ -210,25 +205,30 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         Y2star(W, model_buff, model);
 
         b_print(model_buff, dir, 1);
-        boundary_cond.apply(model_buff, t_0);
+        // TODO APPLY BOUNDARIES ON VELOCITY
+        //boundary_cond.apply(model_buff, t_0);
         b_print(model_buff, dir, 2);
     }
 
 #ifndef DISABLE_PRESSURE
     /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
     {
-        Load_B(deltat, rhs_buff, model_buff)
+        // TODO LOAD PRESSURE BUFFER
+        //Load_B(deltat, rhs_buff, model_buff)
 
         // SOLVE FOR phi2-pn
+        // TODO CALL PRESSURE SOLVER
         p_solver.solve(&rhs_buff.P(0,0,0));
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
+        // TODO UNLOAD PRESSURE BUFFER
         Unload_B(rhs_buff, model_buff)
 
         b_print(model_buff, dir, 3);
-        boundary_cond.apply(model_buff, t_0);
+        // TODO APPLY BOUNDARY ON PRESSURE
+        // boundary_cond.apply(model_buff, t_0);
         b_print(model_buff, dir, 4);
     }
 
@@ -236,9 +236,12 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
     /// Y2 //////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
         Y2(model_buff, model_buff, model);
+        // TODO ADD EXPLICIT CALL FOR PHI2
 
         b_print(model_buff, dir, 5);
-        boundary_cond.apply(model_buff, t_0);
+        // TODO APPLY BOUNDARY ON VELOCITY
+        // TODO APPLY BOUNDARY ON PRESSURE
+        // boundary_cond.apply(model_buff, t_0);
         b_print(model_buff, dir, 6);
     }
 #endif

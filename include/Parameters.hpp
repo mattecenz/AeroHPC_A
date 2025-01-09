@@ -2,6 +2,7 @@
 #define PARAMETERS_HPP
 
 #include "Traits.hpp"
+#include "C2Decomp.hpp"
 
 #define define3d(type, prefix, suffix) \
     type prefix##X##suffix; type prefix##Y##suffix; type prefix##Z##suffix

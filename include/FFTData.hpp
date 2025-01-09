@@ -34,6 +34,8 @@ public:
 
     Real *base_buffer, *u2, *u3, *eigs; // Intermediate buffers
 
+    Real scalingFactor;
+
     FFTData(const Parameters &params, const C2Decomp &c2D, Real *base_buffer) {
         // Allocate FFT buffers
         inputX = fftwr_malloc(sizeof(Real) * c2D.xSize[0] * c2D.xSize[1] * c2D.xSize[2]);
@@ -55,6 +57,8 @@ public:
         c2D.allocY(u2);
         c2D.allocZ(u3);
         c2D.allocZ(eigs);
+
+        scalingFactor = params.glob_nX * params.glob_nY * params.glob_nZ;
 
         computeEigs(params, c2D);
     }
@@ -84,15 +88,15 @@ public:
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
         for (int j = 0; j < c2D.zSize[1]; j++){
             const Real lambda_2 = eig(j + c2D.zStart[1], params.dY, params.glob_nY);
-            const index_t base_index_1 = j * c2D.zSize[0] * c2D.zSize[2];
+            const index_t layer_idx = j * c2D.zSize[0] * c2D.zSize[2];
 
             for (int i = 0; i < c2D.zSize[0]; i++){
-                const index_t base_index_2 = base_index_1 + i * c2D.zSize[2];
+                const index_t row_idx = layer_idx + i * c2D.zSize[2];
                 const Real lambda_1 = eig(i + c2D.zStart[0], params.dX, params.glob_nX);
 
                 for (int k = 0; k < c2D.zSize[2]; k++){
                     const Real lambda_3 = eig(k, params.dZ, params.glob_nZ);
-                    eigs[base_index_2 + k] = (lambda_1 * lambda_1 + lambda_2 * lambda_2 + lambda_3 * lambda_3);
+                    eigs[row_idx + k] = (lambda_1 * lambda_1 + lambda_2 * lambda_2 + lambda_3 * lambda_3);
                 }
             }
         }

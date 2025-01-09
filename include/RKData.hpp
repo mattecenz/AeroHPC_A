@@ -6,34 +6,36 @@
 
 #define VELOCITY_COMPONENTS 3
 
-class RKData{
+class RKData {
 public:
     Real *velocity_data = nullptr;
     Real *pressure_data = nullptr;
 
-    Real *velocity_buffer = nullptr;
-    Real *pressure_buffer = nullptr;
+    Real *velocity_buffer_data = nullptr;
+    Real *pressure_buffer_data = nullptr;
 
-    Real *rhs_buffer = nullptr;
+    Real *rhs_buffer_data = nullptr;
 
-    explicit RKData(const Parameters &params){
-        velocity_data = new Real[VELOCITY_COMPONENTS * params.loc_gnX * params.loc_gnY * params.loc_gnZ];
+    explicit RKData(const Parameters &params) {
+        velocity_data = new Real[VELOCITY_COMPONENTS * params.grid_gndim];
+        pressure_data = new Real[params.grid_gndim];
 
-        pressure_data = new Real[params.loc_gnX * params.loc_gnY * params.loc_gnZ];
+        velocity_buffer_data = new Real[VELOCITY_COMPONENTS * params.grid_gndim];
+        pressure_buffer_data = new Real[params.grid_ndim];
 
-        velocity_buffer = new Real[VELOCITY_COMPONENTS * params.loc_gnX * params.loc_gnY * params.loc_gnZ];
-
-        pressure_buffer = new Real[params.loc_gnX * params.loc_gnY * params.loc_gnZ];
-
-        rhs_buffer = new Real[3 * params.loc_nX * params.loc_nY * params.loc_nZ];
+        rhs_buffer_data = new Real[VELOCITY_COMPONENTS * params.grid_ndim];
     };
 
-    ~RKData(){
-        delete[] velocity_data;
-        delete[] pressure_data;
-        delete[] velocity_buffer;
-        delete[] pressure_buffer;
-        delete[] rhs_buffer;
+#define destroy(data) delete [] data; data=nullptr;
+
+    ~RKData() {
+        destroy(velocity_data);
+        destroy(pressure_data);
+
+        destroy(velocity_buffer_data);
+        destroy(pressure_buffer_data);
+
+        destroy(rhs_buffer_data);
     }
 };
 

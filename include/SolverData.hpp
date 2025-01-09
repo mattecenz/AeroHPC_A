@@ -1,5 +1,5 @@
-#ifndef SOLVERINFO_HPP
-#define SOLVERINFO_HPP
+#ifndef SOLVERDATA_HPP
+#define SOLVERDATA_HPP
 
 #include "Parameters.hpp"
 #include "C2Decomp.hpp"
@@ -42,22 +42,36 @@ void inline initData(const Real dimX, const Real dimY, const Real dimZ,
 
     rkData_ptr = new RKData(params);
 
-    fftData_ptr = new FFTData(params, c2D, data.pressure_buffer);
+    fftData_ptr = new FFTData(params, c2D, rkData.pressure_buffer_data);
 
     // TODO init BCs
 
 }
 
-#define indexing(i,j,k) i + j * params.loc_nX + k * params.loc_nX * params.loc_nY
-#define ghosted_indexing(i,j,k) i + j * params.loc_gnX + k * params.loc_gnX * params.loc_gnY
+// INDEXING MACRO
+#define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)
+#define ghosted_indexing(i,j,k) (i + j * params.loc_gnX + k * params.loc_gnX * params.loc_gnY)
 
+// COMPONENTS FOR GHOSTED BUFFERS
+#define get_U_ghosted(data_ptr) (data)
+#define get_V_ghosted(data_ptr) (&(data[params.grid_gndim]))
+#define get_W_ghosted(data_ptr) (&(data[params.grid_gndim * 2]))
 
-// TODO MODIFY
-#define velocity(i,j,k) velocity_data[ghosted_indexing(i, j, k)]
-#define pressure(i,j,k) pressure_data[ghosted_indexing(i, j, k)]
+// COMPONENTS FOR BUFFERS
+#define get_U(data) (data)
+#define get_V(data) (&data[params.grid_ndim])
+#define get_W(data) (&data[params.grid_ndim * 2])
 
-#define velocity_buffer(i,j,k) velocity_buffer[ghosted_indexing(i, j, k)]
+// ELEMENTS FOR GHOSTED BUFFERS
+#define U(data_ptr, i, j, k) get_U_ghosted(data_ptr)[ghosted_indexing(i,j,k)]
+#define V(data_ptr, i, j, k) get_V_ghosted(data_ptr)[ghosted_indexing(i,j,k)]
+#define W(data_ptr, i, j, k) get_W_ghosted(data_ptr)[ghosted_indexing(i,j,k)]
+#define P(data_ptr, i, j, k) data_ptr[ghosted_indexing(i,j,k)]
+
+// ELEMENTS FOR BUFFERS
 #define pressure_buffer(i,j,k) pressure_buffer[indexing(i, j, k)]
-#define rhs_buffer(i,j,k) rhs_buffer[indexing(i, j, k)]
+#define rhs_U(i,j,k) get_U(rhs_buffer)[indexing(i, j, k)]
+#define rhs_V(i,j,k) get_V(rhs_buffer)[indexing(i, j, k)]
+#define rhs_W(i,j,k) get_W(rhs_buffer)[indexing(i, j, k)]
 
 #endif //SOLVERDATA_HPP

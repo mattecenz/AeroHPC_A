@@ -14,7 +14,6 @@ typedef double Real;
 #define real(val) static_cast<Real>(val)
 #define real_p(pntr) static_cast<Real*>(pntr)
 
-
 /**
  * Typedef for array indexing
  */
@@ -29,29 +28,6 @@ typedef std::array<Real, 3> Vector;
  * Typedef shortening VolSpace dimensions
  */
 typedef std::array<index_t, 3> Idx3;
-
-/**
- * Define mathematical methods for vectors
- */
-#pragma inline
-
-Vector operator*(Real b, const Vector &a);
-
-#pragma inline
-
-Vector operator*(const Vector &a);
-
-#pragma inline
-
-Real operator*(const Vector &a, const Vector &b);
-
-#pragma inline
-
-Vector operator+(const Vector &a, const Vector &b);
-
-#pragma inline
-
-Vector operator-(const Vector &a);
 
 /**
  * Typedef shortening lambda definition of spatial function, time dependent

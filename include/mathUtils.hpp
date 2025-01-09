@@ -6,20 +6,19 @@
 #ifndef AEROHPC_A_MATHUTILS_H
 #define AEROHPC_A_MATHUTILS_H
 
-#include "GridData.hpp"
+#include "SolverData.hpp"
 
 namespace mathUtils {
-
-#define interpolate(C) inline Real intp_##C(const GridData &grid, const int i, const int j, const int k) { \
+#define interpolate(C) inline Real intp_##C(const Real *data, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \
     if constexpr (C == 0) { \
-        return (grid.U(i, j, k) + grid.U(i - 1, j, k)) / 2; \
+        return (U(data, i, j, k) + U(data, i - 1, j, k)) / 2; \
     } else if constexpr (C == 1) { \
-        return (grid.V(i, j, k) + grid.U(i, j - 1, k)) / 2; \
+        return (V(data, i, j, k) + V(data, i, j - 1, k)) / 2; \
     } else { \
-        return (grid.W(i, j, k) + grid.W(i, j, k - 1)) / 2; \
+        return (W(data, i, j, k) + W(data, i, j, k - 1)) / 2; \
     } \
 }
 
@@ -30,22 +29,22 @@ namespace mathUtils {
     interpolate(W)
 
 
-    inline Real vel_div(const GridData &grid, int i, int j, int k) {
-        return (grid.U(i, j, k) - grid.U(i - 1, j, k)) / grid.structure.dx
-               + (grid.V(i, j, k) - grid.V(i, j - 1, k)) / grid.structure.dy
-               + (grid.W(i, j, k) - grid.W(i, j, k - 1)) / grid.structure.dz;
+    inline Real vel_div(const Real *data, int i, int j, int k) {
+        return (U(data, i, j, k) - U(data, i - 1, j, k)) / params.dX
+               + (V(data, i, j, k) - V(data, i, j - 1, k)) / params.dY
+               + (W(data, i, j, k) - W(data, i, j, k - 1)) / params.dZ;
     }
 
-    inline Real dp_dx_U(const GridData &grid, int i, int j, int k) {
-        return (grid.P(i + 1, j, k) - grid.P(i, j, k)) / grid.structure.dx;
+    inline Real dp_dx_U(const Real *data, int i, int j, int k) {
+        return (P(data, i + 1, j, k) - P(data, i, j, k)) / params.dX;
     }
 
-    inline Real dp_dy_V(const GridData &grid, int i, int j, int k) {
-        return (grid.P(i, j + 1, k) - grid.P(i, j, k)) / grid.structure.dy;
+    inline Real dp_dy_V(const Real *data, int i, int j, int k) {
+        return (P(data, i, j + 1, k) - P(data, i, j, k)) / params.dY;
     }
 
-    inline Real dp_dz_W(const GridData &grid, int i, int j, int k) {
-        return (grid.P(i, j, k + 1) - grid.P(i, j, k)) / grid.structure.dz;
+    inline Real dp_dz_W(const Real *data, int i, int j, int k) {
+        return (P(data, i, j, k + 1) - P(data, i, j, k)) / params.dZ;
     }
 
 
@@ -56,8 +55,8 @@ namespace mathUtils {
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the x direction
     */
-#define d_dx(C) inline Real d_dx_##C(const GridData &grid, int i, int j, int k){ \
-    return (grid.C(i + 1, j, k) - grid.C(i - 1, j, k)) / (2 * grid.structure.dx); \
+#define d_dx(C) inline Real d_dx_##C(const Real *data, int i, int j, int k){ \
+    return (C(data, i + 1, j, k) - C(data, i - 1, j, k)) / (2 * params.dX); \
 }
 
     d_dx(U)
@@ -72,8 +71,8 @@ namespace mathUtils {
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the y direction
     */
-#define d_dy(C) inline Real d_dy_##C(const GridData &grid, int i, int j, int k){ \
-    return (grid.C(i, j + 1, k) - grid.C(i, j - 1, k)) / (2 * grid.structure.dy); \
+#define d_dy(C) inline Real d_dy_##C(const Real *data, int i, int j, int k){ \
+    return (C(data, i, j + 1, k) - C(data, i, j - 1, k)) / (2 * params.dY); \
 }
 
     d_dy(U)
@@ -89,8 +88,8 @@ namespace mathUtils {
     @return First derivative evaluation in point (i,j,k)
     @brief Computes the value of the first order derivative in a point along the z direction
     */
-#define d_dz(C) inline Real d_dz_##C(const GridData &grid, int i, int j, int k){ \
-    return (grid.C(i, j, k + 1) - grid.C(i, j, k - 1)) / (2 * grid.structure.dz); \
+#define d_dz(C) inline Real d_dz_##C(const Real *data, int i, int j, int k){ \
+    return (C(data, i, j, k + 1) - C(data, i, j, k - 1)) / (2 * params.dZ); \
 }
 
     d_dz(U)
@@ -106,8 +105,8 @@ namespace mathUtils {
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the x direction
     */
-#define d2_dx2(C) inline Real d2_dx2_##C(const GridData &grid, int i, int j, int k){ \
-    return (grid.C(i - 1, j, k) - 2 * grid.C(i, j, k) + grid.C(i + 1, j, k)) / (grid.structure.dx * grid.structure.dx); \
+#define d2_dx2(C) inline Real d2_dx2_##C(const Real *data, int i, int j, int k){ \
+    return (C(data, i - 1, j, k) - 2 * C(data, i, j, k) + C(data, i + 1, j, k)) / (params.dX * params.dX); \
 }
 
     d2_dx2(U)
@@ -123,8 +122,8 @@ namespace mathUtils {
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the y direction
     */
-#define d2_dy2(C) inline Real d2_dy2_##C(const GridData &grid, int i, int j, int k){ \
-    return (grid.C(i, j - 1, k) - 2 * grid.C(i, j, k) + grid.C(i, j + 1, k)) / (grid.structure.dy * grid.structure.dy); \
+#define d2_dy2(C) inline Real d2_dy2_##C(const Real *data, int i, int j, int k){ \
+    return (C(data, i, j - 1, k) - 2 * C(data, i, j, k) + C(data, i, j + 1, k)) / (params.dY * params.dY); \
 }
 
     d2_dy2(U)
@@ -140,8 +139,8 @@ namespace mathUtils {
     @return Second derivative evaluation in point (i,j,k)
     @brief Computes the value of the second order derivative in a point along the z direction
     */
-#define d2_dz2(C) inline Real d2_dz2_##C(const GridData &grid, int i, int j, int k){ \
-    return (grid.C(i, j, k - 1) - 2 * grid.C(i, j, k) + grid.C(i, j, k + 1)) / (grid.structure.dz * grid.structure.dz); \
+#define d2_dz2(C) inline Real d2_dz2_##C(const Real *data, int i, int j, int k){ \
+    return (C(data, i, j, k - 1) - 2 * C(data, i, j, k) + C(data, i, j, k + 1)) / (params.dZ * params.dZ); \
 }
 
     d2_dz2(U)
@@ -158,8 +157,8 @@ namespace mathUtils {
     @return Laplacian evaluation in point (i,j,k)
     @brief Computes the value of the laplacian in a point
     */
-#define lap(C) inline Real lap_##C(const GridData &grid, int i, int j, int k){ \
-    return d2_dx2_##C(grid, i, j, k) + d2_dy2_##C(grid, i, j, k) + d2_dz2_##C(grid, i, j, k); \
+#define lap(C) inline Real lap_##C(const Real *data, int i, int j, int k){ \
+    return d2_dx2_##C(data, i, j, k) + d2_dy2_##C(data, i, j, k) + d2_dz2_##C(data, i, j, k); \
 }
 
     lap(U)
@@ -176,33 +175,33 @@ namespace mathUtils {
     @return Interpolated value
     @brief Computes the interpolation of a component from the grid "from" to the grid "to" in the point i,j,k of the "to" grid
     */
-#define interp(to, from) inline Real intp_##from##_on_##to(const GridData &grid, const int i, const int j, const int k) { \
+#define interp(to, from) inline Real intp_##from##_on_##to(const Real *data, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \
     if constexpr (to == 0) { \
         if constexpr (from == 1) { \
-            return (grid.V(i, j, k) + grid.V(i + 1, j, k) + \
-                    grid.V(i, j - 1, k) + grid.V(i + 1, j - 1, k)) / 4; \
+            return (V(data,i, j, k) + V(data,i + 1, j, k) + \
+                    V(data,i, j - 1, k) + V(data,i + 1, j - 1, k)) / 4; \
         } else { \
-            return (grid.W(i, j, k) + grid.W(i + 1, j, k) + \
-                    grid.W(i, j, k - 1) + grid.W(i + 1, j, k - 1)) / 4; \
+            return (W(data,i, j, k) + W(data,i + 1, j, k) + \
+                    W(data,i, j, k - 1) + W(data,i + 1, j, k - 1)) / 4; \
         } \
     } else if constexpr (to == 1) { \
         if constexpr (from == 0) { \
-            return (grid.U(i, j, k) + grid.U(i, j + 1, k) + \
-                    grid.U(i - 1, j, k) + grid.U(i - 1, j + 1, k)) / 4; \
+            return (U(data,i, j, k) + U(data,i, j + 1, k) + \
+                    U(data,i - 1, j, k) + U(data,i - 1, j + 1, k)) / 4; \
         } else { \
-            return (grid.W(i, j, k) + grid.W(i, j + 1, k) + \
-                    grid.W(i, j, k - 1) + grid.W(i, j + 1, k - 1)) / 4; \
+            return (W(data,i, j, k) + W(data,i, j + 1, k) + \
+                    W(data,i, j, k - 1) + W(data,i, j + 1, k - 1)) / 4; \
         } \
     } else { \
         if constexpr (from == 0) { \
-            return (grid.U(i, j, k) + grid.U(i, j, k + 1) + \
-                    grid.U(i - 1, j, k) + grid.U(i - 1, j, k + 1)) / 4; \
+            return (U(data,i, j, k) + U(data,i, j, k + 1) + \
+                    U(data,i - 1, j, k) + U(data,i - 1, j, k + 1)) / 4; \
         } else { \
-            return (grid.V(i, j, k) + grid.V(i, j, k + 1) + \
-                    grid.V(i, j - 1, k) + grid.V(i, j - 1, k + 1)) / 4; \
+            return (V(data,i, j, k) + V(data,i, j, k + 1) + \
+                    V(data,i, j - 1, k) + V(data,i, j - 1, k + 1)) / 4; \
         } \
     } \
 }
@@ -226,22 +225,22 @@ namespace mathUtils {
     @return Convective term evaluation in point (i,j,k)
     @brief Computes the value of convective term of the Navier-Stokes equation in a point
     */
-#define conv(C) inline Real conv_##C(const GridData &grid, const int i, const int j, const int k) { \
+#define conv(C) inline Real conv_##C(const Real *data, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \
     if constexpr (C == 0) { \
-        return grid.U(i, j, k) * d_dx_U(grid, i, j, k) + \
-               intp_V_on_U(grid, i, j, k) * d_dy_U(grid, i, j, k) + \
-               intp_W_on_U(grid, i, j, k) * d_dz_U(grid, i, j, k); \
+        return U(data, i, j, k) * d_dx_U(data, i, j, k) + \
+               intp_V_on_U(data, i, j, k) * d_dy_U(data, i, j, k) + \
+               intp_W_on_U(data, i, j, k) * d_dz_U(data, i, j, k); \
     } else if constexpr (C == 1) { \
-        return intp_U_on_V(grid, i, j, k) * d_dx_V(grid, i, j, k) + \
-               grid.V(i, j, k) * d_dy_V(grid, i, j, k) + \
-               intp_W_on_V(grid, i, j, k) * d_dz_V(grid, i, j, k); \
+        return intp_U_on_V(data, i, j, k) * d_dx_V(data, i, j, k) + \
+               V(data, i, j, k) * d_dy_V(data, i, j, k) + \
+               intp_W_on_V(data, i, j, k) * d_dz_V(data, i, j, k); \
     } else { \
-        return intp_U_on_W(grid, i, j, k) * d_dx_W(grid, i, j, k) + \
-               intp_V_on_W(grid, i, j, k) * d_dy_W(grid, i, j, k) + \
-               grid.W(i, j, k) * d_dz_W(grid, i, j, k); \
+        return intp_U_on_W(data, i, j, k) * d_dx_W(data, i, j, k) + \
+               intp_V_on_W(data, i, j, k) * d_dy_W(data, i, j, k) + \
+               W(data, i, j, k) * d_dz_W(data, i, j, k); \
     } \
 }
 
@@ -250,6 +249,5 @@ namespace mathUtils {
     conv(V)
 
     conv(W)
-
 }
 #endif //AEROHPC_A_MATHUTILS_H

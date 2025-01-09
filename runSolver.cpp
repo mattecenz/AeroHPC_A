@@ -11,23 +11,25 @@
 #include <fstream>
 #include "SolverData.hpp"
 
+#include "printBuffer.hpp"
+
 inline Real runSolver(const int rank, const int size,
                const boundaryDomainFunctions &boundaryDF,
                const Real extr_px, const Real extr_py, const Real extr_pz) {
 
     if (!rank)
         logger.openSection("Running the TestSolver")
-                .printValue(5, "Iterations", info.timesteps)
-                .printValue(5, "dT", info.dt)
-                .printValue(5, "Re num", info.Re)
-                .printValue(5, "Phy dim", std::to_string(info.dimX) + " x " + std::to_string(info.dimY) + " x " + std::to_string(info.dimZ));
+                .printValue(5, "Iterations", params.timesteps)
+                .printValue(5, "dT", params.dt)
+                .printValue(5, "Re num", params.Re)
+                .printValue(5, "Phy dim", std::to_string(params.dimX) + " x " + std::to_string(params.dimY) + " x " + std::to_string(params.dimZ));
 
 
     if (!rank)
         logger.printTitle("Grid created")
-                .printValue(5, "nodes", std::to_string(info.loc_nX)
-                                        + " x " + std::to_string(info.loc_nY)
-                                        + " x " + std::to_string(info.loc_nZ));
+                .printValue(5, "nodes", std::to_string(params.loc_nX)
+                                        + " x " + std::to_string(params.loc_nY)
+                                        + " x " + std::to_string(params.loc_nZ));
 
     /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////
     // Define initial velocity function
@@ -54,34 +56,18 @@ inline Real runSolver(const int rank, const int size,
     if (!rank)
         logger.printTitle("Boundary condition set");
 
-    /// Create the Poisson Solver //////////////////////////////////////////////////////////////////////////
-    poissonSolver p_solver(nx, ny, nz, sx, sy, sz, c2d);
-
-    if (!rank)
-        logger.printTitle("Poisson solver created");
-
     /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
-
-    // Buffers for model data
-    GridData modelBuff(modelStructure);
-    // Buffers for other data
-    GridStructure bufferStructure(nodes, spacing, displacement, 0);
-    GridData rhsBuff(bufferStructure);
-
-    if (!rank)
-        logger.printTitle("Buffers created");
 
     // last iteration l2Norm capture
     Real localL2Norm = 0.0;
     Real globalL2Norm = 0.0;
 
     // Performance variables
-    Real nNodes = real(modelStructure.nx * modelStructure.ny * modelStructure.nz);
     Real perf;
 
     // Printing variables
     index_t maxTablePrintLine = 10;
-    index_t printIt = ceil(real(nTimeSteps) / real(maxTablePrintLine));
+    index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     if (!rank)
@@ -90,19 +76,23 @@ inline Real runSolver(const int rank, const int size,
 
     chrono_start(compT);
     mpiBoundaries.apply(model, 0);
-    for (index_t step = 0; step < nTimeSteps; ++step) {
+    for (index_t step = 0; step < params.timesteps; ++step) {
+        dir = "./iterations/" + to_string(step) + "/";
+        c_dir();
+
+        const Real time = real(step) * params.dt;
 
         chrono_start(rkTime);
-        rungeKutta(model, modelBuff, rhsBuff, Re, deltaT, step, mpiBoundaries, p_solver);
+        rungeKutta(time);
         chrono_stop(rkTime);
 
-        if (!((step + 1)  % printIt) || step == nTimeSteps - 1) // prints every n iteration or if is the last one
+        if (!((step + 1)  % printIt) || step == params.timesteps - 1) // prints every n iteration or if is the last one
         {
-            Real currentTime = real(step + 1) * deltaT;
+            Real currentTime = time + params.dt;
             chrono_start(l2Time);
             localL2Norm = computeL2Norm(model, currentTime);
             chrono_stop(l2Time);
-            perf = rkTime / nNodes;
+            perf = rkTime / params.grid_ndim;
 
             globalL2Norm = 0.0;
             MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);

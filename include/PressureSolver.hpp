@@ -15,12 +15,12 @@
 
 inline void computeFFT(){
     // Perform FFT along x (for each y and z slice)
-    for (int k = 0; k < xDirYSize; k++){
+    for (int k = 0; k < xDirZSize; k++){
         for (int j = 0; j < xDirYSize; j++){
-            const int base_index = xDirXSize * xDirYSize * k + xDirYSize * j;
-            memcpy(fftData.inputX, &fftData.base_buffer[base_index], sizeof(Real) * xDirXSize);
+            const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
+            memcpy(fftData.inputX, &fftData.base_buffer[row_idx], sizeof(Real) * xDirXSize);
             fftwr_execute(fftData.planx); // Execute FFT on each slice
-            memcpy(&fftData.base_buffer[base_index], fftData.outputX, sizeof(Real) * xDirXSize);
+            memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
         }
     }
 
@@ -28,24 +28,83 @@ inline void computeFFT(){
 
     for (int i = 0; i < yDirXSize; i++){
         for (int k = 0; k < yDirZSize; k++){
-            const int base_index = yDirXSize * yDir * i + c2d->ySize[1] * k;
-            memcpy(fft_inputY, &u2[base_index], sizeof(Real) * c2d->ySize[1]);
-            fftwr_execute(plany); // Execute FFT on each slice
-            memcpy(&u2[base_index], fft_outputY, sizezof(Real) * c2d->ySize[1]);
+            const int row_idx = yDirZSize * yDirYSize * i + yDirYSize * k;
+            memcpy(fftData.inputY, &fftData.u2[row_idx], sizeof(Real) * yDirYSize);
+            fftwr_execute(fftData.plany); // Execute FFT on each slice
+            memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirYSize);
         }
     }
 
-    c2d->transposeY2Z_MajorIndex(u2, u3);
+    c2D.transposeY2Z_MajorIndex(fftData.u2, fftData.u3);
 
-    for (int j = 0; j < c2d->zSize[1]; j++){
-        for (int i = 0; i < c2d->zSize[0]; i++){
-            const int base_index = c2d->zSize[2] * c2d->zSize[0] * j + c2d->zSize[2] * i;
-            memcpy(fft_inputZ, &u3[base_index], sizeof(Real) * c2d->zSize[2]);
-            fftwr_execute(planz); // Execute FFT on each slice
-            memcpy(&u3[base_index], fft_outputZ, sizeof(Real) * c2d->zSize[2]);
+    for (int j = 0; j < zDirYSize; j++){
+        for (int i = 0; i < zDirXSize; i++){
+            const int row_idx = zDirZSize * zDirXSize * j + zDirZSize * i;
+            memcpy(fftData.inputZ, &fftData.u3[row_idx], sizeof(Real) * zDirZSize);
+            fftwr_execute(fftData.planz); // Execute FFT on each slice
+            memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirZSize);
         }
     }
 }
+
+inline void computeIFFT()
+{
+    for (int j = 0; j < zDirYSize; j++) {
+        for (int i = 0; i < zDirXSize; i++) {
+            const int row_idx = zDirZSize * zDirXSize * j + zDirZSize * i;
+            memcpy(fftData.inputZ, &fftData.u3[row_idx], sizeof(Real) * zDirZSize);
+            fftwr_execute(fftData.planz_i);
+            memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirZSize);
+        }
+    }
+
+    c2D.transposeZ2Y_MajorIndex(fftData.u3, fftData.u2);
+
+
+    for (int i = 0; i < yDirXSize; i++) {
+        for (int k = 0; k < yDirZSize; k++) {
+            const int row_idx = yDirYSize * yDirZSize * i + yDirYSize * k;
+            memcpy(fftData.inputY, &fftData.u2[row_idx], sizeof(Real) * yDirYSize);
+            fftwr_execute(fftData.plany_i);
+            memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirYSize);
+        }
+    }
+
+    c2D.transposeY2X_MajorIndex(fftData.u2, fftData.base_buffer);
+
+    for (int k = 0; k < xDirZSize; k++) {
+        for (int j = 0; j < xDirYSize; j++) {
+            const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
+            memcpy(fftData.inputX, &fftData.base_buffer[row_idx], sizeof(Real) * xDirXSize);
+            fftwr_execute(fftData.planx_i);
+            memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
+        }
+    }
+}
+
+inline void solveEigenvalues(){
+    for (int j = 0; j < zDirYSize; j++){
+        const index_t layer_idx = j * zDirXSize * zDirZSize;
+        for (int i = 0; i < zDirXSize; i++){
+            const index_t row_idx = layer_idx + i * zDirZSize;
+            for (int k = 0; k < zDirZSize; k++){
+                fftData.u3[row_idx + k] /= fftData.eigs[row_idx + k];
+            }
+        }
+    }
+}
+
+inline void solvePressure(){
+    computeFFT();
+    solveEigenvalues();
+    computeIFFT();
+
+    for(index_t idx = 0; idx < xDirXSize * xDirYSize * xDirZSize; ++idx){
+        fftData.base_buffer[idx] /= fftData.scalingFactor;
+    }
+}
+
+
 
 
 #endif //PRESSURESOLVER_HPP

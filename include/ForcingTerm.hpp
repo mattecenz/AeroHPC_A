@@ -3,7 +3,7 @@
 
 #include <array>
 #include <cmath>
-#include "GridData.hpp"
+#include "Traits.hpp"
 
 class ForcingTerm {
 
