@@ -4,6 +4,8 @@
 #include "runSolver.cpp"
 #include <fstream>
 
+#import "Info.hpp"
+
 using namespace std;
 
 int runTestCase(int rank, int size, int argc, char **argv) {
@@ -52,9 +54,6 @@ int runTestCase(int rank, int size, int argc, char **argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     boundaryDomainFunctions boundaryDF;
-    Real dim_x, dim_y, dim_z;
-    Real Re;
-    Real origin_x, origin_y, origin_z;
     Real extr_px, extr_py, extr_pz;
 
     switch (testCase) {
@@ -100,7 +99,11 @@ int runTestCase(int rank, int size, int argc, char **argv) {
     return 0;
 }
 
+#include "DomainInfo.h"
+
+
 int main(int argc, char **argv) {
+
     MPI_Init(&argc, &argv);
 
     int rank, size;

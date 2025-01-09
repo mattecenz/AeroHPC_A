@@ -577,17 +577,7 @@ namespace shwt {
 inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &gridStructure, MPIBoundaries &boundaries,
                                const boundaryDomainFunctions &boundaryFunctions) {
     /// Determine where the domain is positioned ///////////////////////////////////////////////////////////
-    // global position of this process
-    int n_y_proc = decomp.dims[0];
-    int n_z_proc = decomp.dims[1];
-    int this_y_pos = decomp.coord[0];
-    int this_z_pos = decomp.coord[1];
 
-    // flags to define if the processor is on a physical boundary
-    bool isOnTop = (this_y_pos == n_y_proc - 1);
-    bool isOnBottom = (this_y_pos == 0);
-    bool isOnLeft = (this_z_pos == 0);
-    bool isOnRight = (this_z_pos == n_z_proc - 1);
 
     /// Define face mappers ////////////////////////////////////////////////////////////////////////////////
 
@@ -671,46 +661,37 @@ inline void buildMPIBoundaries(const C2Decomp &decomp, const GridStructure &grid
     }
 
 
-    if (!(isOnTop || isOnRight)) {
         int nhet_proc_rank;
-        const int coord[] = {this_y_pos + 1, this_z_pos + 1};
-        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &nhet_proc_rank);
 
         auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *nhetCond = new MPICondition(nhet::init, nhet::exc, nhet::mapp, *bufferStructure, nhet_proc_rank);
         boundaries.addMPICond(*nhetCond);
-    }
 
-    if (!(isOnTop || isOnLeft)) {
+
         int nhwt_proc_rank;
-        const int coord[] = {this_y_pos + 1, this_z_pos - 1};
-        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &nhwt_proc_rank);
+
 
 
         auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *nhwtCond = new MPICondition(nhwt::init, nhwt::exc, nhwt::mapp, *bufferStructure, nhwt_proc_rank);
         boundaries.addMPICond(*nhwtCond);
-    }
 
-    if (!(isOnBottom || isOnRight)) {
+
         int shet_proc_rank;
-        const int coord[] = {this_y_pos - 1, this_z_pos + 1};
-        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &shet_proc_rank);
+
 
         auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *shetCond = new MPICondition(shet::init, shet::exc, shet::mapp, *bufferStructure, shet_proc_rank);
         boundaries.addMPICond(*shetCond);
-    }
 
-    if (!(isOnBottom || isOnLeft)) {
+
         int shwt_proc_rank;
-        const int coord[] = {this_y_pos - 1, this_z_pos - 1};
-        MPI_Cart_rank(decomp.DECOMP_2D_COMM_CART_X, coord, &shwt_proc_rank);
+
 
         auto *bufferStructure = new GridStructure({gridStructure.gx, 1, 1}, {0, 0, 0}, {0, 0, 0}, 0);
         auto *shwtCond = new MPICondition(shwt::init, shwt::exc, shwt::mapp, *bufferStructure, shwt_proc_rank);
         boundaries.addMPICond(*shwtCond);
-    }
+
 
     // Font and back faces are always physical boundaries in pencil domain decomposition
 

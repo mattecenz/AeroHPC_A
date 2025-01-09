@@ -4,30 +4,27 @@
 #include "runSolver.cpp"
 #include <fstream>
 
+#include "SolverData.hpp"
+
 int testSolver(const int rank, const int size) {
     const int npy = 1;
     const int npz = 1;
 
-    // dividing the timestep size to half
-    const std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    const std::vector<int> nodes = {
-        4,8,16 ,32,64
-    };
     const Real dim_x = 1.0;
     const Real dim_y = 1.0;
     const Real dim_z = 1.0;
+
+    const Real origin_x = 0.0;
+    const Real origin_y = 0.0;
+    const Real origin_z = 0.0;
+
+    const Real deltaT = 10e-4;
     const Real Re = 1000;
     const index_t timeSteps = 1000;
 
+    const bool periodicPressureBC[3] = {true, true, true};
 
     std::vector<Real> error;
-
-    // wrt deltaT
-    // for (size_t i=0; i<deltaTs.size(); ++i){
-    //     Real deltaT = deltaTs[i];
-    //     index_t dim = dims[3];
-    //     error.push_back(testSolver(deltaT, dim));
-    // }
 
     const boundaryDomainFunctions boundaryDomainFunctions = {
         boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w},
@@ -38,16 +35,26 @@ int testSolver(const int rank, const int size) {
         boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w}
     };
 
+
+    std::vector<index_t> nodes = {
+        4, 8, 16
+    };
+
+    velocity_buffer
+
+
+
     // wrt dim
     for (int n: nodes) {
-        Real deltaT = deltaTs[0]; // first
+        initInfo(dim_x, dim_y, dim_z,
+                 origin_x, origin_y, origin_z,
+                 deltaT, timeSteps, Re,
+                 n, n, n,
+                 npy, npz,
+                 periodicPressureBC);
+
         Real l2norm = runSolver(rank, size,
-                                npy, npz,
-                                n, n, n,
-                                dim_x, dim_y, dim_z,
-                                deltaT, timeSteps, Re,
                                 boundaryDomainFunctions,
-                                0.0, 0.0, 0.0,
                                 0.0, 0.0, 0.0);
         error.push_back(l2norm);
     }

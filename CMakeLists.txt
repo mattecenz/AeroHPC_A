@@ -76,7 +76,10 @@ if (DEFINED MAKE_TEST)
     add_compile_definitions(TEST=1)
     add_compile_definitions(ForcingT=1)
 
-    add_compile_definitions(DISABLE_PRESSURE=${DISABLE_PRESSURE})
+    if(DEFINED DISABLE_PRESSURE)
+        add_compile_definitions(DISABLE_PRESSURE=${DISABLE_PRESSURE})
+        message(STATUS "Pressure disabled: ${DISABLE_PRESSURE}")
+    endif ()
     add_compile_definitions(DEBUG_PRINT_BUFFERS=${DEBUG_PRINT_BUFFERS})
 
     message(STATUS "main file: test.cpp")

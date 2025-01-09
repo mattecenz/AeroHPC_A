@@ -9,57 +9,25 @@
 #include "RungeKutta.hpp"
 #include "DataExporter.hpp"
 #include <fstream>
+#include "SolverData.hpp"
 
 inline Real runSolver(const int rank, const int size,
-               const int npy, const int npz,
-               const int nx, const int ny, const int nz,
-               const Real dim_x, const Real dim_y, const Real dim_z,
-               const Real deltaT, const index_t nTimeSteps, const Real Re,
                const boundaryDomainFunctions &boundaryDF,
-               const Real origin_x, const Real origin_y, const Real origin_z,
                const Real extr_px, const Real extr_py, const Real extr_pz) {
-
-    C2Decomp *c2d;
-    bool periodicBC[3] = {true, true, true};
-    c2d = new C2Decomp(nx, ny, nz, npy, npz, periodicBC);
 
     if (!rank)
         logger.openSection("Running the TestSolver")
-                .printValue(5, "Iterations", nTimeSteps)
-                .printValue(5, "dT", deltaT)
-                .printValue(5, "Re num", Re)
-                .printValue(5, "Phy dim", std::to_string(dim_x) + " x " + std::to_string(dim_y) + " x " + std::to_string(dim_z));
+                .printValue(5, "Iterations", info.timesteps)
+                .printValue(5, "dT", info.dt)
+                .printValue(5, "Re num", info.Re)
+                .printValue(5, "Phy dim", std::to_string(info.dimX) + " x " + std::to_string(info.dimY) + " x " + std::to_string(info.dimZ));
 
-    // Define number of local nodes for each axis
-    const index_t local_nx = c2d->xSize[0];
-    const index_t local_ny = c2d->xSize[1];
-    const index_t local_nz = c2d->xSize[2];
-    Idx3 nodes = {local_nx, local_ny, local_nz};
-
-    // Define global displacement of the grid
-    const index_t px = c2d->xStart[0];
-    const index_t py = c2d->xStart[1];
-    const index_t pz = c2d->xStart[2];
-    Idx3 displacement = {px, py, pz};
-
-    // Define physical size of the problem for each axis
-    const Real sx = dim_x / real(nx);
-    const Real sy = dim_y / real(ny);
-    const Real sz = dim_z / real(nz);
-    Vector spacing = {sx, sy, sz};
-
-    // Initialize the global Grid Structure
-    GridStructure modelStructure(nodes, spacing, displacement, 1);
-
-    // define the mesh:
-    GridData model(modelStructure);
 
     if (!rank)
         logger.printTitle("Grid created")
-                .printValue(5, "nodes", std::to_string(modelStructure.nx)
-                                        + " x " + std::to_string(modelStructure.ny)
-                                        + " x " + std::to_string(modelStructure.nz))
-                .printValue(5, "ghosts", modelStructure.gp);
+                .printValue(5, "nodes", std::to_string(info.loc_nX)
+                                        + " x " + std::to_string(info.loc_nY)
+                                        + " x " + std::to_string(info.loc_nZ));
 
     /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////
     // Define initial velocity function
@@ -73,7 +41,7 @@ inline Real runSolver(const int rank, const int size,
     };
 
     chrono_start(initT);
-    model.initData(initialVel, initialPres);
+    initData(initialVel, initialPres);
     chrono_stop(initT);
 
     if (!rank)

@@ -21,17 +21,6 @@ typedef double Real;
 typedef long index_t;
 
 /**
- * Enum for easy modification of the class addressing
- */
-enum Addressing_T {
-    /**
-     * Multidimensional grid flattened into a single dimension array composed by cells of 4 values:
-     * [u000, v000, w000, p000, u100, v100, w100, p100,  ... ]
-     */
-    STANDARD = 0
-};
-
-/**
  * Typedef shortening Real Physical vector
  */
 typedef std::array<Real, 3> Vector;
@@ -63,7 +52,6 @@ Vector operator+(const Vector &a, const Vector &b);
 #pragma inline
 
 Vector operator-(const Vector &a);
-
 
 /**
  * Typedef shortening lambda definition of spatial function, time dependent
