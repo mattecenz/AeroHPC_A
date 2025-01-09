@@ -2,13 +2,12 @@
 #define _2DECOMPCH_
 
 #include "Traits.hpp"
-#include "MPITraits.hpp"
 
 #include "mpi.h"
 #include <cstdlib>
 #include <cstddef>
 #include <iostream>
-#include "math.h"
+#include <cmath>
 #include <string>
 #include <memory.h>
 

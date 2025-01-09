@@ -8,7 +8,7 @@
 
 namespace mu = mathUtils;
 
-////RHS function
+//// RHS ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define compute_rhs(C)                                                                                          \
     inline Real compute_rhs_##C(Real *data, const Real nu, const index_t i, const index_t j, const index_t k)   \
     {                                                                                                           \
@@ -20,7 +20,7 @@ compute_rhs(U)
 compute_rhs(V)
 
 compute_rhs(W)
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// FORCING TERM ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ForcingT
@@ -51,7 +51,7 @@ compute_rhs(W)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/// RK STEPS ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// MOMENTUM EQUATIONS /////////////////////////////////////////////////////////////////////////////////////////////////
 #define Y2star_C(C, Y2star, U_N, P_N)                           \
 ITERATE_DOMAIN_VELOCITY(i, j, k)                                \
     getForce##C(force, i, j, k);                                \
@@ -63,11 +63,11 @@ ITERATE_DOMAIN_VELOCITY(i, j, k)                                \
                             - consts.k_0 * d_press;             \
 ITERATE_DOMAIN_END()
 
+
 #define Y2star(Y2star, U_N, P_N)    \
     {Y2star_C(U, Y2star, U_N, P_N)} \
     {Y2star_C(V, Y2star, U_N, P_N)} \
     {Y2star_C(W, Y2star, U_N, P_N)}
-
 
 
 #define Y3star_C(C, Y3star, Y2, PHI_2)                  \
@@ -83,12 +83,11 @@ ITERATE_DOMAIN_VELOCITY(i, j, k)                        \
                        - consts.k_3 * d_press;                 \
 ITERATE_DOMAIN_END()
 
+
 #define Y3star(Y3star, Y2, PHI_2)  \
     {Y3star_C(U, Y3star, Y2, PHI_2)} \
     {Y3star_C(V, Y3star, Y2, PHI_2)} \
     {Y3star_C(W, Y3star, Y2, PHI_2)}
-
-
 
 
 #define U_N1star_C(C, U_N1star, Y3, PHI_3)              \
@@ -102,11 +101,11 @@ ITERATE_DOMAIN_VELOCITY(i, j, k)                        \
                             - consts.k_6 * d_press;            \
 ITERATE_DOMAIN_END()
 
+
 #define U_N1star(U_N1star, Y3, PHI_3)       \
     {U_N1star_C(U, U_N1star, Y3, PHI_3)}    \
     {U_N1star_C(V, U_N1star, Y3, PHI_3)}    \
     {U_N1star_C(W, U_N1star, Y3, PHI_3)}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 

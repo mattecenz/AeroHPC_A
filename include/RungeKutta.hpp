@@ -10,7 +10,6 @@
 
 #include "printBuffer.hpp"
 
-
 // Runge-Kutta method
 inline void rungeKutta(const Real time) {
     int rank;
@@ -26,19 +25,14 @@ inline void rungeKutta(const Real time) {
 #endif
 
     Y2star(rkData.buffer_data, rkData.model_data, rkData.model_data)
-    // TODO APPLY BOUNDARIES ON VELOCITY
-    //boundary_cond.apply(model_buff, t_0);
-
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY);
 
 #ifndef DISABLE_PRESSURE
     P_Eq(params.dt, rkData.buffer_data, rkData.buffer_data)
-    // TODO APPLY BOUNDARY ON PRESSURE
-    // boundary_cond.apply(model_buff, t_0);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_PRESSURE);
 
     Y2(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data)
-    // TODO APPLY BOUNDARY ON VELOCITY
-    // TODO APPLY BOUNDARY ON PRESSURE
-    // boundary_cond.apply(model_buff, t_0);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY | TYPE_PRESSURE);
 #endif
 
 #ifdef ForcingT
@@ -46,18 +40,14 @@ inline void rungeKutta(const Real time) {
 #endif
 
     Y3star(rkData.model_data, rkData.buffer_data, rkData.buffer_data)
-    //TODO boundary of velocity
-    //boundary_cond.apply(model, t_1);
+    apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY);
 
 #ifndef DISABLE_PRESSURE
     P_Eq(params.dt, rkData.model_data, rkData.model_data)
-    //TODO boundary of pressure
-    //boundary_cond.apply(model, t_1);
+    apply_boundaries(rkData.model_data, t_1, TYPE_PRESSURE);
 
     Y3(rkData.model_data, rkData.model_data, rkData.model_data, rkData.model_data, rkData.buffer_data)
-    //TODO boundary of velocity
-    //TODO boundary of pressure
-    //boundary_cond.apply(model, t_1);
+    apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY | TYPE_PRESSURE);
 #endif
 
 
@@ -66,18 +56,14 @@ inline void rungeKutta(const Real time) {
 #endif
 
     U_N1star(rkData.buffer_data, rkData.model_data, rkData.model_data)
-    //TODO boundary of velocity
-    //boundary_cond.apply(model_buff, t_2);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY);
 
 #ifndef DISABLE_PRESSURE
     P_Eq(params.dt, rkData.buffer_data, rkData.buffer_data)
-    //TODO boundary of pressure
-    //boundary_cond.apply(model_buff, t_2);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_PRESSURE);
 
     U_N1(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data);
-    //TODO boundary of velocity
-    //TODO boundary of pressure
-    //boundary_cond.apply(model_buff, t_2);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY | TYPE_PRESSURE);
 #endif
 
     swap(rkData.buffer_data, rkData.model_data);

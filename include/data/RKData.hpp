@@ -20,7 +20,7 @@ public:
         buffer_data = new Real[(VELOCITY_COMPONENTS + 1) * params.grid_gndim];
 
         rhs_data = new Real[(VELOCITY_COMPONENTS + 1) * params.grid_ndim];
-    };
+    }
 
 #define destroy(data) delete [] data; data=nullptr;
 

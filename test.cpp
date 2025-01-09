@@ -4,7 +4,7 @@
 #include "runSolver.cpp"
 #include <fstream>
 
-#include "SolverData.hpp"
+#include "data/SolverData.hpp"
 
 int testSolver(const int rank, const int size) {
     const int npy = 1;

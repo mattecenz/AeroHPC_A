@@ -8,7 +8,6 @@
 #include "Condition.hpp"
 #include "Boundaries.hpp"
 
-#include "MPITraits.hpp"
 #include "MPICondition.hpp"
 #include "MPIBoundaries.hpp"
 

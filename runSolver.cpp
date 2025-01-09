@@ -1,7 +1,7 @@
 #include <mpi.h>
 #include <cmath>
 #include "Traits.hpp"
-#include "chronoUtils.hpp"
+#include "utils/chronoUtils.hpp"
 #include "Logger.hpp"
 #include "boundariesBuilders.cpp"
 #include "C2Decomp.hpp"
@@ -9,7 +9,7 @@
 #include "RungeKutta.hpp"
 #include "DataExporter.hpp"
 #include <fstream>
-#include "SolverData.hpp"
+#include "data/SolverData.hpp"
 
 #include "printBuffer.hpp"
 

@@ -5,30 +5,33 @@
 #include "data/RKData.hpp"
 #include "data/FFTData.hpp"
 #include "data/Constants.hpp"
+#include "data/BoundariesFunctions.hpp"
 #include "C2Decomp.hpp"
-
 
 #define params_ptr _params
 #define c2D_ptr _c2D
 #define rkData_ptr _rkData
 #define fftData_ptr _fftData
 #define consts_ptr _consts
+#define bcsFun_ptr _bcsFun
 
 #define params (*params_ptr)
 #define c2D (*c2D_ptr)
 #define rkData (*rkData_ptr)
 #define fftData (*fftData_ptr)
 #define consts (*consts_ptr)
+#define bcsFun (*bcsFun_ptr)
 
 inline Parameters params = nullptr;
 inline C2Decomp c2D = nullptr;
 inline RKData rkData = nullptr;
 inline FFTData fftData = nullptr;
 inline Constants consts = nullptr;
+inline BoundariesFunctions bcsFun = nullptr;
 
 // INDEXING MACRO
 #define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)
-#define ghosted_indexing(i,j,k) (i + j * params.loc_gnX + k * params.loc_gnX * params.loc_gnY)
+#define ghosted_indexing(i,j,k) ((i+1) + (j+1) * params.loc_gnX + (k+1) * params.loc_gnX * params.loc_gnY)
 
 // COMPONENTS FOR GHOSTED BUFFERS
 #define get_U_ghosted(data_ptr) (data)
@@ -54,25 +57,18 @@ inline Constants consts = nullptr;
 #define rhs_W(i,j,k) get_W(rkData.rhs_data)[indexing(i, j, k)]
 #define rhs_P(i,j,k) get_P(rkData.rhs_data)[indexing(i, j, k)]
 
-void inline destroyData() {
-    delete params_ptr;
-    delete c2D_ptr;
-    delete rkData_ptr;
-    delete fftData_ptr;
-    delete consts_ptr;
-}
-
 void inline initData(const Real dimX, const Real dimY, const Real dimZ,
                      const Real originX, const Real originY, const Real originZ,
                      const Real deltaT, const index_t timestep, const Real Re,
                      const index_t nX, const index_t nY, const index_t nZ,
                      const index_t nPY, const index_t nPZ,
-                     const bool periodicBC[3]) {
+                     const bool periodicBC[3],
+                     BoundariesFunctions *boundariesFunctions) {
 
     c2D_ptr = new C2Decomp(nX, nY, nZ, nPY, nPZ, periodicBC);
 
     params_ptr = new Parameters(dimX, dimY, dimZ, originX, originY, originZ,
-                             nX, nY, nZ, deltaT, timestep, Re, c2D);
+                             nX, nY, nZ, deltaT, timestep, Re, periodicBC, c2D);
 
     rkData_ptr = new RKData(params);
 
@@ -80,7 +76,16 @@ void inline initData(const Real dimX, const Real dimY, const Real dimZ,
 
     consts_ptr = new Constants(Re, deltaT);
 
-    // TODO init BCs
-
+    bcsFun_ptr = boundariesFunctions;
 }
+
+void inline destroyData() {
+    delete params_ptr;
+    delete c2D_ptr;
+    delete rkData_ptr;
+    delete fftData_ptr;
+    delete consts_ptr;
+    bcsFun_ptr = nullptr;
+}
+
 #endif //SOLVERDATA_HPP

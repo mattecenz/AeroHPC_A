@@ -36,7 +36,12 @@ public:
 
     // Boundary Info
     bool isOnTop, isOnBottom, isOnRight, isOnLeft;
+    bool periodicX, periodicY, periodicZ;
 
+    // MPI Types
+    MPI_Datatype XYFace;
+    MPI_Datatype XZFace;
+    MPI_Datatype XRow;
 
     // Time Info
     Real dt; // Physical delta Time between timesteps
@@ -49,7 +54,7 @@ public:
                use3d(const Real, origin),
                use3d(const Real, glob_n),
                const Real dt, const index_t timesteps, const Real Re,
-               const C2Decomp &c2D)
+                const bool periodicBC[3], const C2Decomp &c2D)
         : dimX(dimX), dimY(dimY), dimZ(dimZ),
           originX(originX), originY(originY), originZ(originZ),
           glob_nX(glob_nX), glob_nY(glob_nY), glob_nZ(glob_nZ),
@@ -77,10 +82,19 @@ public:
         grid_ndim = loc_nX * loc_nY * loc_nZ;
         grid_gndim = loc_gnX * loc_gnY * loc_gnZ;
 
-        findNeighbours(c2D);
-    }
+        // GENERATE MPI VECTORS
+        MPI_Type_vector(loc_nY, loc_gnX, loc_gnX, Real_MPI, &XYFace);
+        MPI_Type_commit(&XYFace);
+        MPI_Type_vector(loc_nZ, loc_gnX, loc_gnX * loc_gnY, Real_MPI, &XYFace);
+        MPI_Type_commit(&XZFace);
+        MPI_Type_vector(1, loc_gnX, 0, Real_MPI, &XRow);
+        MPI_Type_commit(&XRow);
 
-    void findNeighbours(const C2Decomp &c2D) {
+        periodicX = periodicBC[0];
+        periodicY = periodicBC[1];
+        periodicZ = periodicBC[2];
+
+        // FIND NEIGHBORS
         // global position of this process
         const int n_y_proc = c2D.dims[0];
         const int n_z_proc = c2D.dims[1];
@@ -125,6 +139,12 @@ public:
             std::cerr << "Neighbours are not the same of c2d" << std::endl;
             MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
         }
+    }
+
+    ~Parameters() {
+        MPI_Type_free(&XYFace);
+        MPI_Type_free(&XZFace);
+        MPI_Type_free(&XRow);
     }
 };
 

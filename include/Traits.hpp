@@ -53,14 +53,19 @@ typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 #define Real_MPI MPI_DOUBLE
 #endif
 
-#define NORTH_BUFFER_TAG 0
-#define SOUTH_BUFFER_TAG 1
-#define WEST_BUFFER_TAG 2
-#define EAST_BUFFER_TAG 3
-#define NORTH_EAST_BUFFER_TAG 4
-#define NORTH_WEST_BUFFER_TAG 5
-#define SOUTH_EAST_BUFFER_TAG 6
-#define SOUTH_WEST_BUFFER_TAG 7
+#define NORTH_BUFFER_TAG 1
+#define SOUTH_BUFFER_TAG 2
+#define WEST_BUFFER_TAG 4
+#define EAST_BUFFER_TAG 8
+#define NORTH_EAST_BUFFER_TAG 16
+#define NORTH_WEST_BUFFER_TAG 32
+#define SOUTH_EAST_BUFFER_TAG 64
+#define SOUTH_WEST_BUFFER_TAG 128
+
+#define U_BUFFER_TAG 256
+#define V_BUFFER_TAG 512
+#define W_BUFFER_TAG 1024
+#define P_BUFFER_TAG 2048
 
 
 #endif //AEROHPC_A_TRAITS_H
