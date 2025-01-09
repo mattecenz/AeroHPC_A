@@ -43,7 +43,7 @@ inline Real runSolver(const int rank, const int size,
     };
 
     chrono_start(initT);
-    initData(initialVel, initialPres);
+    initValues(initialVel, initialPres);
     chrono_stop(initT);
 
     if (!rank)

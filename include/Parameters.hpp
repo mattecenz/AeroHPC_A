@@ -35,6 +35,7 @@ public:
             neigh_south_east, neigh_south_west;
 
     // Boundary Info
+    bool isOnTop, isOnBottom, isOnRight, isOnLeft;
 
 
     // Time Info
@@ -87,10 +88,10 @@ public:
         const int this_z_pos = c2D.coord[1];
 
         // flags to define if the processor is on a physical boundary
-        const bool isOnTop = (this_y_pos == n_y_proc - 1);
-        const bool isOnBottom = (this_y_pos == 0);
-        const bool isOnLeft = (this_z_pos == 0);
-        const bool isOnRight = (this_z_pos == n_z_proc - 1);
+        isOnTop = (this_y_pos == n_y_proc - 1);
+        isOnBottom = (this_y_pos == 0);
+        isOnLeft = (this_z_pos == 0);
+        isOnRight = (this_z_pos == n_z_proc - 1);
 
         int coord[] = {this_y_pos + 1, this_z_pos};
         MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north);

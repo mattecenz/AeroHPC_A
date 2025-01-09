@@ -7,9 +7,6 @@
 #include "SolverData.hpp"
 
 int testSolver(const int rank, const int size) {
-
-    Real c =
-
     const int npy = 1;
     const int npz = 1;
 
@@ -45,7 +42,9 @@ int testSolver(const int rank, const int size) {
 
 
     // wrt dim
-    for (index_t n : nodes) {
+    for (index_t n: nodes) {
+        logger.openSection("TEST");
+
         initData(dim_x, dim_y, dim_z,
                  origin_x, origin_y, origin_z,
                  deltaT, timeSteps, Re,
@@ -53,11 +52,16 @@ int testSolver(const int rank, const int size) {
                  npy, npz,
                  periodicPressureBC);
 
+        logger.printTitle("Data initialized");
+
         Real l2norm = runSolver(rank, size,
                                 boundaryDomainFunctions,
                                 0.0, 0.0, 0.0);
 
         destroyData();
+
+        logger.printTitle("Data destroyed")
+                .closeSection();
 
         error.push_back(l2norm);
     }

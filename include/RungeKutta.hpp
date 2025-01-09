@@ -28,9 +28,9 @@ compute_rhs(W)
 /// FORCING TERM ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ForcingT
 #define getPhys(i, j, k)                         \
-    Real px = real(i + model.structure.px) * dx; \
-    Real py = real(j + model.structure.py) * dy; \
-    Real pz = real(k + model.structure.pz) * dz
+    Real px = real(i + params.st_nX) * dx; \
+    Real py = real(j + params.st_nY) * dy; \
+    Real pz = real(k + params.st_nZ) * dz
 #define getForceU(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGx(px + dx, py + sdy, pz + sdz)
 #define getForceV(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGy(px + sdx, py + dy, pz + sdz)
 #define getForceW(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGz(px + sdx, py + sdy, pz + dz)
@@ -55,25 +55,30 @@ compute_rhs(W)
 
 
 /// RK STEPS ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define ITERATE_OVER_ALL_POINTS_START(i,j,k)    \
+#define ITERATE_DOMAIN_START(i,j,k)             \
 for (index_t k = 0; k < nz; ++k) {              \
     for (index_t j = 0; j < ny; ++j) {          \
         for (index_t i = 0; i < nx; ++i) {
-#define ITERATE_OVER_ALL_POINTS_END()           \
+#define ITERATE_DOMAIN_END()                    \
         }                                       \
     }                                           \
 }
 
-#define Y2star(C, Y2star, U_N)                      \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
-    getForce##C(force, i, j, k);                    \
-    getPressureGrad##C(d_press, U_N, i, j, k);      \
-    const Real r = rhs_##C(U_N, nu, i, j, k);       \
-    rhs_buff.C(i, j, k) = (r + force);              \
-    Y2star.C(i, j, k) = U_N.C(i, j, k)              \
-                            + k_0 * (r + force)     \
-                            - k_0 * d_press;        \
+#define Y2star_C(C, Y2star, U_N)                        \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                  \
+    getForce##C(force, i, j, k);                        \
+    getPressureGrad##C(d_press, U_N, i, j, k);          \
+    const Real r = compute_rhs_##C(U_N, nu, i, j, k);   \
+    rhs_##C(i, j, k) = (r + force);                     \
+    C(Y2star, i, j, k) = C(U_N, i, j, k)                \
+                            + k_0 * (r + force)         \
+                            - k_0 * d_press;            \
 ITERATE_OVER_ALL_POINTS_END()
+
+#define Y2star(Y2star, U_N)  \
+    Y2star_C(U, Y2star, U_N) \
+    Y2star_C(V, Y2star, U_N) \
+    Y2star_C(W, Y2star, U_N)
 
 #define Y2(Y2, Y2star, U_N)                                                 \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
@@ -162,36 +167,26 @@ inline void rungeKutta(const Real time) {
 
     b_print(model, dir, 0);
 
-    const Real time = deltat * real(iteration);
-
-    const Real nu = (real(1) / reynolds);
-
-    const Real dx = model.structure.dx;
-    const Real dy = model.structure.dy;
-    const Real dz = model.structure.dz;
-
-    const Real sdx = model.structure.sdx;
-    const Real sdy = model.structure.sdy;
-    const Real sdz = model.structure.sdz;
+    const Real nu = (real(1) / params.Re);
 
     const index_t nx = model.structure.nx;
     const index_t ny = model.structure.ny;
     const index_t nz = model.structure.nz;
 
     // kappa -> weighted_deltat
-    const Real k_0 = RKConst::alpha0 * deltat;
-    const Real k_1 = RKConst::alpha1 * deltat;
-    const Real k_2 = RKConst::alpha2 * deltat;
-    const Real k_3 = RKConst::alpha3 * deltat;
-    const Real k_4 = RKConst::alpha4 * deltat;
-    const Real k_5 = RKConst::alpha5 * deltat;
-    const Real k_6 = RKConst::alpha6 * deltat;
+    const Real k_0 = RKConst::alpha0 * params.dt;
+    const Real k_1 = RKConst::alpha1 * params.dt;
+    const Real k_2 = RKConst::alpha2 * params.dt;
+    const Real k_3 = RKConst::alpha3 * params.dt;
+    const Real k_4 = RKConst::alpha4 * params.dt;
+    const Real k_5 = RKConst::alpha5 * params.dt;
+    const Real k_6 = RKConst::alpha6 * params.dt;
     const Real inv_k_0 = real(1.0) / k_0;
     const Real inv_k_3 = real(1.0) / k_3;
     const Real inv_k_6 = real(1.0) / k_6;
-    const Real t_0 = time + RKConst::beta0 * deltat;
-    const Real t_1 = time + RKConst::beta1 * deltat;
-    const Real t_2 = time + deltat;
+    const Real t_0 = time + RKConst::beta0 * params.dt;
+    const Real t_1 = time + RKConst::beta1 * params.dt;
+    const Real t_2 = time + params.dt;
 
 
 #ifdef ForcingT
@@ -200,11 +195,9 @@ inline void rungeKutta(const Real time) {
 
     /// Y2* //////////////////////////////////////////////////////////////////////////////////////////////
     {
-        Y2star(U, model_buff, model);
-        Y2star(V, model_buff, model);
-        Y2star(W, model_buff, model);
+        Y2star(rkData.velocity_buffer_data, rkData.velocity_data);
 
-        b_print(model_buff, dir, 1);
+        b_print(model_buff, 1);
         // TODO APPLY BOUNDARIES ON VELOCITY
         //boundary_cond.apply(model_buff, t_0);
         b_print(model_buff, dir, 2);

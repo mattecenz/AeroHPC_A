@@ -83,10 +83,10 @@ inline void print(const Real *data, std::string &filename, bool has_ghosts) {
 inline std::string dir;
 
 #ifdef DEBUG_PRINT_BUFFERS
-#define b_print(buff, n) \
+#define b_print(buff, n, has_ghost) \
 if (!rank) { \
 std::string nn{dir + to_string(n)}; \
-print(buff, nn); \
+print(buff, nn, has_ghost); \
 }
 #define c_dir() \
 if (!rank) {\

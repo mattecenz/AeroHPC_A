@@ -69,9 +69,9 @@ void inline initData(const Real dimX, const Real dimY, const Real dimZ,
 #define P(data_ptr, i, j, k) data_ptr[ghosted_indexing(i,j,k)]
 
 // ELEMENTS FOR BUFFERS
-#define pressure_buffer(i,j,k) pressure_buffer[indexing(i, j, k)]
-#define rhs_U(i,j,k) get_U(rhs_buffer)[indexing(i, j, k)]
-#define rhs_V(i,j,k) get_V(rhs_buffer)[indexing(i, j, k)]
-#define rhs_W(i,j,k) get_W(rhs_buffer)[indexing(i, j, k)]
+#define pressure_buffer(i,j,k) rkData.pressure_buffer_data[indexing(i, j, k)]
+#define rhs_U(i,j,k) get_U(rkData.rhs_buffer_data)[indexing(i, j, k)]
+#define rhs_V(i,j,k) get_V(rkData.rhs_buffer_data)[indexing(i, j, k)]
+#define rhs_W(i,j,k) get_W(rkData.rhs_buffer_data)[indexing(i, j, k)]
 
 #endif //SOLVERDATA_HPP
