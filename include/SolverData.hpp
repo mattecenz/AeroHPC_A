@@ -5,21 +5,25 @@
 #include "C2Decomp.hpp"
 #include "RKData.hpp"
 #include "FFTData.hpp"
+#include "Constants.hpp"
 
 #define params_ptr _params
 #define c2D_ptr _c2D
 #define rkData_ptr _rkData
 #define fftData_ptr _fftData
+#define consts_ptr _consts
 
 #define params (*params_ptr)
 #define c2D (*c2D_ptr)
 #define rkData (*rkData_ptr)
 #define fftData (*fftData_ptr)
+#define consts (*consts_ptr)
 
 inline Parameters params = nullptr;
 inline C2Decomp c2D = nullptr;
 inline RKData rkData = nullptr;
 inline FFTData fftData = nullptr;
+inline Constants consts = nullptr;
 
 // INDEXING MACRO
 #define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)
@@ -54,6 +58,7 @@ void inline destroyData() {
     delete c2D_ptr;
     delete rkData_ptr;
     delete fftData_ptr;
+    delete consts_ptr;
 }
 
 void inline initData(const Real dimX, const Real dimY, const Real dimZ,
@@ -71,6 +76,8 @@ void inline initData(const Real dimX, const Real dimY, const Real dimZ,
     rkData_ptr = new RKData(params);
 
     fftData_ptr = new FFTData(params, c2D, get_P(rkData.rhs_data));
+
+    consts_ptr = new Constants(Re, deltaT);
 
     // TODO init BCs
 
