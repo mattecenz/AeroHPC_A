@@ -58,6 +58,7 @@ rhs(W)
 #define ITERATE_OVER_ALL_POINTS_START(i,j,k)    \
 for (index_t k = 0; k < nz; ++k) {              \
     for (index_t j = 0; j < ny; ++j) {          \
+    _Pragma("omp simd")                         \
         for (index_t i = 0; i < nx; ++i) {
 #define ITERATE_OVER_ALL_POINTS_END()           \
         }                                       \
