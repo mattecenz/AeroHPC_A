@@ -17,7 +17,7 @@ namespace mathUtils {
     if constexpr (C == 0) { \
         return (grid.U(i, j, k) + grid.U(i - 1, j, k)) / 2; \
     } else if constexpr (C == 1) { \
-        return (grid.V(i, j, k) + grid.U(i, j - 1, k)) / 2; \
+        return (grid.V(i, j, k) + grid.V(i, j - 1, k)) / 2; \
     } else { \
         return (grid.W(i, j, k) + grid.W(i, j, k - 1)) / 2; \
     } \
