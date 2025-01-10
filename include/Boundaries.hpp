@@ -4,6 +4,31 @@
 #include "Traits.hpp"
 #include "data/SolverData.hpp"
 
+#define ITERATE_X_ROW(i,x)                                                  \
+    for (index_t i = 0; i < params.loc_nX; i++) {                           \
+        const Real x = real(i + params.st_nX) * params.dX + params.originX;
+
+#define ITERATE_XZ_FACE(i,k,x,z)                                                \
+    for (index_t k = 0; k < params.loc_nZ; k++) {                               \
+        const Real z = real(k + params.st_nZ) * params.dZ + params.originZ;     \
+        ITERATE_X_ROW(i,x)
+
+#define ITERATE_XY_FACE(i,j,x,y)                                                \
+    for (index_t j = 0; j < params.loc_nY; j++) {                               \
+        const Real y = real(j + params.st_nY) * params.dY + params.originY;     \
+        ITERATE_X_ROW(i,x)
+
+#define ITERATE_YZ_FACE(j,k,y,z)                                                \
+    for (index_t j = 0; j < params.loc_nY; j++) {                               \
+        const Real y = real(j + params.st_nY) * params.dY + params.originY;     \
+        for (index_t k = 0; k < params.loc_nZ; k++) {                           \
+            const Real z = real(k + params.st_nZ) * params.dZ + params.originZ;
+
+#define ITERATE_FACE_END()  \
+    }                       \
+}
+
+
 #define TYPE_VELOCITY 1
 #define TYPE_PRESSURE 2
 
@@ -36,64 +61,386 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
     std::vector<MPI_BCRequest> bcs_send;
     std::vector<MPI_BCRequest> bcs_recv;
 
-    const index_t north_inner_j = params.loc_nY - 1;
-    const index_t north_ghost_j = params.loc_nY;
 
-    // VELOCITY NORTH
-    if constexpr (apply_velocity) {
-        if (params.periodicY || !params.isOnTop) {
-            add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
-            add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
-        } else {
-            if (bcsFun.northType == BOUNDARY_DIRICHLET) {
-                const Real y = real(north_ghost_j + params.st_nX) * params.dY + params.originY;
+    // NORTH
+    {
+        const index_t north_inner_j = params.loc_nY - 1;
+        const index_t north_ghost_j = params.loc_nY;
 
-                // apply on face
-                for (index_t k = 0; k < params.loc_nZ; k++) {
-                    for (index_t i = 0; i < params.loc_nX; i++) {
-                        Real x = real(i + params.st_nX) * params.dX + params.originX;
-                        Real z = real(k + params.st_nZ) * params.dZ + params.originZ;
-
+        const Real y = real(north_ghost_j + params.st_nY) * params.dY + params.originY;
+        // VELOCITY
+        if constexpr (apply_velocity) {
+            if (params.periodicY || !params.isOnTop) {
+                add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
+            } else {
+                if (bcsFun.northType == BOUNDARY_DIRICHLET) {
+                    // apply on face
+                    ITERATE_XZ_FACE(i, k, x, z)
                         // On y = phy_dim for domain point we have exact for V
-                        V(data, i, north_inner_j, k) = bcsFun.northFunction(x + params.dX2, y, z + params.dZ2, currentTime);
+                        V(data, i, north_inner_j, k) = bcsFun.northF.VF(x + params.dX2, y, z + params.dZ2, currentTime);
                         // For ghost points we have useless V, other approximate
 
-                        U(data, i, north_ghost_j, k) = 2 * bcsFun.northFunction(x + params.dX, y, z + params.dZ2, currentTime)
+                        U(data, i, north_ghost_j, k) = 2 * bcsFun.northF.UF(x + params.dX, y, z + params.dZ2, currentTime)
                                                        - U(data, i, north_inner_j, k);
                         V(data, i, north_ghost_j, k) = 0;
-                        W(data, i, north_ghost_j, k) = 2 * bcsFun.northFunction(x + params.dX2, y, z + params.dZ, currentTime)
-                                                       - W(datai, north_inner_j, k);
-                    }
+                        W(data, i, north_ghost_j, k) = 2 * bcsFun.northF.WF(x + params.dX2, y, z + params.dZ, currentTime)
+                                                       - W(data, i, north_inner_j, k);
+                    ITERATE_FACE_END()
+                } else {
+                    // TODO Write neumann condition
                 }
+            }
+        }
+        // PRESSURE
+        if constexpr (apply_pressure) {
+            if (params.periodicY || !params.isOnTop) {
+                add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             } else {
-                // TODO Write neumann condition
+                ITERATE_XZ_FACE(i, k, x, z)
+                    P(data, i, north_ghost_j, k) = P(data, i, north_inner_j, k)
+                                                   + bcsFun.northF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
+                ITERATE_FACE_END()
             }
         }
     }
-    // PRESSURE NORTH
-    if constexpr (apply_pressure) {
-        if (params.periodicY || !params.isOnTop) {
-            add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
-            add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
-        } else {
-            // TODO Write neumann condition
+
+    // SOUTH
+    {
+        constexpr index_t south_inner_j = 0;
+        constexpr index_t south_ghost_j = -1;
+
+        const Real y = real(south_inner_j + params.st_nY) * params.dY + params.originY;
+        // VELOCITY
+        if constexpr (apply_velocity) {
+            if (params.periodicY || !params.isOnBottom) {
+                add_request_velocity(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
+            } else {
+                if (bcsFun.southType == BOUNDARY_DIRICHLET) {
+                    // apply on face
+                    ITERATE_XZ_FACE(i, k, x, z)
+                        // On y = 0 for ghost point we hae exact for V, other approximate
+                        U(data, i, south_ghost_j, k) = 2 * bcsFun.southF.UF(x + params.dX, y, z + params.dZ2, currentTime)
+                                                       - U(data, i, south_inner_j, k);
+                        V(data, i, south_ghost_j, k) = bcsFun.southF.VF(x + params.dX, y, z + params.dZ2, currentTime);
+                        W(data, i, south_ghost_j, k) = 2 * bcsFun.southF.WF(x + params.dX2, y, z + params.dZ, currentTime)
+                                                       - W(data, i, south_inner_j, k);
+                    ITERATE_FACE_END()
+                } else {
+                    // TODO Write neumann condition
+                }
+            }
+        }
+        // PRESSURE
+        if constexpr (apply_pressure) {
+            if (params.periodicY || !params.isOnBottom) {
+                add_request_pressure(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
+            } else {
+                ITERATE_XZ_FACE(i, k, x, z)
+                    P(data, i, south_ghost_j, k) = P(data, i, south_inner_j, k)
+                                                   - bcsFun.southF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
+                ITERATE_FACE_END()
+            }
         }
     }
 
-    // TODO WRITE ALL OTHER FACES
+    // EAST
+    {
+        const index_t east_inner_k = params.loc_nZ - 1;
+        const index_t east_ghost_k = params.loc_nZ;
 
+        const Real z = real(east_ghost_k + params.st_nZ) * params.dZ + params.originZ;
+        // VELOCITY
+        if constexpr (apply_velocity) {
+            if (params.periodicZ || !params.isOnRight) {
+                add_request_velocity(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
+            } else {
+                if (bcsFun.eastType == BOUNDARY_DIRICHLET) {
+                    // apply on face
+                    ITERATE_XY_FACE(i, j, x, y)
+                        // On y = phy_dim for domain point we have exact for V
+                        W(data, i, j, east_inner_k) = bcsFun.eastF.WF(x + params.dX2, y + params.dY2, z, currentTime);
+                        // For ghost points we have useless V, other approximate
+
+                        U(data, i, j, east_ghost_k) = 2 * bcsFun.eastF.UF(x + params.dX, y + params.dY2, z, currentTime)
+                                                      - U(data, i, j, east_inner_k);
+                        V(data, i, j, east_ghost_k) = 2 * bcsFun.eastF.VF(x + params.dX2, y + params.dY, z, currentTime);
+                        W(data, i, j, east_ghost_k) = 0;
+                    ITERATE_FACE_END()
+                } else {
+                    // TODO Write neumann condition
+                }
+            }
+        }
+        // PRESSURE
+        if constexpr (apply_pressure) {
+            if (params.periodicZ || !params.isOnRight) {
+                add_request_pressure(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
+            } else {
+                ITERATE_XY_FACE(i, j, x, y)
+                    P(data, i, j, east_ghost_k) = P(data, i, j, east_inner_k)
+                                                  + bcsFun.eastF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
+                ITERATE_FACE_END()
+            }
+        }
+    }
+
+    // WEST
+    {
+        constexpr index_t west_inner_k = 0;
+        constexpr index_t west_ghost_k = -1;
+
+        const Real z = real(west_inner_k + params.st_nZ) * params.dZ + params.originZ;
+        // VELOCITY
+        if constexpr (apply_velocity) {
+            if (params.periodicZ || !params.isOnLeft) {
+                add_request_velocity(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
+            } else {
+                if (bcsFun.westType == BOUNDARY_DIRICHLET) {
+                    // apply on face
+                    ITERATE_XY_FACE(i, j, x, y)
+                        // On y = 0 for ghost point we hae exact for V, other approximate
+                        U(data, i, j, west_ghost_k) = 2 * bcsFun.westF.UF(x + params.dX, y + params.dY2, z, currentTime)
+                                                      - U(data, i, j, west_inner_k);
+                        V(data, i, j, west_ghost_k) = 2 * bcsFun.westF.VF(x + params.dX2, y + params.dY, z, currentTime)
+                                                      - V(data, i, j, west_inner_k);
+                        W(data, i, j, west_ghost_k) = bcsFun.westF.WF(x + params.dX2, y + params.dY2, z, currentTime);
+                    ITERATE_FACE_END()
+                } else {
+                    // TODO Write neumann condition
+                }
+            }
+        }
+        // PRESSURE
+        if constexpr (apply_pressure) {
+            if (params.periodicZ || !params.isOnLeft) {
+                add_request_pressure(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
+            } else {
+                ITERATE_XY_FACE(i, j, x, y)
+                    P(data, i, j, west_ghost_k) = P(data, i, j, west_inner_k)
+                                                  - bcsFun.westF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
+                ITERATE_FACE_END()
+            }
+        }
+    }
+
+    // BACK
+    {
+        const index_t back_inner_i = params.loc_nX - 1;
+        const index_t back_ghost_i = params.loc_nX;
+
+        constexpr index_t back_periodic_i = 0;
+
+        const Real x = real(back_ghost_i + params.st_nX) * params.dX + params.originX;
+        // VELOCITY
+        if constexpr (apply_velocity) {
+            if (params.periodicX) {
+                ITERATE_YZ_FACE(j, k, y, z)
+                    U(data, back_ghost_i, j, k) = U(data, back_periodic_i, j, k);
+                    V(data, back_ghost_i, j, k) = V(data, back_periodic_i, j, k);
+                    W(data, back_ghost_i, j, k) = W(data, back_periodic_i, j, k);
+                ITERATE_FACE_END()
+            } else {
+                if (bcsFun.backType == BOUNDARY_DIRICHLET) {
+                    // apply on face
+                    ITERATE_YZ_FACE(j, k, y, z)
+                        // On y = phy_dim for domain point we have exact for V
+                        U(data, back_inner_i, j, k) = bcsFun.backF.UF(x, y + params.dY2, +params.dZ2, currentTime);
+                        // For ghost points we have useless V, other approximate
+                        U(data, back_ghost_i, j, k) = 0;
+                        V(data, back_ghost_i, j, k) = 2 * bcsFun.backF.VF(x, y + params.dY, z + params.dZ2, currentTime)
+                                                      - V(data, back_inner_i, j, k);
+                        W(data, back_ghost_i, j, k) = 2 * bcsFun.backF.WF(x, y + params.dY2, z + params.dZ, currentTime)
+                                                      - W(data, back_inner_i, j, k);
+                    ITERATE_FACE_END()
+                } else {
+                    // TODO Write neumann condition
+                }
+            }
+        }
+        // PRESSURE
+        if constexpr (apply_pressure) {
+            if (params.periodicX) {
+                ITERATE_YZ_FACE(j, k, y, z)
+                    P(data, back_ghost_i, j, k) = P(data, back_periodic_i, j, k);
+                ITERATE_FACE_END()
+            } else {
+                ITERATE_YZ_FACE(j, k, y, z)
+                    P(data, back_ghost_i, j, k) = P(data, back_inner_i, j, k)
+                                                  + bcsFun.backF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
+                ITERATE_FACE_END()
+            }
+        }
+    }
+
+    // FRONT
+    {
+        constexpr index_t front_inner_i = 0;
+        constexpr index_t front_ghost_i = -1;
+
+        const index_t front_periodic_i = params.loc_nX - 1;
+
+        const Real x = real(front_inner_i + params.st_nX) * params.dX + params.originX;
+        // VELOCITY
+        if constexpr (apply_velocity) {
+            if (params.periodicX) {
+                ITERATE_YZ_FACE(j, k, y, z)
+                    U(data, front_ghost_i, j, k) = U(data, front_periodic_i, j, k);
+                    V(data, front_ghost_i, j, k) = V(data, front_periodic_i, j, k);
+                    W(data, front_ghost_i, j, k) = W(data, front_periodic_i, j, k);
+                ITERATE_FACE_END()
+            } else {
+                if (bcsFun.frontType == BOUNDARY_DIRICHLET) {
+                    // apply on face
+                    ITERATE_YZ_FACE(j, k, y, z)
+                        // On y = 0 for ghost point we hae exact for V, other approximate
+                        U(data, front_ghost_i, j, k) = bcsFun.frontF.UF(x, y + params.dY2, z + params.dZ2, currentTime)
+                                                       - U(data, front_inner_i, j, k);
+                        V(data, front_ghost_i, j, k) = 2 * bcsFun.frontF.VF(x, y + params.dY, z + params.dZ2, currentTime)
+                                                       - V(data, front_inner_i, j, k);
+                        W(data, front_ghost_i, j, k) = 2 * bcsFun.frontF.WF(x, y + params.dY2, z + params.dZ, currentTime)
+                                                       - W(data, front_inner_i, j, k);
+                    ITERATE_FACE_END()
+                } else {
+                    // TODO Write neumann condition
+                }
+            }
+        }
+        // PRESSURE
+        if constexpr (apply_pressure) {
+            if (params.periodicX) {
+                ITERATE_YZ_FACE(j, k, y, z)
+                    P(data, front_ghost_i, j, k) = P(data, front_periodic_i, j, k);
+                ITERATE_FACE_END()
+            } else {
+                ITERATE_YZ_FACE(j, k, y, z)
+                    P(data, front_ghost_i, j, k) = P(data, front_inner_i, j, k)
+                                                   - bcsFun.frontF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
+                ITERATE_FACE_END()
+            }
+        }
+    }
+
+
+    // NORTH EAST
+    {
+        const index_t ne_inner_j = params.loc_nY - 1;
+        const index_t ne_inner_k = params.loc_nZ - 1;
+        const index_t ne_ghost_j = params.loc_nY;
+        const index_t ne_ghost_k = params.loc_nZ;
+
+        if constexpr (apply_velocity) {
+            if ((!params.isOnTop && !params.isOnRight)
+                || (params.isOnTop && !params.isOnRight && params.periodicY)
+                || (!params.isOnTop && params.isOnRight && params.periodicZ)) {
+                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
+            }
+        }
+        if constexpr (apply_pressure) {
+            if ((!params.isOnTop && !params.isOnRight)
+                || (params.isOnTop && !params.isOnRight && params.periodicY)
+                || (!params.isOnTop && params.isOnRight && params.periodicZ)) {
+                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
+            }
+        }
+    }
+
+    // NORTH WEST
+    {
+        const index_t ne_inner_j = params.loc_nY - 1;
+        constexpr index_t ne_inner_k = 0;
+        const index_t ne_ghost_j = params.loc_nY;
+        constexpr index_t ne_ghost_k = -1;
+
+        if constexpr (apply_velocity) {
+            if ((!params.isOnTop && !params.isOnLeft)
+                || (params.isOnTop && !params.isOnLeft && params.periodicY)
+                || (!params.isOnTop && params.isOnLeft && params.periodicZ)) {
+                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
+            }
+        }
+        if constexpr (apply_pressure) {
+            if ((!params.isOnTop && !params.isOnLeft)
+                || (params.isOnTop && !params.isOnLeft && params.periodicY)
+                || (!params.isOnTop && params.isOnLeft && params.periodicZ)) {
+                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
+            }
+        }
+    }
+
+
+    // SOUTH EAST
+    {
+        constexpr index_t ne_inner_j = 0;
+        const index_t ne_inner_k = params.loc_nZ - 1;
+        constexpr index_t ne_ghost_j = -1;
+        const index_t ne_ghost_k = params.loc_nZ;
+
+        if constexpr (apply_velocity) {
+            if ((!params.isOnBottom && !params.isOnRight)
+                || (params.isOnBottom && !params.isOnRight && params.periodicY)
+                || (!params.isOnBottom && params.isOnRight && params.periodicZ)) {
+                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
+            }
+        }
+        if constexpr (apply_pressure) {
+            if ((!params.isOnBottom && !params.isOnRight)
+                || (params.isOnBottom && !params.isOnRight && params.periodicY)
+                || (!params.isOnBottom && params.isOnRight && params.periodicZ)) {
+                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
+            }
+        }
+    }
+
+    // SOUTH WEST
+    {
+        constexpr index_t ne_inner_j = 0;
+        constexpr index_t ne_inner_k = 0;
+        constexpr index_t ne_ghost_j = -1;
+        constexpr index_t ne_ghost_k = -1;
+
+        if constexpr (apply_velocity) {
+            if ((!params.isOnBottom && !params.isOnLeft)
+                || (params.isOnBottom && !params.isOnLeft && params.periodicY)
+                || (!params.isOnBottom && params.isOnLeft && params.periodicZ)) {
+                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
+                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
+                }
+        }
+        if constexpr (apply_pressure) {
+            if ((!params.isOnBottom && !params.isOnLeft)
+                || (params.isOnBottom && !params.isOnLeft && params.periodicY)
+                || (!params.isOnBottom && params.isOnLeft && params.periodicZ)) {
+                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
+                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
+                }
+        }
+    }
 
     // EXCHANGE FACES WITH OTHER SUBDOMAINS
-    for (auto req : bcs_send) {
+    for (auto req: bcs_send) {
         MPI_Isend(req.data_basePtr, 1, *req.datatype, req.neighRank, req.bufferTag, MPI_COMM_WORLD, &req.request);
     }
-    for (auto req : bcs_recv) {
+    for (auto req: bcs_recv) {
         MPI_Irecv(req.data_basePtr, 1, *req.datatype, req.neighRank, req.bufferTag, MPI_COMM_WORLD, &req.request);
     }
-    for (auto req : bcs_send) {
+    for (auto req: bcs_send) {
         MPI_Wait(&req.request, MPI_STATUS_IGNORE);
     }
-    for (auto req : bcs_recv) {
+    for (auto req: bcs_recv) {
         MPI_Wait(&req.request, MPI_STATUS_IGNORE);
     }
 }

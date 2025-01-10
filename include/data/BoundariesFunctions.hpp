@@ -6,24 +6,35 @@
 #define BOUNDARY_DIRICHLET 0
 #define BOUNDARY_NEUMANN 1
 
-class BoundariesFunctions{
+class BoundaryFunction {
+public:
+    const TFunction *UF, *VF, *WF, *PF;
+
+    BoundaryFunction(const TFunction *UF, const TFunction *VF,
+                     const TFunction *WF, const TFunction *PF)
+        : UF(UF), VF(VF), WF(WF), PF(PF) {
+    }
+};
+
+class BoundariesFunctions {
 public:
     const int northType, southType, eastType, westType, frontType, backType;
-    const TFunction *northFunction, *southFunction, *eastFunction, *westFunction, *frontFunction, *backFunction;
+    const BoundaryFunction &northF, &southF, &eastF, &westF, &frontF, &backF;
 
     BoundariesFunctions(
-        const int northType, const TFunction *northFunction,
-        const int southType, const TFunction *southFunction,
-        const int eastType, const TFunction *eastFunction,
-        const int westType, const TFunction *westFunction,
-        const int frontType, const TFunction *frontFunction,
-        const int backType, const TFunction *backFunction
+        const int northType, const BoundaryFunction &northF,
+        const int southType, const BoundaryFunction &southF,
+        const int eastType, const BoundaryFunction &eastF,
+        const int westType, const BoundaryFunction &westF,
+        const int frontType, const BoundaryFunction &frontF,
+        const int backType, const BoundaryFunction &backF
     ) : northType(northType), southType(southType),
         eastType(eastType), westType(westType),
         frontType(frontType), backType(backType),
-        northFunction(northFunction), southFunction(southFunction),
-        eastFunction(eastFunction), westFunction(westFunction),
-        frontFunction(frontFunction), backFunction(backFunction){};
+        northF(northF), southF(southF),
+        eastF(eastF), westF(westF),
+        frontF(frontF), backF(backF) {
+    };
 };
 
 
