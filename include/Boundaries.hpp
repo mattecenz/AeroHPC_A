@@ -31,8 +31,8 @@ public:
     collection.emplace_back(&P(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | P_BUFFER_TAG);
 
 void inline apply_boundaries(Real *data, const Real currentTime, int type) {
-    const bool apply_velocity = (type & TYPE_VELOCITY) != 0;
-    const bool apply_pressure = (type & TYPE_PRESSURE) != 0;
+    const bool apply_velocity = type & TYPE_VELOCITY;
+    const bool apply_pressure = type & TYPE_PRESSURE;
 
     std::vector<MPI_BCRequest> bcs_send;
     std::vector<MPI_BCRequest> bcs_recv;
@@ -46,7 +46,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const Real y = real(north_ghost_j + params.st_nY) * params.dY + params.originY;
         // VELOCITY
         if (apply_velocity) {
-            if (params.periodicY || !params.isOnTop) {
+            if (params.neigh_north != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             } else {
@@ -70,7 +70,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         }
         // PRESSURE
         if (apply_pressure) {
-            if (params.periodicY || !params.isOnTop) {
+            if (params.neigh_north != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             } else {
@@ -90,7 +90,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const Real y = real(south_inner_j + params.st_nY) * params.dY + params.originY;
         // VELOCITY
         if (apply_velocity) {
-            if (params.periodicY || !params.isOnBottom) {
+            if (params.neigh_south != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
             } else {
@@ -111,7 +111,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         }
         // PRESSURE
         if (apply_pressure) {
-            if (params.periodicY || !params.isOnBottom) {
+            if (params.neigh_south != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
             } else {
@@ -131,7 +131,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const Real z = real(east_ghost_k + params.st_nZ) * params.dZ + params.originZ;
         // VELOCITY
         if (apply_velocity) {
-            if (params.periodicZ || !params.isOnRight) {
+            if (params.neigh_east != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
             } else {
@@ -154,7 +154,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         }
         // PRESSURE
         if (apply_pressure) {
-            if (params.periodicZ || !params.isOnRight) {
+            if (params.neigh_east != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
             } else {
@@ -174,7 +174,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const Real z = real(west_inner_k + params.st_nZ) * params.dZ + params.originZ;
         // VELOCITY
         if (apply_velocity) {
-            if (params.periodicZ || !params.isOnLeft) {
+            if (params.neigh_west != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
             } else {
@@ -195,7 +195,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         }
         // PRESSURE
         if (apply_pressure) {
-            if (params.periodicZ || !params.isOnLeft) {
+            if (params.neigh_west != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
             } else {
@@ -313,17 +313,13 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const index_t ne_ghost_k = params.loc_nZ;
 
         if (apply_velocity) {
-            if ((!params.isOnTop && !params.isOnRight)
-                || (params.isOnTop && !params.isOnRight && params.periodicY)
-                || (!params.isOnTop && params.isOnRight && params.periodicZ)) {
+            if (params.neigh_north_east != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
-            if ((!params.isOnTop && !params.isOnRight)
-                || (params.isOnTop && !params.isOnRight && params.periodicY)
-                || (!params.isOnTop && params.isOnRight && params.periodicZ)) {
+            if (params.neigh_north_east != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
             }
@@ -338,17 +334,13 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         constexpr index_t ne_ghost_k = -1;
 
         if (apply_velocity) {
-            if ((!params.isOnTop && !params.isOnLeft)
-                || (params.isOnTop && !params.isOnLeft && params.periodicY)
-                || (!params.isOnTop && params.isOnLeft && params.periodicZ)) {
+            if (params.neigh_north_west != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
-            if ((!params.isOnTop && !params.isOnLeft)
-                || (params.isOnTop && !params.isOnLeft && params.periodicY)
-                || (!params.isOnTop && params.isOnLeft && params.periodicZ)) {
+            if (params.neigh_north_west != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
             }
@@ -364,17 +356,13 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const index_t ne_ghost_k = params.loc_nZ;
 
         if (apply_velocity) {
-            if ((!params.isOnBottom && !params.isOnRight)
-                || (params.isOnBottom && !params.isOnRight && params.periodicY)
-                || (!params.isOnBottom && params.isOnRight && params.periodicZ)) {
+            if (params.neigh_south_east != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
-            if ((!params.isOnBottom && !params.isOnRight)
-                || (params.isOnBottom && !params.isOnRight && params.periodicY)
-                || (!params.isOnBottom && params.isOnRight && params.periodicZ)) {
+            if (params.neigh_south_east != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
             }
@@ -389,34 +377,30 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         constexpr index_t ne_ghost_k = -1;
 
         if (apply_velocity) {
-            if ((!params.isOnBottom && !params.isOnLeft)
-                || (params.isOnBottom && !params.isOnLeft && params.periodicY)
-                || (!params.isOnBottom && params.isOnLeft && params.periodicZ)) {
+            if (params.neigh_south_west != MPI_PROC_NULL) {
                 add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
-                }
+            }
         }
         if (apply_pressure) {
-            if ((!params.isOnBottom && !params.isOnLeft)
-                || (params.isOnBottom && !params.isOnLeft && params.periodicY)
-                || (!params.isOnBottom && params.isOnLeft && params.periodicZ)) {
+            if (params.neigh_south_west != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
-                }
+            }
         }
     }
 
     // EXCHANGE FACES WITH OTHER SUBDOMAINS
-    for (auto req: bcs_send) {
+    for (MPI_BCRequest &req: bcs_send) {
         MPI_Isend(req.data_basePtr, 1, *req.datatype, req.neighRank, req.bufferTag, MPI_COMM_WORLD, &req.request);
     }
-    for (auto req: bcs_recv) {
+    for (MPI_BCRequest &req: bcs_recv) {
         MPI_Irecv(req.data_basePtr, 1, *req.datatype, req.neighRank, req.bufferTag, MPI_COMM_WORLD, &req.request);
     }
-    for (auto req: bcs_send) {
+    for (MPI_BCRequest &req: bcs_send) {
         MPI_Wait(&req.request, MPI_STATUS_IGNORE);
     }
-    for (auto req: bcs_recv) {
+    for (MPI_BCRequest &req: bcs_recv) {
         MPI_Wait(&req.request, MPI_STATUS_IGNORE);
     }
 }

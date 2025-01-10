@@ -14,12 +14,11 @@
 
 #include "utils/printBuffer.hpp"
 
-
 inline Real runSolver(const int rank, const int size,
                const Real extr_px, const Real extr_py, const Real extr_pz) {
 
     if (!rank)
-        logger.openSection("Running the TestSolver")
+        logger.printTitle("Solver parameters")
                 .printValue(5, "Iterations", params.timesteps)
                 .printValue(5, "dT", params.dt)
                 .printValue(5, "Re num", params.Re)
@@ -27,21 +26,10 @@ inline Real runSolver(const int rank, const int size,
 
 
     if (!rank)
-        logger.printTitle("Grid created")
+        logger.printTitle("Grid parameters")
                 .printValue(5, "nodes", std::to_string(params.loc_nX)
                                         + " x " + std::to_string(params.loc_nY)
                                         + " x " + std::to_string(params.loc_nZ));
-
-    /// Initialize the mesh ////////////////////////////////////////////////////////////////////////////////
-    // Define initial velocity function
-    auto initialVel = [](Real x, Real y, Real z) -> Vector {
-        return {ExactSolution::u(x, y, z, 0), ExactSolution::v(x, y, z, 0), ExactSolution::w(x, y, z, 0)};
-    };
-
-    // Define initial pressure function
-    auto initialPres = [](Real x, Real y, Real z) -> Real {
-        return 0;
-    };
 
     chrono_start(initT);
     initializeModel(rkData.model_data, 0);
@@ -50,15 +38,9 @@ inline Real runSolver(const int rank, const int size,
     if (!rank)
         logger.printTitle("Grid initialized", initT);
 
-    if (!rank)
-        logger.printTitle("Boundary condition set");
-
     // last iteration l2Norm capture
     Real localL2Norm = 0.0;
     Real globalL2Norm = 0.0;
-
-    // Performance variables
-    Real perf;
 
     // Printing variables
     index_t maxTablePrintLine = 10;
@@ -73,6 +55,7 @@ inline Real runSolver(const int rank, const int size,
 
     apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
     for (index_t step = 0; step < params.timesteps; ++step) {
+
         dir = "./iterations/" + to_string(step) + "/";
         c_dir();
 
@@ -86,9 +69,9 @@ inline Real runSolver(const int rank, const int size,
         {
             Real currentTime = time + params.dt;
             chrono_start(l2Time);
-            localL2Norm = 0;//computeL2Norm(model, currentTime);
+            localL2Norm = computeL2Norm(rkData.model_data, currentTime);
             chrono_stop(l2Time);
-            perf = rkTime / params.grid_ndim;
+            const Real perf = rkTime / params.grid_ndim;
 
             globalL2Norm = 0.0;
             MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
@@ -144,9 +127,6 @@ inline Real runSolver(const int rank, const int size,
     if (!rank)
         logger.printTitle("profile3 written");
 */
-
-    if (!rank)
-        logger.closeSection().empty();
 
     return globalL2Norm;
 }

@@ -2,19 +2,19 @@
 #include "Traits.hpp"
 #include "data/DomainData.hpp"
 
-TFunction exactU = [](Real x, Real y, Real z, Real t) -> Real{
-  return 0;
+TFunction exactU = [](const Real x, const Real y, const Real z, const Real t) -> Real{
+  return std::sin(x) * std::cos(y) * std::sin(z) * std::sin(t);
 };
 
-TFunction exactV = [](Real x, Real y, Real z, Real t) -> Real{
-  return 0;
+TFunction exactV = [](const Real x, const Real y, const Real z, const Real t) -> Real{
+  return std::cos(x) * std::sin(y) * std::sin(z) * std::sin(t);
 };
 
-TFunction exactW = [](Real x, Real y, Real z, Real t) -> Real{
-  return 0;
+TFunction exactW = [](const Real x, const Real y, const Real z, const Real t) -> Real{
+  return 2 * std::cos(x) * std::cos(y) * std::cos(z) * std::sin(t);
 };
 
-TFunction exactP = [](Real x, Real y, Real z, Real t) -> Real{
+TFunction exactP = [](const Real x, const Real y, const Real z, const Real t) -> Real{
   return 0;
 };
 

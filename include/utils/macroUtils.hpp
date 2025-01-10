@@ -1,46 +1,57 @@
 #ifndef MACROUTILS_HPP
 #define MACROUTILS_HPP
 
-#define ITERATE_DOMAIN_VELOCITY(i, j, k, compute_physics)                           \
-const index_t nz = params.isOnRight ? params.loc_nZ - 1 : params.loc_nZ;            \
-const index_t ny = params.isOnTop ? params.loc_nY - 1 : params.loc_nY;              \
-const index_t nx = params.loc_nY - 1;                                               \
-for (index_t k = 0; k < nz; ++k) {                                                  \
-    Real z = 0;                                                                     \
-    if constexpr (compute_physics)                                                  \
-        z = real(k + params.st_nZ) * params.dZ + params.originZ;                    \
-    for (index_t j = 0; j < ny; ++j) {                                              \
-        Real y = 0;                                                                 \
-        if constexpr (compute_physics)                                              \
-            y = real(j + params.st_nY) * params.dY + params.originY;                \
-    _Pragma("omp simd")                                                             \
-        for (index_t i = 0; i < nx; ++i) {                                          \
-            Real x = 0;                                                             \
-            if constexpr (compute_physics)                                          \
-                x = real(i + params.st_nX) * params.dX + params.originX;
+#define NO_SKIP 0
+#define SKIP_U 1
+#define SKIP_V 2
+#define SKIP_W 4
 
-#define ITERATE_DOMAIN_PRESSURE(i, j, k, compute_physics)                           \
-const index_t nz = params.loc_nZ;                                                   \
-const index_t ny = params.loc_nY;                                                   \
-const index_t nx = params.loc_nX;                                                   \
-for (index_t k = 0; k < nz; ++k) {                                                  \
-    Real z = 0;                                                                     \
-    if constexpr (compute_physics)                                                  \
-        z = real(k + params.st_nZ) * params.dZ + params.originZ;                    \
-    for (index_t j = 0; j < ny; ++j) {                                              \
-        Real y = 0;                                                                 \
-        if constexpr (compute_physics)                                              \
-            y = real(j + params.st_nY) * params.dY + params.originY;                \
-    _Pragma("omp simd")                                                             \
-        for (index_t i = 0; i < nx; ++i) {                                          \
-            Real x = 0;                                                             \
-            if constexpr (compute_physics)                                          \
-                x = real(i + params.st_nX) * params.dX + params.originX;
+#define ITERATE_DOMAIN_VELOCITY(i, j, k, compute_physics, skip_C)                           \
+{                                                                                           \
+    const bool skip_U = skip_C & SKIP_U;                                                    \
+    const bool skip_V = skip_C & SKIP_V;                                                    \
+    const bool skip_W = skip_C & SKIP_W;                                                    \
+    const index_t nz = (params.isOnRight && skip_W) ? params.loc_nZ - 1 : params.loc_nZ;    \
+    const index_t ny = (params.isOnTop && skip_V) ? params.loc_nY - 1 : params.loc_nY;      \
+    const index_t nx = skip_U ? params.loc_nX - 1 : params.loc_nX;                          \
+    for (index_t k = 0; k < nz; ++k) {                                                      \
+        Real z = 0;                                                                         \
+        if constexpr (compute_physics)                                                      \
+            z = real(k + params.st_nZ) * params.dZ + params.originZ;                        \
+        for (index_t j = 0; j < ny; ++j) {                                                  \
+            Real y = 0;                                                                     \
+            if constexpr (compute_physics)                                                  \
+                y = real(j + params.st_nY) * params.dY + params.originY;                    \
+        _Pragma("omp simd")                                                                 \
+            for (index_t i = 0; i < nx; ++i) {                                              \
+                Real x = 0;                                                                 \
+                if constexpr (compute_physics)                                              \
+                    x = real(i + params.st_nX) * params.dX + params.originX;
+
+#define ITERATE_DOMAIN_PRESSURE(i, j, k, compute_physics)                               \
+{                                                                                       \
+    const index_t nz = params.loc_nZ;                                                   \
+    const index_t ny = params.loc_nY;                                                   \
+    const index_t nx = params.loc_nX;                                                   \
+    for (index_t k = 0; k < nz; ++k) {                                                  \
+        Real z = 0;                                                                     \
+        if constexpr (compute_physics)                                                  \
+            z = real(k + params.st_nZ) * params.dZ + params.originZ;                    \
+        for (index_t j = 0; j < ny; ++j) {                                              \
+            Real y = 0;                                                                 \
+            if constexpr (compute_physics)                                              \
+                y = real(j + params.st_nY) * params.dY + params.originY;                \
+        _Pragma("omp simd")                                                             \
+            for (index_t i = 0; i < nx; ++i) {                                          \
+                Real x = 0;                                                             \
+                if constexpr (compute_physics)                                          \
+                    x = real(i + params.st_nX) * params.dX + params.originX;
 
 
-#define ITERATE_DOMAIN_END()                                        \
-        }                                                           \
-    }                                                               \
+#define ITERATE_DOMAIN_END()    \
+            }                   \
+        }                       \
+    }                           \
 }
 
 #define ITERATE_X_ROW(i,x)                                                  \

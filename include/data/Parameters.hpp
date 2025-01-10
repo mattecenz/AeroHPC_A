@@ -12,15 +12,15 @@ public:
 
     // Logical Grid Info
     index_t glob_nX, glob_nY, glob_nZ; // Number of gloabl nodes
-    index_t loc_nX; index_t loc_nY; index_t loc_nZ; // Number of local nodes
-    index_t st_nX; index_t st_nY; index_t st_nZ; // Local nodes starting global index
-    index_t loc_gnX; index_t loc_gnY; index_t loc_gnZ; // Number of loocal nodes + ghosts
+    index_t loc_nX, loc_nY, loc_nZ; // Number of local nodes
+    index_t st_nX, st_nY, st_nZ; // Local nodes starting global index
+    index_t loc_gnX, loc_gnY, loc_gnZ; // Number of loocal nodes + ghosts
     index_t grid_ndim; // Total number of local nodes
     index_t grid_gndim; // Total number of local nodes + ghosts
 
     // Physical Grid Info
-    Real dX; Real dY; Real dZ; // Physical spacing between nodes
-    Real dX2; Real dY2; Real dZ2; // Physical spacing between staggered nodes
+    Real dX, dY, dZ; // Physical spacing between nodes
+    Real dX2, dY2, dZ2; // Physical spacing between staggered nodes
 
     // Domain Info
     int neigh_front, neigh_back,
@@ -47,9 +47,9 @@ public:
 
     Parameters(const Real dimX, const Real dimY, const Real dimZ,
                const Real originX, const Real originY, const Real originZ,
-               const Real glob_nX, const Real glob_nY, const Real glob_nZ,
+               const index_t glob_nX, const index_t glob_nY, const index_t glob_nZ,
                const Real dt, const index_t timesteps, const Real Re,
-                const bool periodicBC[3], const C2Decomp &c2D)
+               const bool periodicBC[3], const C2Decomp &c2D)
         : dimX(dimX), dimY(dimY), dimZ(dimZ),
           originX(originX), originY(originY), originZ(originZ),
           glob_nX(glob_nX), glob_nY(glob_nY), glob_nZ(glob_nZ),
@@ -80,7 +80,7 @@ public:
         // GENERATE MPI VECTORS
         MPI_Type_vector(loc_nY, loc_gnX, loc_gnX, Real_MPI, &XYFace);
         MPI_Type_commit(&XYFace);
-        MPI_Type_vector(loc_nZ, loc_gnX, loc_gnX * loc_gnY, Real_MPI, &XYFace);
+        MPI_Type_vector(loc_nZ, loc_gnX, loc_gnX * loc_gnY, Real_MPI, &XZFace);
         MPI_Type_commit(&XZFace);
         MPI_Type_vector(1, loc_gnX, 0, Real_MPI, &XRow);
         MPI_Type_commit(&XRow);
@@ -102,38 +102,53 @@ public:
         isOnLeft = (this_z_pos == 0);
         isOnRight = (this_z_pos == n_z_proc - 1);
 
-        {
+        if (periodicY || !isOnTop) {
             int coord[] = {this_y_pos + 1, this_z_pos};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north);
-        }
-        {
+        } else { neigh_north = MPI_PROC_NULL; }
+
+        if (periodicY || !isOnBottom) {
             int coord[] = {this_y_pos - 1, this_z_pos};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south);
-        }
-        {
+        } else { neigh_south = MPI_PROC_NULL; }
+
+        if (periodicZ || !isOnRight) {
             int coord[] = {this_y_pos, this_z_pos + 1};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_east);
-        }
-        {
+        } else { neigh_east = MPI_PROC_NULL; }
+
+        if (periodicZ || !isOnLeft) {
             int coord[] = {this_y_pos, this_z_pos - 1};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_west);
-        }
-        {
+        } else { neigh_west = MPI_PROC_NULL; }
+
+        if ((!isOnTop && !isOnRight)
+            || (isOnTop && !isOnRight && periodicY)
+            || (!isOnTop && isOnRight && periodicZ)) {
             int coord[] = {this_y_pos + 1, this_z_pos + 1};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north_east);
-        }
-        {
+        } else { neigh_north_east = MPI_PROC_NULL; }
+
+        if ((!isOnTop && !isOnLeft)
+            || (isOnTop && !isOnLeft && periodicY)
+            || (!isOnTop && isOnLeft && periodicZ)) {
             int coord[] = {this_y_pos + 1, this_z_pos - 1};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north_west);
-        }
-        {
+        } else { neigh_north_west = MPI_PROC_NULL; }
+
+        if ((!isOnBottom && !isOnRight)
+            || (isOnBottom && !isOnRight && periodicY)
+            || (!isOnBottom && isOnRight && periodicZ)) {
             int coord[] = {this_y_pos - 1, this_z_pos + 1};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south_east);
-        }
-        {
+        } else { neigh_south_east = MPI_PROC_NULL; }
+
+        if ((!isOnBottom && !isOnLeft)
+            || (isOnBottom && !isOnLeft && periodicY)
+            || (!isOnBottom && isOnLeft && periodicZ)) {
             int coord[] = {this_y_pos - 1, this_z_pos - 1};
             MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south_west);
-        }
+        } else { neigh_south_west = MPI_PROC_NULL; }
 
         // TODO REMOVE, only a check if it is correct
         if (neigh_north != c2D.neighbor[0][2] ||

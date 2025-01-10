@@ -23,7 +23,7 @@ int testSolver(const int rank, const int size) {
 
     const Real deltaT = 10e-4;
     const Real Re = 1000;
-    const index_t timeSteps = 100;
+    const index_t timeSteps = 1000;
 
     const bool periodicPressureBC[3] = {false, false, false};
 
@@ -31,7 +31,7 @@ int testSolver(const int rank, const int size) {
 
 
     std::vector<index_t> nodes = {
-        4,8,16
+        4,8,16,32
     };
 
     // wrt dim
@@ -54,18 +54,10 @@ int testSolver(const int rank, const int size) {
         destroyData();
 
         logger.printTitle("Data destroyed")
-                .closeSection();
+                .closeSection().empty();
 
         error.push_back(l2norm);
     }
-
-
-    // // wrt both
-    // for (size_t i=0; i<dims.size(); ++i){
-    //     Real deltaT = deltaT[i];
-    //     index_t dim = dims[i];
-    //     error.push_back(testSolver(deltaT, dim));
-    // }
 
     if (!rank) {
         std::ofstream csvFile("output.csv");

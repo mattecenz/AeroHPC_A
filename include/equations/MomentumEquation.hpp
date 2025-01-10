@@ -49,7 +49,7 @@ compute_rhs(W)
 
 /// MOMENTUM EQUATIONS /////////////////////////////////////////////////////////////////////////////////////////////////
 #define Y2star_C(C, Y2star, U_N, P_N)                           \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT)                      \
+ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, P_N, i, j, k);                  \
     const Real r = compute_rhs_##C(U_N, consts.nu, i, j, k);    \
@@ -60,14 +60,14 @@ ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT)                      \
 ITERATE_DOMAIN_END()
 
 
-#define Y2star(Y2star, U_N, P_N)    \
-    {Y2star_C(U, Y2star, U_N, P_N)} \
-    {Y2star_C(V, Y2star, U_N, P_N)} \
-    {Y2star_C(W, Y2star, U_N, P_N)}
+#define Y2star(Y2star, U_N, P_N)  \
+    Y2star_C(U, Y2star, U_N, P_N) \
+    Y2star_C(V, Y2star, U_N, P_N) \
+    Y2star_C(W, Y2star, U_N, P_N)
 
 
 #define Y3star_C(C, Y3star, Y2, PHI_2)                          \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT)                      \
+ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, PHI_2, i, j, k);                \
     const Real r1 = rhs_##C(i, j, k);                           \
@@ -81,13 +81,13 @@ ITERATE_DOMAIN_END()
 
 
 #define Y3star(Y3star, Y2, PHI_2)  \
-    {Y3star_C(U, Y3star, Y2, PHI_2)} \
-    {Y3star_C(V, Y3star, Y2, PHI_2)} \
-    {Y3star_C(W, Y3star, Y2, PHI_2)}
+    Y3star_C(U, Y3star, Y2, PHI_2) \
+    Y3star_C(V, Y3star, Y2, PHI_2) \
+    Y3star_C(W, Y3star, Y2, PHI_2)
 
 
 #define U_N1star_C(C, U_N1star, Y3, PHI_3)                      \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT)                      \
+ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, PHI_3, i, j, k);                \
     const Real r = compute_rhs_##C(Y3, consts.nu, i, j, k);     \
@@ -98,10 +98,10 @@ ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT)                      \
 ITERATE_DOMAIN_END()
 
 
-#define U_N1star(U_N1star, Y3, PHI_3)       \
-    {U_N1star_C(U, U_N1star, Y3, PHI_3)}    \
-    {U_N1star_C(V, U_N1star, Y3, PHI_3)}    \
-    {U_N1star_C(W, U_N1star, Y3, PHI_3)}
+#define U_N1star(U_N1star, Y3, PHI_3)     \
+    U_N1star_C(U, U_N1star, Y3, PHI_3)    \
+    U_N1star_C(V, U_N1star, Y3, PHI_3)    \
+    U_N1star_C(W, U_N1star, Y3, PHI_3)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
