@@ -5,7 +5,7 @@
 #include "data/RKData.hpp"
 #include "data/FFTData.hpp"
 #include "data/Constants.hpp"
-#include "data/BoundariesData.hpp"
+#include "data/DomainData.hpp"
 #include "C2Decomp.hpp"
 
 #define params_ptr _params
@@ -13,21 +13,21 @@
 #define rkData_ptr _rkData
 #define fftData_ptr _fftData
 #define consts_ptr _consts
-#define bcs_ptr _bcs
+#define domData_ptr _domData
 
 #define params (*params_ptr)
 #define c2D (*c2D_ptr)
 #define rkData (*rkData_ptr)
 #define fftData (*fftData_ptr)
 #define consts (*consts_ptr)
-#define bcs (*bcs_ptr)
+#define domData (*domData_ptr)
 
 inline Parameters params = nullptr;
 inline C2Decomp c2D = nullptr;
 inline RKData rkData = nullptr;
 inline FFTData fftData = nullptr;
 inline Constants consts = nullptr;
-inline BoundariesData bcs = nullptr;
+inline DomainData domData = nullptr;
 
 // INDEXING MACRO
 #define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)
@@ -63,7 +63,7 @@ void inline initData(const Real dimX, const Real dimY, const Real dimZ,
                      const index_t nX, const index_t nY, const index_t nZ,
                      const index_t nPY, const index_t nPZ,
                      const bool periodicBC[3],
-                     BoundariesData *boundariesData) {
+                     DomainData *domainData) {
 
     c2D_ptr = new C2Decomp(nX, nY, nZ, nPY, nPZ, periodicBC);
 
@@ -76,7 +76,7 @@ void inline initData(const Real dimX, const Real dimY, const Real dimZ,
 
     consts_ptr = new Constants(Re, deltaT);
 
-    bcs_ptr = boundariesData;
+    _domData = domainData;
 }
 
 void inline destroyData() {
@@ -85,7 +85,7 @@ void inline destroyData() {
     delete rkData_ptr;
     delete fftData_ptr;
     delete consts_ptr;
-    bcs_ptr = nullptr;
+    domData_ptr = nullptr;
 }
 
 #endif //SOLVERDATA_HPP

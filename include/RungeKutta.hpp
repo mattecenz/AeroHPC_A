@@ -8,7 +8,7 @@
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
 
-#include "printBuffer.hpp"
+#include "utils/printBuffer.hpp"
 
 // Runge-Kutta method
 inline void rungeKutta(const Real time) {

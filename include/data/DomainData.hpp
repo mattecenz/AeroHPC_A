@@ -19,13 +19,13 @@ public:
         const int westType, const SpatialFunctionsCollect &westBF,
         const int frontType, const SpatialFunctionsCollect &frontBF,
         const int backType, const SpatialFunctionsCollect &backBF,
-        const SpatialFunctionsCollect &domainF,
+        const SpatialFunctionsCollect &domainF
     ) : northType(northType), southType(southType),
         eastType(eastType), westType(westType),
         frontType(frontType), backType(backType),
-        northBF(northBF), southF(southBF),
-        eastF(eastBF), westF(westBF),
-        frontF(frontBF), backF(backBF),
+        northBF(northBF), southBF(southBF),
+        eastBF(eastBF), westBF(westBF),
+        frontBF(frontBF), backBF(backBF),
         domainF(domainF) {
     }
 };
