@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         error.push_back(l2norm);
 
         logger.printTableValues(n,{l2norm});
-        outputFile << std::endl;
+        if(writeToFile) outputFile << std::endl;
     }
 
     logger.closeTable();
