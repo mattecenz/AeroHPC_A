@@ -1,6 +1,6 @@
 #ifndef DATAEXPORTER_HPP
 #define DATAEXPORTER_HPP
-
+/*
 #include "MPITraits.hpp"
 #include "Traits.hpp"
 #include <mpi.h>
@@ -357,7 +357,7 @@ void writeDatFile(
     for (float &pressure_value: pressure_values)
         swap_endian(pressure_value);
     */
-
+/*
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -395,5 +395,5 @@ void writeDatFile(
     // Close the file
     MPI_File_close(&file);
 }
-
+*/
 #endif //DATAEXPORTER_HPP

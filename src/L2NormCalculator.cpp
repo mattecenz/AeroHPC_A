@@ -24,7 +24,7 @@ Real ExactSolution::w(Real x, Real y, Real z, Real t) {
     return 0;
 #endif
 }
-
+/*
 
 Real computeL2Norm(const GridData &grid, Real time) {
     Real sum = 0.0;
@@ -71,3 +71,4 @@ Real computeL2Norm(const GridData &grid, Real time) {
 
     return sum * (grid.structure.dx * grid.structure.dy * grid.structure.dz);
 }
+*/

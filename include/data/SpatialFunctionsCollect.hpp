@@ -5,10 +5,10 @@
 
 class SpatialFunctionsCollect {
 public:
-    const TFunction *UF, *VF, *WF, *PF;
+    const TFunction &UF, &VF, &WF, &PF;
 
-    SpatialFunctionsCollect(const TFunction *UF, const TFunction *VF,
-                     const TFunction *WF, const TFunction *PF)
+    SpatialFunctionsCollect(const TFunction &UF, const TFunction &VF,
+                     const TFunction &WF, const TFunction &PF)
         : UF(UF), VF(VF), WF(WF), PF(PF) {
     }
 };

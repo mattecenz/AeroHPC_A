@@ -45,7 +45,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         const Real y = real(north_ghost_j + params.st_nY) * params.dY + params.originY;
         // VELOCITY
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if (params.periodicY || !params.isOnTop) {
                 add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
@@ -69,7 +69,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             }
         }
         // PRESSURE
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if (params.periodicY || !params.isOnTop) {
                 add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
@@ -89,7 +89,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         const Real y = real(south_inner_j + params.st_nY) * params.dY + params.originY;
         // VELOCITY
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if (params.periodicY || !params.isOnBottom) {
                 add_request_velocity(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
@@ -110,7 +110,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             }
         }
         // PRESSURE
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if (params.periodicY || !params.isOnBottom) {
                 add_request_pressure(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
@@ -130,7 +130,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         const Real z = real(east_ghost_k + params.st_nZ) * params.dZ + params.originZ;
         // VELOCITY
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if (params.periodicZ || !params.isOnRight) {
                 add_request_velocity(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
@@ -153,7 +153,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             }
         }
         // PRESSURE
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if (params.periodicZ || !params.isOnRight) {
                 add_request_pressure(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
@@ -173,7 +173,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         const Real z = real(west_inner_k + params.st_nZ) * params.dZ + params.originZ;
         // VELOCITY
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if (params.periodicZ || !params.isOnLeft) {
                 add_request_velocity(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
@@ -194,7 +194,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             }
         }
         // PRESSURE
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if (params.periodicZ || !params.isOnLeft) {
                 add_request_pressure(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
@@ -216,7 +216,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         const Real x = real(back_ghost_i + params.st_nX) * params.dX + params.originX;
         // VELOCITY
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if (params.periodicX) {
                 ITERATE_YZ_FACE(j, k, y, z)
                     U(data, back_ghost_i, j, k) = U(data, back_periodic_i, j, k);
@@ -242,7 +242,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             }
         }
         // PRESSURE
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if (params.periodicX) {
                 ITERATE_YZ_FACE(j, k, y, z)
                     P(data, back_ghost_i, j, k) = P(data, back_periodic_i, j, k);
@@ -265,7 +265,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         const Real x = real(front_inner_i + params.st_nX) * params.dX + params.originX;
         // VELOCITY
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if (params.periodicX) {
                 ITERATE_YZ_FACE(j, k, y, z)
                     U(data, front_ghost_i, j, k) = U(data, front_periodic_i, j, k);
@@ -290,7 +290,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             }
         }
         // PRESSURE
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if (params.periodicX) {
                 ITERATE_YZ_FACE(j, k, y, z)
                     P(data, front_ghost_i, j, k) = P(data, front_periodic_i, j, k);
@@ -312,7 +312,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const index_t ne_ghost_j = params.loc_nY;
         const index_t ne_ghost_k = params.loc_nZ;
 
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if ((!params.isOnTop && !params.isOnRight)
                 || (params.isOnTop && !params.isOnRight && params.periodicY)
                 || (!params.isOnTop && params.isOnRight && params.periodicZ)) {
@@ -320,7 +320,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
             }
         }
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if ((!params.isOnTop && !params.isOnRight)
                 || (params.isOnTop && !params.isOnRight && params.periodicY)
                 || (!params.isOnTop && params.isOnRight && params.periodicZ)) {
@@ -337,7 +337,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         const index_t ne_ghost_j = params.loc_nY;
         constexpr index_t ne_ghost_k = -1;
 
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if ((!params.isOnTop && !params.isOnLeft)
                 || (params.isOnTop && !params.isOnLeft && params.periodicY)
                 || (!params.isOnTop && params.isOnLeft && params.periodicZ)) {
@@ -345,7 +345,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
             }
         }
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if ((!params.isOnTop && !params.isOnLeft)
                 || (params.isOnTop && !params.isOnLeft && params.periodicY)
                 || (!params.isOnTop && params.isOnLeft && params.periodicZ)) {
@@ -363,7 +363,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         constexpr index_t ne_ghost_j = -1;
         const index_t ne_ghost_k = params.loc_nZ;
 
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if ((!params.isOnBottom && !params.isOnRight)
                 || (params.isOnBottom && !params.isOnRight && params.periodicY)
                 || (!params.isOnBottom && params.isOnRight && params.periodicZ)) {
@@ -371,7 +371,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
             }
         }
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if ((!params.isOnBottom && !params.isOnRight)
                 || (params.isOnBottom && !params.isOnRight && params.periodicY)
                 || (!params.isOnBottom && params.isOnRight && params.periodicZ)) {
@@ -388,7 +388,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         constexpr index_t ne_ghost_j = -1;
         constexpr index_t ne_ghost_k = -1;
 
-        if constexpr (apply_velocity) {
+        if (apply_velocity) {
             if ((!params.isOnBottom && !params.isOnLeft)
                 || (params.isOnBottom && !params.isOnLeft && params.periodicY)
                 || (!params.isOnBottom && params.isOnLeft && params.periodicZ)) {
@@ -396,7 +396,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
                 }
         }
-        if constexpr (apply_pressure) {
+        if (apply_pressure) {
             if ((!params.isOnBottom && !params.isOnLeft)
                 || (params.isOnBottom && !params.isOnLeft && params.periodicY)
                 || (!params.isOnBottom && params.isOnLeft && params.periodicZ)) {

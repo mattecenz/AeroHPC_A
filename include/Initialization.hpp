@@ -5,10 +5,15 @@
 
 #include "utils/macroUtils.hpp"
 
-void initializeData(Real *data, Real initTime){
-	ITERATE_DOMAIN_VELOCITY(i,j,k,false)
-  		U(data,i,j,k) = domData.
-  	ITERATE_DOMAIN_END()
+inline void initializeModel(Real *data, Real initTime){
+	{ITERATE_DOMAIN_VELOCITY(i,j,k,true)
+  		U(data,i,j,k) = domData.domainF.UF(x,y,z,initTime);
+  		V(data,i,j,k) = domData.domainF.VF(x,y,z,initTime);
+  		W(data,i,j,k) = domData.domainF.WF(x,y,z,initTime);
+  	ITERATE_DOMAIN_END()}
+    {ITERATE_DOMAIN_PRESSURE(i,j,k,true)
+    	P(data,i,j,k) = domData.domainF.PF(x,y,z,initTime);
+    ITERATE_DOMAIN_END()}
 };
 
 #endif //INITIALIZATION_HPP

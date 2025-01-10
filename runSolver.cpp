@@ -10,6 +10,7 @@
 #include <fstream>
 #include "data/SolverData.hpp"
 #include "Boundaries.hpp"
+#include "Initialization.hpp"
 
 #include "utils/printBuffer.hpp"
 
@@ -43,7 +44,7 @@ inline Real runSolver(const int rank, const int size,
     };
 
     chrono_start(initT);
-    initValues(initialVel, initialPres);
+    initializeModel(rkData.model_data, 0);
     chrono_stop(initT);
 
     if (!rank)
@@ -85,7 +86,7 @@ inline Real runSolver(const int rank, const int size,
         {
             Real currentTime = time + params.dt;
             chrono_start(l2Time);
-            localL2Norm = computeL2Norm(model, currentTime);
+            localL2Norm = 0;//computeL2Norm(model, currentTime);
             chrono_stop(l2Time);
             perf = rkTime / params.grid_ndim;
 

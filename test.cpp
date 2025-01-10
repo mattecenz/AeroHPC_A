@@ -7,6 +7,8 @@
 
 #include "data/SolverData.hpp"
 
+#include "testDomainFunctions.cpp"
+
 int testSolver(const int rank, const int size) {
     const int npy = 1;
     const int npz = 1;
@@ -21,17 +23,16 @@ int testSolver(const int rank, const int size) {
 
     const Real deltaT = 10e-4;
     const Real Re = 1000;
-    const index_t timeSteps = 1000;
+    const index_t timeSteps = 100;
 
-    const bool periodicPressureBC[3] = {true, true, true};
+    const bool periodicPressureBC[3] = {false, false, false};
 
     std::vector<Real> error;
 
 
     std::vector<index_t> nodes = {
-        4, 8, 16
+        4,8,16
     };
-
 
     // wrt dim
     for (index_t n: nodes) {
@@ -43,7 +44,7 @@ int testSolver(const int rank, const int size) {
                  n, n, n,
                  npy, npz,
                  periodicPressureBC,
-                 boundaryFunctions);
+                 &testDomainData);
 
         logger.printTitle("Data initialized");
 

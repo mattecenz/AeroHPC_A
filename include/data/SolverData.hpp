@@ -34,16 +34,16 @@ inline DomainData domData = nullptr;
 #define ghosted_indexing(i,j,k) ((i+1) + (j+1) * params.loc_gnX + (k+1) * params.loc_gnX * params.loc_gnY)
 
 // COMPONENTS FOR GHOSTED BUFFERS
-#define get_U_ghosted(data_ptr) (data)
-#define get_V_ghosted(data_ptr) (&(data[params.grid_gndim]))
-#define get_W_ghosted(data_ptr) (&(data[params.grid_gndim * 2]))
-#define get_P_ghosted(data_ptr) (&(data[params.grid_gndim * 3]))
+#define get_U_ghosted(data_ptr) (&data_ptr[0])
+#define get_V_ghosted(data_ptr) (&(data_ptr[params.grid_gndim]))
+#define get_W_ghosted(data_ptr) (&(data_ptr[params.grid_gndim * 2]))
+#define get_P_ghosted(data_ptr) (&(data_ptr[params.grid_gndim * 3]))
 
 // COMPONENTS FOR BUFFERS
-#define get_U(data) (data)
-#define get_V(data) (&data[params.grid_ndim])
-#define get_W(data) (&data[params.grid_ndim * 2])
-#define get_P(data) (&data[params.grid_ndim * 3])
+#define get_U(data_ptr) (&data_ptr[0])
+#define get_V(data_ptr) (&data_ptr[params.grid_ndim])
+#define get_W(data_ptr) (&data_ptr[params.grid_ndim * 2])
+#define get_P(data_ptr) (&data_ptr[params.grid_ndim * 3])
 
 // ELEMENTS FOR GHOSTED BUFFERS
 #define U(data_ptr, i, j, k) get_U_ghosted(data_ptr)[ghosted_indexing(i,j,k)]

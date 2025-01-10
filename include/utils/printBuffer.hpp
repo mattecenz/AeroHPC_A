@@ -5,7 +5,7 @@
 #include <string>
 #include <iomanip>
 #include <filesystem>
-#include "SolverData.hpp"
+#include "data/SolverData.hpp"
 
 using namespace std;
 

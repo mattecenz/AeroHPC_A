@@ -4,28 +4,23 @@
 #include "Traits.hpp"
 #include "C2Decomp.hpp"
 
-#define define3d(type, prefix, suffix) \
-    type prefix##X##suffix; type prefix##Y##suffix; type prefix##Z##suffix
-#define use3d(type, prefix, suffix) \
-    type prefix##X##suffix, type prefix##Y##suffix, type prefix##Z##suffix
-
 class Parameters {
 public:
     // Spatial Info
-    define3d(Real, dim); // Physical dimension of the global space
-    define3d(Real, origin); // Physical origin of the global space
+    Real dimX, dimY, dimZ;
+    Real originX, originY, originZ;
 
     // Logical Grid Info
-    define3d(index_t, glob_n); // Number of gloabl nodes
-    define3d(index_t, loc_n); // Number of local nodes
-    define3d(index_t, st_n); // Local nodes starting global index
-    define3d(index_t, loc_gn); // Number of loocal nodes + ghosts
+    index_t glob_nX, glob_nY, glob_nZ; // Number of gloabl nodes
+    index_t loc_nX; index_t loc_nY; index_t loc_nZ; // Number of local nodes
+    index_t st_nX; index_t st_nY; index_t st_nZ; // Local nodes starting global index
+    index_t loc_gnX; index_t loc_gnY; index_t loc_gnZ; // Number of loocal nodes + ghosts
     index_t grid_ndim; // Total number of local nodes
     index_t grid_gndim; // Total number of local nodes + ghosts
 
     // Physical Grid Info
-    define3d(Real, d); // Physical spacing between nodes
-    define3d(Real, d, 2); // Physical spacing between staggered nodes
+    Real dX; Real dY; Real dZ; // Physical spacing between nodes
+    Real dX2; Real dY2; Real dZ2; // Physical spacing between staggered nodes
 
     // Domain Info
     int neigh_front, neigh_back,
@@ -50,9 +45,9 @@ public:
     index_t timesteps;
     Real Re;
 
-    Parameters(use3d(const Real, dim),
-               use3d(const Real, origin),
-               use3d(const Real, glob_n),
+    Parameters(const Real dimX, const Real dimY, const Real dimZ,
+               const Real originX, const Real originY, const Real originZ,
+               const Real glob_nX, const Real glob_nY, const Real glob_nZ,
                const Real dt, const index_t timesteps, const Real Re,
                 const bool periodicBC[3], const C2Decomp &c2D)
         : dimX(dimX), dimY(dimY), dimZ(dimZ),
@@ -107,29 +102,38 @@ public:
         isOnLeft = (this_z_pos == 0);
         isOnRight = (this_z_pos == n_z_proc - 1);
 
-        int coord[] = {this_y_pos + 1, this_z_pos};
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north);
-
-        coord(this_y_pos - 1, this_z_pos);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south);
-
-        coord(this_y_pos, this_z_pos + 1);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_east);
-
-        coord(this_y_pos, this_z_pos - 1);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_west);
-
-        coord(this_y_pos + 1, this_z_pos + 1);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north_east);
-
-        coord(this_y_pos + 1, this_z_pos - 1);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north_west);
-
-        coord(this_y_pos - 1, this_z_pos + 1);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south_east);
-
-        coord(this_y_pos - 1, this_z_pos - 1);
-        MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south_west);
+        {
+            int coord[] = {this_y_pos + 1, this_z_pos};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north);
+        }
+        {
+            int coord[] = {this_y_pos - 1, this_z_pos};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south);
+        }
+        {
+            int coord[] = {this_y_pos, this_z_pos + 1};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_east);
+        }
+        {
+            int coord[] = {this_y_pos, this_z_pos - 1};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_west);
+        }
+        {
+            int coord[] = {this_y_pos + 1, this_z_pos + 1};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north_east);
+        }
+        {
+            int coord[] = {this_y_pos + 1, this_z_pos - 1};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_north_west);
+        }
+        {
+            int coord[] = {this_y_pos - 1, this_z_pos + 1};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south_east);
+        }
+        {
+            int coord[] = {this_y_pos - 1, this_z_pos - 1};
+            MPI_Cart_rank(c2D.DECOMP_2D_COMM_CART_X, coord, &neigh_south_west);
+        }
 
         // TODO REMOVE, only a check if it is correct
         if (neigh_north != c2D.neighbor[0][2] ||

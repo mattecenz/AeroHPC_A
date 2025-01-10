@@ -6,7 +6,7 @@
 #ifndef AEROHPC_A_MATHUTILS_H
 #define AEROHPC_A_MATHUTILS_H
 
-#include "SolverData.hpp"
+#include "data/SolverData.hpp"
 
 namespace mathUtils {
 #define interpolate(C) inline Real intp_##C(const Real *data, const int i, const int j, const int k) { \

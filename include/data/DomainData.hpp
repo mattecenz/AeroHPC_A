@@ -12,6 +12,8 @@ public:
     const SpatialFunctionsCollect &northBF, &southBF, &eastBF, &westBF, &frontBF, &backBF;
     const SpatialFunctionsCollect &domainF;
 
+    DomainData() = delete;
+
     DomainData(
         const int northType, const SpatialFunctionsCollect &northBF,
         const int southType, const SpatialFunctionsCollect &southBF,
