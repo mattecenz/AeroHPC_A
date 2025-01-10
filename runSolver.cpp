@@ -2,19 +2,19 @@
 #include <cmath>
 #include "Traits.hpp"
 #include "utils/chronoUtils.hpp"
-#include "Logger.hpp"
-#include "boundariesBuilders.cpp"
+#include "utils/Logger.hpp"
 #include "C2Decomp.hpp"
 #include "L2NormCalculator.hpp"
 #include "RungeKutta.hpp"
 #include "DataExporter.hpp"
 #include <fstream>
 #include "data/SolverData.hpp"
+#include "Boundaries.hpp"
 
-#include "printBuffer.hpp"
+#include "utils/printBuffer.hpp"
+
 
 inline Real runSolver(const int rank, const int size,
-               const boundaryDomainFunctions &boundaryDF,
                const Real extr_px, const Real extr_py, const Real extr_pz) {
 
     if (!rank)
@@ -49,14 +49,8 @@ inline Real runSolver(const int rank, const int size,
     if (!rank)
         logger.printTitle("Grid initialized", initT);
 
-    /// Define boundaries condition functions //////////////////////////////////////////////////////////////
-    MPIBoundaries mpiBoundaries;
-    buildMPIBoundaries(*c2d, modelStructure, mpiBoundaries, boundaryDF);
-
     if (!rank)
         logger.printTitle("Boundary condition set");
-
-    /// Init variables for RK method ///////////////////////////////////////////////////////////////////////
 
     // last iteration l2Norm capture
     Real localL2Norm = 0.0;
@@ -75,7 +69,8 @@ inline Real runSolver(const int rank, const int size,
                 .openTable("Iter", {"ts", "gl2", "rkT", "l2T", "TxN"});
 
     chrono_start(compT);
-    mpiBoundaries.apply(model, 0);
+
+    apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
     for (index_t step = 0; step < params.timesteps; ++step) {
         dir = "./iterations/" + to_string(step) + "/";
         c_dir();
@@ -106,6 +101,8 @@ inline Real runSolver(const int rank, const int size,
     if (!rank)
         logger.closeTable().printTitle("End of computation", compT);
 
+    //TODO EXPORTING
+/*
     GridData interpolated_model(modelStructure);
     interpData(model, interpolated_model);
 
@@ -145,6 +142,7 @@ inline Real runSolver(const int rank, const int size,
 
     if (!rank)
         logger.printTitle("profile3 written");
+*/
 
     if (!rank)
         logger.closeSection().empty();

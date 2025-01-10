@@ -1,23 +1,34 @@
-#ifndef BOUNDARIESDATA_HPP
-#define BOUNDARIESDATA_HPP
+#ifndef BOUNDARIESFUNCTIONS_HPP
+#define BOUNDARIESFUNCTIONS_HPP
 
-#include "Traits.hpp"
+#include "data/SpatialFunctionsCollect.hpp"
 
-class MPI_BCRequest {
+#define BOUNDARY_DIRICHLET 0
+#define BOUNDARY_NEUMANN 1
+
+class DomainData {
 public:
-    Real *data_basePtr;
-    MPI_Datatype *datatype;
-    MPI_Request *request;
-};
+    const int northType, southType, eastType, westType, frontType, backType;
+    const SpatialFunctionsCollect &northBF, &southBF, &eastBF, &westBF, &frontBF, &backBF;
+    const SpatialFunctionsCollect &domainF;
 
-class BoundariesData {
-public:
-    std::vector<MPI_BCRequest> bcs_send;
-    std::vector<MPI_BCRequest> bcs_recv;
-
-    BoundariesData() {
-
+    DomainData(
+        const int northType, const SpatialFunctionsCollect &northBF,
+        const int southType, const SpatialFunctionsCollect &southBF,
+        const int eastType, const SpatialFunctionsCollect &eastBF,
+        const int westType, const SpatialFunctionsCollect &westBF,
+        const int frontType, const SpatialFunctionsCollect &frontBF,
+        const int backType, const SpatialFunctionsCollect &backBF,
+        const SpatialFunctionsCollect &domainF,
+    ) : northType(northType), southType(southType),
+        eastType(eastType), westType(westType),
+        frontType(frontType), backType(backType),
+        northBF(northBF), southF(southBF),
+        eastF(eastBF), westF(westBF),
+        frontF(frontBF), backF(backBF),
+        domainF(domainF) {
     }
 };
 
-#endif //BOUNDARIESDATA_HPP
+
+#endif //BOUNDARIESFUNCTIONS_HPP

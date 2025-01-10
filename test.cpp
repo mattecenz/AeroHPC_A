@@ -2,6 +2,7 @@
 #include "Traits.hpp"
 #include "DataExporter.hpp"
 #include "runSolver.cpp"
+#include "utils/Logger.hpp"
 #include <fstream>
 
 #include "data/SolverData.hpp"
@@ -26,15 +27,6 @@ int testSolver(const int rank, const int size) {
 
     std::vector<Real> error;
 
-    const boundaryDomainFunctions boundaryDomainFunctions = {
-        boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w},
-        boundaryFaceFunctions{ExactSolution::u, ExactSolution::v, ExactSolution::w}
-    };
-
 
     std::vector<index_t> nodes = {
         4, 8, 16
@@ -50,12 +42,12 @@ int testSolver(const int rank, const int size) {
                  deltaT, timeSteps, Re,
                  n, n, n,
                  npy, npz,
-                 periodicPressureBC);
+                 periodicPressureBC,
+                 boundaryFunctions);
 
         logger.printTitle("Data initialized");
 
         Real l2norm = runSolver(rank, size,
-                                boundaryDomainFunctions,
                                 0.0, 0.0, 0.0);
 
         destroyData();

@@ -74,17 +74,17 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             } else {
-                if (bcsFun.northType == BOUNDARY_DIRICHLET) {
+                if (bcs.northType == BOUNDARY_DIRICHLET) {
                     // apply on face
                     ITERATE_XZ_FACE(i, k, x, z)
                         // On y = phy_dim for domain point we have exact for V
-                        V(data, i, north_inner_j, k) = bcsFun.northF.VF(x + params.dX2, y, z + params.dZ2, currentTime);
+                        V(data, i, north_inner_j, k) = bcs.northBF.VF(x + params.dX2, y, z + params.dZ2, currentTime);
                         // For ghost points we have useless V, other approximate
 
-                        U(data, i, north_ghost_j, k) = 2 * bcsFun.northF.UF(x + params.dX, y, z + params.dZ2, currentTime)
+                        U(data, i, north_ghost_j, k) = 2 * bcs.northBF.UF(x + params.dX, y, z + params.dZ2, currentTime)
                                                        - U(data, i, north_inner_j, k);
                         V(data, i, north_ghost_j, k) = 0;
-                        W(data, i, north_ghost_j, k) = 2 * bcsFun.northF.WF(x + params.dX2, y, z + params.dZ, currentTime)
+                        W(data, i, north_ghost_j, k) = 2 * bcs.northBF.WF(x + params.dX2, y, z + params.dZ, currentTime)
                                                        - W(data, i, north_inner_j, k);
                     ITERATE_FACE_END()
                 } else {
@@ -100,7 +100,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             } else {
                 ITERATE_XZ_FACE(i, k, x, z)
                     P(data, i, north_ghost_j, k) = P(data, i, north_inner_j, k)
-                                                   + bcsFun.northF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
+                                                   + bcs.northBF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
                 ITERATE_FACE_END()
             }
         }
@@ -118,14 +118,14 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
             } else {
-                if (bcsFun.southType == BOUNDARY_DIRICHLET) {
+                if (bcs.southType == BOUNDARY_DIRICHLET) {
                     // apply on face
                     ITERATE_XZ_FACE(i, k, x, z)
                         // On y = 0 for ghost point we hae exact for V, other approximate
-                        U(data, i, south_ghost_j, k) = 2 * bcsFun.southF.UF(x + params.dX, y, z + params.dZ2, currentTime)
+                        U(data, i, south_ghost_j, k) = 2 * bcs.southBF.UF(x + params.dX, y, z + params.dZ2, currentTime)
                                                        - U(data, i, south_inner_j, k);
-                        V(data, i, south_ghost_j, k) = bcsFun.southF.VF(x + params.dX, y, z + params.dZ2, currentTime);
-                        W(data, i, south_ghost_j, k) = 2 * bcsFun.southF.WF(x + params.dX2, y, z + params.dZ, currentTime)
+                        V(data, i, south_ghost_j, k) = bcs.southBF.VF(x + params.dX, y, z + params.dZ2, currentTime);
+                        W(data, i, south_ghost_j, k) = 2 * bcs.southBF.WF(x + params.dX2, y, z + params.dZ, currentTime)
                                                        - W(data, i, south_inner_j, k);
                     ITERATE_FACE_END()
                 } else {
@@ -141,7 +141,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             } else {
                 ITERATE_XZ_FACE(i, k, x, z)
                     P(data, i, south_ghost_j, k) = P(data, i, south_inner_j, k)
-                                                   - bcsFun.southF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
+                                                   - bcs.southBF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
                 ITERATE_FACE_END()
             }
         }
@@ -159,16 +159,16 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
             } else {
-                if (bcsFun.eastType == BOUNDARY_DIRICHLET) {
+                if (bcs.eastType == BOUNDARY_DIRICHLET) {
                     // apply on face
                     ITERATE_XY_FACE(i, j, x, y)
                         // On y = phy_dim for domain point we have exact for V
-                        W(data, i, j, east_inner_k) = bcsFun.eastF.WF(x + params.dX2, y + params.dY2, z, currentTime);
+                        W(data, i, j, east_inner_k) = bcs.eastBF.WF(x + params.dX2, y + params.dY2, z, currentTime);
                         // For ghost points we have useless V, other approximate
 
-                        U(data, i, j, east_ghost_k) = 2 * bcsFun.eastF.UF(x + params.dX, y + params.dY2, z, currentTime)
+                        U(data, i, j, east_ghost_k) = 2 * bcs.eastBF.UF(x + params.dX, y + params.dY2, z, currentTime)
                                                       - U(data, i, j, east_inner_k);
-                        V(data, i, j, east_ghost_k) = 2 * bcsFun.eastF.VF(x + params.dX2, y + params.dY, z, currentTime);
+                        V(data, i, j, east_ghost_k) = 2 * bcs.eastBF.VF(x + params.dX2, y + params.dY, z, currentTime);
                         W(data, i, j, east_ghost_k) = 0;
                     ITERATE_FACE_END()
                 } else {
@@ -184,7 +184,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             } else {
                 ITERATE_XY_FACE(i, j, x, y)
                     P(data, i, j, east_ghost_k) = P(data, i, j, east_inner_k)
-                                                  + bcsFun.eastF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
+                                                  + bcs.eastBF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
                 ITERATE_FACE_END()
             }
         }
@@ -202,15 +202,15 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 add_request_velocity(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 add_request_velocity(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
             } else {
-                if (bcsFun.westType == BOUNDARY_DIRICHLET) {
+                if (bcs.westType == BOUNDARY_DIRICHLET) {
                     // apply on face
                     ITERATE_XY_FACE(i, j, x, y)
                         // On y = 0 for ghost point we hae exact for V, other approximate
-                        U(data, i, j, west_ghost_k) = 2 * bcsFun.westF.UF(x + params.dX, y + params.dY2, z, currentTime)
+                        U(data, i, j, west_ghost_k) = 2 * bcs.westBF.UF(x + params.dX, y + params.dY2, z, currentTime)
                                                       - U(data, i, j, west_inner_k);
-                        V(data, i, j, west_ghost_k) = 2 * bcsFun.westF.VF(x + params.dX2, y + params.dY, z, currentTime)
+                        V(data, i, j, west_ghost_k) = 2 * bcs.westBF.VF(x + params.dX2, y + params.dY, z, currentTime)
                                                       - V(data, i, j, west_inner_k);
-                        W(data, i, j, west_ghost_k) = bcsFun.westF.WF(x + params.dX2, y + params.dY2, z, currentTime);
+                        W(data, i, j, west_ghost_k) = bcs.westBF.WF(x + params.dX2, y + params.dY2, z, currentTime);
                     ITERATE_FACE_END()
                 } else {
                     // TODO Write neumann condition
@@ -225,7 +225,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             } else {
                 ITERATE_XY_FACE(i, j, x, y)
                     P(data, i, j, west_ghost_k) = P(data, i, j, west_inner_k)
-                                                  - bcsFun.westF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
+                                                  - bcs.westBF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
                 ITERATE_FACE_END()
             }
         }
@@ -248,16 +248,16 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                     W(data, back_ghost_i, j, k) = W(data, back_periodic_i, j, k);
                 ITERATE_FACE_END()
             } else {
-                if (bcsFun.backType == BOUNDARY_DIRICHLET) {
+                if (bcs.backType == BOUNDARY_DIRICHLET) {
                     // apply on face
                     ITERATE_YZ_FACE(j, k, y, z)
                         // On y = phy_dim for domain point we have exact for V
-                        U(data, back_inner_i, j, k) = bcsFun.backF.UF(x, y + params.dY2, +params.dZ2, currentTime);
+                        U(data, back_inner_i, j, k) = bcs.backBF.UF(x, y + params.dY2, +params.dZ2, currentTime);
                         // For ghost points we have useless V, other approximate
                         U(data, back_ghost_i, j, k) = 0;
-                        V(data, back_ghost_i, j, k) = 2 * bcsFun.backF.VF(x, y + params.dY, z + params.dZ2, currentTime)
+                        V(data, back_ghost_i, j, k) = 2 * bcs.backBF.VF(x, y + params.dY, z + params.dZ2, currentTime)
                                                       - V(data, back_inner_i, j, k);
-                        W(data, back_ghost_i, j, k) = 2 * bcsFun.backF.WF(x, y + params.dY2, z + params.dZ, currentTime)
+                        W(data, back_ghost_i, j, k) = 2 * bcs.backBF.WF(x, y + params.dY2, z + params.dZ, currentTime)
                                                       - W(data, back_inner_i, j, k);
                     ITERATE_FACE_END()
                 } else {
@@ -274,7 +274,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             } else {
                 ITERATE_YZ_FACE(j, k, y, z)
                     P(data, back_ghost_i, j, k) = P(data, back_inner_i, j, k)
-                                                  + bcsFun.backF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
+                                                  + bcs.backBF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
                 ITERATE_FACE_END()
             }
         }
@@ -297,15 +297,15 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                     W(data, front_ghost_i, j, k) = W(data, front_periodic_i, j, k);
                 ITERATE_FACE_END()
             } else {
-                if (bcsFun.frontType == BOUNDARY_DIRICHLET) {
+                if (bcs.frontType == BOUNDARY_DIRICHLET) {
                     // apply on face
                     ITERATE_YZ_FACE(j, k, y, z)
                         // On y = 0 for ghost point we hae exact for V, other approximate
-                        U(data, front_ghost_i, j, k) = bcsFun.frontF.UF(x, y + params.dY2, z + params.dZ2, currentTime)
+                        U(data, front_ghost_i, j, k) = bcs.frontBF.UF(x, y + params.dY2, z + params.dZ2, currentTime)
                                                        - U(data, front_inner_i, j, k);
-                        V(data, front_ghost_i, j, k) = 2 * bcsFun.frontF.VF(x, y + params.dY, z + params.dZ2, currentTime)
+                        V(data, front_ghost_i, j, k) = 2 * bcs.frontBF.VF(x, y + params.dY, z + params.dZ2, currentTime)
                                                        - V(data, front_inner_i, j, k);
-                        W(data, front_ghost_i, j, k) = 2 * bcsFun.frontF.WF(x, y + params.dY2, z + params.dZ, currentTime)
+                        W(data, front_ghost_i, j, k) = 2 * bcs.frontBF.WF(x, y + params.dY2, z + params.dZ, currentTime)
                                                        - W(data, front_inner_i, j, k);
                     ITERATE_FACE_END()
                 } else {
@@ -322,7 +322,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             } else {
                 ITERATE_YZ_FACE(j, k, y, z)
                     P(data, front_ghost_i, j, k) = P(data, front_inner_i, j, k)
-                                                   - bcsFun.frontF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
+                                                   - bcs.frontBF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
                 ITERATE_FACE_END()
             }
         }

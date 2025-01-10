@@ -4,8 +4,6 @@
 #include "runSolver.cpp"
 #include <fstream>
 
-#import "Info.hpp"
-
 using namespace std;
 
 int runTestCase(int rank, int size, int argc, char **argv) {
