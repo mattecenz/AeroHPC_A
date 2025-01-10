@@ -55,7 +55,7 @@ rhs(W)
 
 
 /// RK STEPS ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define ITERATE_OVER_ALL_POINTS_START(i,j,k)    \
+#define ITERATE_OVER_ALL_POINTS_START(i,j,k) \
 for (index_t k = 0; k < nz; ++k) {              \
     for (index_t j = 0; j < ny; ++j) {          \
     _Pragma("omp simd")                         \
@@ -131,6 +131,13 @@ ITERATE_OVER_ALL_POINTS_START(i, j, k)                                          
     U_N1.P(i, j, k) = U_N1star.P(i, j, k) + Y3.P(i, j, k);                          \
 ITERATE_OVER_ALL_POINTS_END()
 
+#define GRADX(grax, X)                                                              \
+ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
+grax.U(i, j, k) = deltat * mu::dp_dx_U(X, i, j, k);   \
+grax.V(i, j, k) = deltat * mu::dp_dy_V(X, i, j, k);   \
+grax.W(i, j, k) = deltat * mu::dp_dz_W(X, i, j, k);   \
+ITERATE_OVER_ALL_POINTS_END()                                                       \
+
 
 #define Load_B(constant, b_buffer, velocity_in)                                     \
 ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
@@ -160,13 +167,16 @@ struct RKConst {
 inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
                        Real reynolds, Real deltat, index_t iteration,
                        Boundaries &boundary_cond, poissonSolver &p_solver) {
+
+    GridData grad_buff(model.structure, true);
+
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::string dir = "./iterations/" + to_string(iteration) + "/";
 
     c_dir(dir);
-    b_print(model, dir, 0);
+    b_print(model, dir, 0, "initial boundary", true,false);
 
     const Real time = deltat * real(iteration);
 
@@ -199,6 +209,13 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
     const Real t_1 = time + RKConst::beta1 * deltat;
     const Real t_2 = time + deltat;
 
+// INIT (senza boundary), INIT (boundary),
+// Y2star (senza boundary), Y2star (boundary),
+// B
+// X
+// Grad(X)
+// Y2
+
 
 #ifdef ForcingT
     ForcingTerm ft(reynolds, time);
@@ -210,9 +227,9 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         Y2star(V, model_buff, model);
         Y2star(W, model_buff, model);
 
-        b_print(model_buff, dir, 1);
+        b_print(model_buff, dir, 0, "Y2star no boundary", true, false);
         boundary_cond.apply(model_buff, t_0);
-        b_print(model_buff, dir, 2);
+        b_print(model_buff, dir, 0, "Y2star boundary", true, false);
     }
 
 #ifndef DISABLE_PRESSURE
@@ -220,27 +237,32 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
     {
         Load_B(deltat, rhs_buff, model_buff)
 
+        b_print(rhs_buff, dir, 0, "divergence Vel", false, true);
         // SOLVE FOR phi2-pn
         p_solver.solve(&rhs_buff.P(0,0,0));
+
     }
 
     /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
     {
         Unload_B(rhs_buff, model_buff)
+        b_print(model_buff, dir, 0, "fft result", false, true);
 
-        b_print(model_buff, dir, 3);
-        boundary_cond.apply(model_buff, t_0);
-        b_print(model_buff, dir, 4);
+        GRADX(grad_buff, model_buff)
+        b_print(model_buff, dir, 0, "grad phi2-pn", true, false);
+        //boundary_cond.apply(model_buff, t_0);
     }
 
 
     /// Y2 //////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
         Y2(model_buff, model_buff, model);
+        b_print(model_buff, dir, 0, "Y2", true, false);
 
-        b_print(model_buff, dir, 5);
-        boundary_cond.apply(model_buff, t_0);
-        b_print(model_buff, dir, 6);
+        b_print(model_buff, dir, 0, "PHI2", false, true);
+        //b_print(model_buff, dir, 5);
+        //boundary_cond.apply(model_buff, t_0);
+        //b_print(model_buff, dir, 6);
     }
 #endif
 
@@ -254,9 +276,9 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         Y3star(V, model, model_buff);
         Y3star(W, model, model_buff);
 
-        b_print(model, dir, 7);
+        //b_print(model, dir, 7);
         boundary_cond.apply(model, t_1);
-        b_print(model, dir, 8);
+        //b_print(model, dir, 8);
     }
 
 #ifndef DISABLE_PRESSURE
@@ -271,18 +293,19 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
     {
         Unload_B(rhs_buff, model)
 
-        b_print(model, dir, 9);
-        boundary_cond.apply(model, t_1);
-        b_print(model, dir, 10);
+
+        //b_print(model, dir, 9);
+        //boundary_cond.apply(model, t_1);
+        //b_print(model, dir, 10);
     }
 
     /// Y3 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
         Y3(model, model, model_buff);
 
-        b_print(model, dir, 11);
-        boundary_cond.apply(model, t_1);
-        b_print(model, dir, 12);
+        //b_print(model, dir, 11);
+        //boundary_cond.apply(model, t_1);
+        //b_print(model, dir, 12);
     }
 #endif
 
@@ -298,9 +321,9 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         U_N1star(W, model_buff, model);
 
 
-        b_print(model_buff, dir, 13);
+        //b_print(model_buff, dir, 13);
         boundary_cond.apply(model_buff, t_2);
-        b_print(model_buff, dir, 14);
+        //b_print(model_buff, dir, 14);
     }
 
 #ifndef DISABLE_PRESSURE
@@ -315,18 +338,18 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
     {
         Unload_B(rhs_buff, model_buff)
 
-        b_print(model_buff, dir, 15);
-        boundary_cond.apply(model_buff, t_2);
-        b_print(model_buff, dir, 16);
+        //b_print(model_buff, dir, 15);
+        //boundary_cond.apply(model_buff, t_2);
+        //b_print(model_buff, dir, 16);
     }
 
     /// un+1 /////////////////////////////////////////////////////////////////////////////////////////////////////////
     {
         U_N1(model_buff, model_buff, model);
 
-        b_print(model_buff, dir, 17);
-        boundary_cond.apply(model_buff, t_2);
-        b_print(model_buff, dir, 18);
+        //b_print(model_buff, dir, 17);
+        //boundary_cond.apply(model_buff, t_2);
+        //b_print(model_buff, dir, 18);
     }
 #endif
 

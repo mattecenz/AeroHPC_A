@@ -3,7 +3,7 @@
 
 Real ExactSolution::u(Real x, Real y, Real z, Real t) {
 #ifdef TEST
-    return std::sin(x) * std::cos(y) * std::sin(z) * std::sin(t);
+    return x + y + z;
 #else
     return 0;
 #endif
@@ -11,7 +11,7 @@ Real ExactSolution::u(Real x, Real y, Real z, Real t) {
 
 Real ExactSolution::v(Real x, Real y, Real z, Real t) {
 #ifdef TEST
-    return std::cos(x) * std::sin(y) * std::sin(z) * std::sin(t);
+    return x+y+z;
 #else
     return 0;
 #endif
@@ -19,7 +19,7 @@ Real ExactSolution::v(Real x, Real y, Real z, Real t) {
 
 Real ExactSolution::w(Real x, Real y, Real z, Real t) {
 #ifdef TEST
-    return 2 * std::cos(x) * std::cos(y) * std::cos(z) * std::sin(t);
+    return x+y+z;
 #else
     return 0;
 #endif

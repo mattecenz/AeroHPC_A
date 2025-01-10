@@ -11,87 +11,63 @@ using namespace std;
 
 using namespace filesystem;
 
-void print(GridData &grid, std::string &filename) {
+void print(GridData &grid, std::string &filename, const std::string &name, bool print_vel, bool print_P) {
     std::ofstream file;
-    file.open(filename);
+    file.open(filename,ios_base::out | ios_base::app);
 
-    file << std::setprecision(4) << std::fixed;
+    file << std::setprecision(6) << std::fixed;
 
     int nx = grid.structure.nx;
     int ny = grid.structure.ny;
     int nz = grid.structure.nz;
     int gp = grid.structure.gp;
 
-    file << "U:" << endl;
     std::string space;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << grid.U(i, j, k) << " ";
-            }
-            file << endl;
-            space += "\t";
-        }
-        space = "";
-        file << endl;
-    }
 
-    file << endl << "V:" << endl;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << grid.V(i, j, k) << " ";
+    if (print_vel) {
+        file << name << ":" << endl;
+        for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
+            for (int k = 0 - gp; k < nz + gp; ++k) {
+                file << space;
+                for (int i = 0 - gp; i < nx + gp; ++i) {
+                    file << "( " << grid.U(i, j, k) << " , " << grid.V(i,j,k) << ", " << grid.W(i,j,k) << " )" << " ";
+                }
+                file << endl;
+                space += "\t";
             }
+            space = "";
             file << endl;
-            space += "\t";
         }
-        space = "";
-        file << endl;
     }
-
-    file << endl << "W:" << endl;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << grid.W(i, j, k) << " ";
+    if (print_P) {
+        file << endl << name <<":" << endl;
+        for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
+            for (int k = 0 - gp; k < nz + gp; ++k) {
+                file << space;
+                for (int i = 0 - gp; i < nx + gp; ++i) {
+                    file << grid.P(i, j, k) << " ";
+                }
+                file << endl;
+                space += "\t";
             }
+            space = "";
             file << endl;
-            space += "\t";
         }
-        space = "";
-        file << endl;
-    }
-
-    file << endl << "P:" << endl;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << grid.P(i, j, k) << " ";
-            }
-            file << endl;
-            space += "\t";
-        }
-        space = "";
-        file << endl;
     }
 }
 
 #ifdef DEBUG_PRINT_BUFFERS
-#define b_print(buff, dir, n) \
+#define b_print(buff, dir, n, name, p_Vel, p_P) \
 if (!rank) { \
 std::string nn{dir + to_string(n)}; \
-print(buff, nn); \
+print(buff, nn, name, p_Vel, p_P); \
 }
 #define c_dir(dir) \
 if (!rank) {\
 create_directories(dir); \
 }
 #else
-#define b_print(a,b,c) //
+#define b_print(a,b,c,d,p_Vel, p_P) //
 #define c_dir(a) //
 #endif
 
