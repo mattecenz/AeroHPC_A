@@ -10,14 +10,12 @@ int testSolver(const int rank, const int size) {
 
     // dividing the timestep size to half
     const std::vector<Real> deltaTs = {0.001, 0.0005, 0.00025};
-    const std::vector<int> nodes = {
-        3
-    };
-    const Real dim_x = 0.9;
-    const Real dim_y = 0.9;
-    const Real dim_z = 0.9;
+    const std::vector<int> nodes = {16};
+    const Real dim_x = 3;
+    const Real dim_y = 3;
+    const Real dim_z = 3;
     const Real Re = 1000;
-    const index_t timeSteps = 1;
+    const index_t timeSteps = 10;
 
 
     std::vector<Real> error;

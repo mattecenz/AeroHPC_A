@@ -249,7 +249,7 @@ inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff
         b_print(model_buff, dir, 0, "fft result", false, true);
 
         GRADX(grad_buff, model_buff)
-        b_print(model_buff, dir, 0, "grad phi2-pn", true, false);
+        b_print(grad_buff, dir, 0, "grad phi2-pn", true, false);
         //boundary_cond.apply(model_buff, t_0);
     }
 

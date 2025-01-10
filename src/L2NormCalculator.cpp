@@ -3,7 +3,7 @@
 
 Real ExactSolution::u(Real x, Real y, Real z, Real t) {
 #ifdef TEST
-    return x + y + z;
+    return 5.0;
 #else
     return 0;
 #endif
@@ -11,7 +11,7 @@ Real ExactSolution::u(Real x, Real y, Real z, Real t) {
 
 Real ExactSolution::v(Real x, Real y, Real z, Real t) {
 #ifdef TEST
-    return x+y+z;
+    return 5.0;
 #else
     return 0;
 #endif
@@ -19,7 +19,7 @@ Real ExactSolution::v(Real x, Real y, Real z, Real t) {
 
 Real ExactSolution::w(Real x, Real y, Real z, Real t) {
 #ifdef TEST
-    return x+y+z;
+    return 5.0;
 #else
     return 0;
 #endif
