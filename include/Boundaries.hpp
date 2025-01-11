@@ -144,7 +144,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
                         U(data, i, j, east_ghost_k) = 2 * domData.eastBF.UF(x + params.dX, y + params.dY2, z, currentTime)
                                                       - U(data, i, j, east_inner_k);
-                        V(data, i, j, east_ghost_k) = 2 * domData.eastBF.VF(x + params.dX2, y + params.dY, z, currentTime);
+                        V(data, i, j, east_ghost_k) = 2 * domData.eastBF.VF(x + params.dX2, y + params.dY, z, currentTime)
+                                                      - V(data, i, j, east_inner_k);
                         W(data, i, j, east_ghost_k) = 0;
                     ITERATE_FACE_END()
                 } else {
@@ -228,7 +229,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                     // apply on face
                     ITERATE_YZ_FACE(j, k, y, z)
                         // On y = phy_dim for domain point we have exact for V
-                        U(data, back_inner_i, j, k) = domData.backBF.UF(x, y + params.dY2, +params.dZ2, currentTime);
+                        U(data, back_inner_i, j, k) = domData.backBF.UF(x, y + params.dY2, z + params.dZ2, currentTime);
                         // For ghost points we have useless V, other approximate
                         U(data, back_ghost_i, j, k) = 0;
                         V(data, back_ghost_i, j, k) = 2 * domData.backBF.VF(x, y + params.dY, z + params.dZ2, currentTime)
@@ -277,8 +278,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                     // apply on face
                     ITERATE_YZ_FACE(j, k, y, z)
                         // On y = 0 for ghost point we hae exact for V, other approximate
-                        U(data, front_ghost_i, j, k) = domData.frontBF.UF(x, y + params.dY2, z + params.dZ2, currentTime)
-                                                       - U(data, front_inner_i, j, k);
+                        U(data, front_ghost_i, j, k) = domData.frontBF.UF(x, y + params.dY2, z + params.dZ2, currentTime);
                         V(data, front_ghost_i, j, k) = 2 * domData.frontBF.VF(x, y + params.dY, z + params.dZ2, currentTime)
                                                        - V(data, front_inner_i, j, k);
                         W(data, front_ghost_i, j, k) = 2 * domData.frontBF.WF(x, y + params.dY2, z + params.dZ, currentTime)
