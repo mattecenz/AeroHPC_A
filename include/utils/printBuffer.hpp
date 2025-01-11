@@ -5,96 +5,99 @@
 #include <string>
 #include <iomanip>
 #include <filesystem>
-#include "data/SolverData.hpp"
+#include "Traits.hpp"
 
 using namespace std;
 
 using namespace filesystem;
 
-inline void print(const Real *data, std::string &filename, bool has_ghosts) {
-    std::ofstream file;
-    file.open(filename);
+class BufferPrinter {
 
-    file << std::setprecision(4) << std::fixed;
+    std::ofstream outputFile;
+    const std::string printer_dir_path;
 
-    int nx = has_ghosts ? params.loc_gnX : params.loc_nX;
-    int ny = has_ghosts ? params.loc_gnY : params.loc_nY;
-    int nz = has_ghosts ? params.loc_gnZ : params.loc_nZ;
-    int gp = has_ghosts ? 1 : 0;
+public:
 
-    file << "U:" << endl;
-    std::string space;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << U(data, i, j, k) << " ";
-            }
-            file << endl;
-            space += "\t";
-        }
-        space = "";
-        file << endl;
-    }
+    static constexpr int PRINT_VELOCITY = 1;
+    static constexpr int PRINT_PRESSURE = 2;
 
-    file << endl << "V:" << endl;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << V(data, i, j, k) << " ";
-            }
-            file << endl;
-            space += "\t";
-        }
-        space = "";
-        file << endl;
-    }
+    const int precision = 4;
 
-    file << endl << "W:" << endl;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << W(data, i, j, k) << " ";
-            }
-            file << endl;
-            space += "\t";
-        }
-        space = "";
-        file << endl;
-    }
+    explicit BufferPrinter(const std::string &printer_dir_path) : printer_dir_path(printer_dir_path) {}
 
-    file << endl << "P:" << endl;
-    for (int j = ny - 1 + gp; j >= 0 - gp; --j) {
-        for (int k = 0 - gp; k < nz + gp; ++k) {
-            file << space;
-            for (int i = 0 - gp; i < nx + gp; ++i) {
-                file << P(data, i, j, k) << " ";
-            }
-            file << endl;
-            space += "\t";
-        }
-        space = "";
-        file << endl;
-    }
-}
-
-inline std::string dir;
-
-#ifdef DEBUG_PRINT_BUFFERS
-#define b_print(buff, n, has_ghost) \
-if (!rank) { \
-std::string nn{dir + to_string(n)}; \
-print(buff, nn, has_ghost); \
-}
-#define c_dir() \
-if (!rank) {\
-create_directories(dir); \
-}
-#else
-#define b_print(a,b,c) //
-#define c_dir(a) //
+    void initDir() const {
+#if DEBUG_PRINT_BUFFERS
+        if (IS_MAIN_PROC) create_directories(printer_dir_path);
 #endif
 
+    }
+
+    void setFile(const std::string &iterationFilePath) {
+#if DEBUG_PRINT_BUFFERS
+        if (outputFile.is_open()) outputFile.close();
+        outputFile.open(printer_dir_path + "/" + iterationFilePath);
 #endif
+    }
+
+    void print(const Real *data, const std::string &buffer_name, const int type) {
+        if (!outputFile.is_open()) return;
+
+        outputFile << std::setprecision(precision) << std::fixed;
+
+        outputFile << buffer_name << ":" << endl;
+        std::string prev_space;
+        std::string space;
+
+        for (int k = -1; k <= params.loc_nZ ; ++k) prev_space += '\t';
+
+        if (type & PRINT_VELOCITY) {
+            for (int j = params.loc_nY; j >= -1; --j) {
+                for (int k = -1; k <= params.loc_nZ ; ++k) {
+                    outputFile << prev_space;
+                    for (int i = -1; i <= params.loc_nX; ++i) {
+                        outputFile << U(data, i, j, k) << " ";
+                    }
+                    outputFile << space << "\t" << prev_space;
+                    for (int i = -1; i <= params.loc_nX; ++i) {
+                        outputFile << V(data, i, j, k) << " ";
+                    }
+                    outputFile << space << "\t" << prev_space;
+                    for (int i = -1; i <= params.loc_nX; ++i) {
+                        outputFile << W(data, i, j, k) << " ";
+                    }
+                    outputFile << endl;
+                    space += "\t";
+                    prev_space = prev_space.substr(0, prev_space.size() - 1);
+                }
+                space = "";
+                for (int k = -1; k <= params.loc_nZ ; ++k) prev_space += '\t';
+                outputFile << endl;
+            }
+        }
+        if (type & PRINT_PRESSURE) {
+            for (int j = params.loc_nY; j >= -1; --j) {
+                for (int k = -1; k <= params.loc_nZ ; ++k) {
+                    outputFile << space;
+                    for (int i = -1; i <= params.loc_nX; ++i) {
+                        outputFile << P(data, i, j, k) << " ";
+                    }
+                    outputFile << endl;
+                    space += "\t";
+                }
+                space = "";
+                for (int k = -1; k <= params.loc_nZ ; ++k) prev_space += '\t';
+                outputFile << endl;
+            }
+        }
+        outputFile << std::endl
+        << "=============================================================================================="
+        << "=============================================================================================="
+        << "==============================================================================================" << std::endl;
+    }
+};
+
+inline BufferPrinter bufferPrinter("./iterations");
+
+#define enabledBufferPrinter if(IS_MAIN_PROC) bufferPrinter
+
+#endif //AEROHPC_A_PRINT_BUFFER_H

@@ -23,7 +23,7 @@ compute_rhs(W)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// FORCING TERM ///////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ForcingT
+#if ForcingT
 #define getForceU(force, i, j, k) const Real force = ft.computeGx(x + params.dX, y + params.dX2, z + params.dZ2)
 #define getForceV(force, i, j, k) const Real force = ft.computeGy(x + params.dX2, y + params.dY, z + params.dZ2)
 #define getForceW(force, i, j, k) const Real force = ft.computeGz(x + params.dX2, y + params.dY2, z + params.dZ)
@@ -35,14 +35,14 @@ compute_rhs(W)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// PRESSURE TERM //////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef DISABLE_PRESSURE
-#define getPressureGradU(d_press, buff, i, j, k) const Real d_press = mu::dp_dx_U(buff, i, j, k)
-#define getPressureGradV(d_press, buff, i, j, k) const Real d_press = mu::dp_dy_V(buff, i, j, k)
-#define getPressureGradW(d_press, buff, i, j, k) const Real d_press = mu::dp_dz_W(buff, i, j, k)
-#else
+# if DISABLE_PRESSURE
 #define getPressureGradU(d_press, buff, i, j, k) constexpr Real d_press = 0
 #define getPressureGradV(d_press, buff, i, j, k) constexpr Real d_press = 0
 #define getPressureGradW(d_press, buff, i, j, k) constexpr Real d_press = 0
+#else
+#define getPressureGradU(d_press, buff, i, j, k) const Real d_press = mu::dp_dx_U(buff, i, j, k)
+#define getPressureGradV(d_press, buff, i, j, k) const Real d_press = mu::dp_dy_V(buff, i, j, k)
+#define getPressureGradW(d_press, buff, i, j, k) const Real d_press = mu::dp_dz_W(buff, i, j, k)
 #endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

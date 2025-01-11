@@ -3,6 +3,19 @@
 
 #include <functional>
 
+#ifndef ForcingT
+#define ForcingT 0
+#endif
+
+#ifndef DISABLE_PRESSURE
+#define DISABLE_PRESSURE 0
+#endif
+
+#ifndef DEBUG_PRINT_BUFFERS
+#define DEBUG_PRINT_BUFFERS 0
+#endif
+
+
 #if REAL_USE_FLOAT
 typedef float Real;
 #define Real_Dataname "float"
@@ -47,6 +60,11 @@ typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 
 #include "mpi.h"
 
+inline int THIS_PROC_RANK = MPI_PROC_NULL;
+inline int THIS_WORLD_SIZE = -1;
+
+#define IS_MAIN_PROC (THIS_PROC_RANK == 0)
+
 #if REAL_USE_FLOAT
 #define Real_MPI MPI_FLOAT
 #else
@@ -66,6 +84,5 @@ typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 #define V_BUFFER_TAG 512
 #define W_BUFFER_TAG 1024
 #define P_BUFFER_TAG 2048
-
 
 #endif //AEROHPC_A_TRAITS_H

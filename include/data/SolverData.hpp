@@ -57,7 +57,7 @@ inline DomainData domData = nullptr;
 #define rhs_W(i,j,k) get_W(rkData.rhs_data)[indexing(i, j, k)]
 #define rhs_P(i,j,k) get_P(rkData.rhs_data)[indexing(i, j, k)]
 
-void inline initData(const Real dimX, const Real dimY, const Real dimZ,
+void inline initSolverData(const Real dimX, const Real dimY, const Real dimZ,
                      const Real originX, const Real originY, const Real originZ,
                      const Real deltaT, const index_t timestep, const Real Re,
                      const index_t nX, const index_t nY, const index_t nZ,

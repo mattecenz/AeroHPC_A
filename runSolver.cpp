@@ -14,19 +14,24 @@
 
 #include "utils/printBuffer.hpp"
 
-inline Real runSolver(const int rank, const int size,
-               const Real extr_px, const Real extr_py, const Real extr_pz) {
+inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz) {
 
-    if (!rank)
-        logger.printTitle("Solver parameters")
+    enabledLogger.printTitle("Subdomain settings")
+                .printValue(5, "IsOnTop", params.isOnTop)
+                .printValue(5, "IsOnBottom", params.isOnBottom)
+                .printValue(5, "IsOnLeft", params.isOnLeft)
+                .printValue(5, "IsOnRight", params.isOnRight);
+
+
+
+    enabledLogger.printTitle("Solver parameters")
                 .printValue(5, "Iterations", params.timesteps)
                 .printValue(5, "dT", params.dt)
                 .printValue(5, "Re num", params.Re)
                 .printValue(5, "Phy dim", std::to_string(params.dimX) + " x " + std::to_string(params.dimY) + " x " + std::to_string(params.dimZ));
 
 
-    if (!rank)
-        logger.printTitle("Grid parameters")
+    enabledLogger.printTitle("Grid parameters")
                 .printValue(5, "nodes", std::to_string(params.loc_nX)
                                         + " x " + std::to_string(params.loc_nY)
                                         + " x " + std::to_string(params.loc_nZ));
@@ -35,8 +40,7 @@ inline Real runSolver(const int rank, const int size,
     initializeModel(rkData.model_data, 0);
     chrono_stop(initT);
 
-    if (!rank)
-        logger.printTitle("Grid initialized", initT);
+    enabledLogger.printTitle("Grid initialized", initT);
 
     // last iteration l2Norm capture
     Real localL2Norm = 0.0;
@@ -47,8 +51,7 @@ inline Real runSolver(const int rank, const int size,
     index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
-    if (!rank)
-        logger.printTitle("Start computation")
+    enabledLogger.printTitle("Start computation")
                 .openTable("Iter", {"ts", "gl2", "rkT", "l2T", "TxN"});
 
     chrono_start(compT);
@@ -56,8 +59,7 @@ inline Real runSolver(const int rank, const int size,
     apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
     for (index_t step = 0; step < params.timesteps; ++step) {
 
-        dir = "./iterations/" + to_string(step) + "/";
-        c_dir();
+        enabledBufferPrinter.setFile(to_string(step));
 
         const Real time = real(step) * params.dt;
 
@@ -76,14 +78,12 @@ inline Real runSolver(const int rank, const int size,
             globalL2Norm = 0.0;
             MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
             globalL2Norm = std::sqrt(globalL2Norm);
-            if (!rank)
-                logger.printTableValues(step + 1, {currentTime, globalL2Norm, rkTime, l2Time, perf});
+            enabledLogger.printTableValues(step + 1, {currentTime, globalL2Norm, rkTime, l2Time, perf});
         }
     }
     chrono_stop(compT);
 
-    if (!rank)
-        logger.closeTable().printTitle("End of computation", compT);
+    enabledLogger.closeTable().printTitle("End of computation", compT);
 
     //TODO EXPORTING
 /*
