@@ -11,6 +11,7 @@
 #include "data/SolverData.hpp"
 #include "Boundaries.hpp"
 #include "Initialization.hpp"
+#include "vtk/VTKConverter.hpp"
 
 #include "utils/printBuffer.hpp"
 
@@ -43,20 +44,24 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
     enabledLogger.printTitle("Grid initialized", initT);
 
     // last iteration l2Norm capture
-    Real localL2Norm = 0.0;
-    Real globalL2Norm = 0.0;
+    Real localL2NormU = 0.0;
+    Real globalL2NormU = 0.0;
+    Real localL2NormP = 0.0;
+    Real globalL2NormP = 0.0;
 
     // Printing variables
-    index_t maxTablePrintLine = 10;
+    index_t maxTablePrintLine = 200;
     index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     enabledLogger.printTitle("Start computation")
-                .openTable("Iter", {"ts", "gl2", "rkT", "l2T", "TxN"});
+                .openTable("Iter", {"ts", "gl2U", "gl2P","rkT", "l2T", "TxN"});
 
     chrono_start(compT);
 
     apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
+
+    VTKConverter::exportGrid(rkData.model_data).writeFile("vtk/solution_0.vtk");
     for (index_t step = 0; step < params.timesteps; ++step) {
 
         enabledBufferPrinter.setFile(to_string(step));
@@ -71,14 +76,18 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
         {
             Real currentTime = time + params.dt;
             chrono_start(l2Time);
-            localL2Norm = computeL2Norm(rkData.model_data, currentTime);
+            computeL2Norm(rkData.model_data, currentTime, localL2NormU, localL2NormP);
             chrono_stop(l2Time);
             const Real perf = rkTime / params.grid_ndim;
 
-            globalL2Norm = 0.0;
-            MPI_Allreduce(&localL2Norm, &globalL2Norm, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
-            globalL2Norm = std::sqrt(globalL2Norm);
-            enabledLogger.printTableValues(step + 1, {currentTime, globalL2Norm, rkTime, l2Time, perf});
+            globalL2NormU = 0.0;
+            globalL2NormP = 0.0;
+            MPI_Allreduce(&localL2NormU, &globalL2NormU, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&localL2NormP, &globalL2NormP, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
+            globalL2NormU = std::sqrt(globalL2NormU);
+            globalL2NormP = std::sqrt(globalL2NormP);
+            enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
+            VTKConverter::exportGrid(rkData.model_data).writeFile("vtk/solution_"+std::to_string(step)+".vtk");
         }
     }
     chrono_stop(compT);
@@ -128,5 +137,5 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
         logger.printTitle("profile3 written");
 */
 
-    return globalL2Norm;
+    return 0;
 }

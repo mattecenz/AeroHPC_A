@@ -45,13 +45,13 @@ public:
         inputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[0] * c2D.zSize[1] * c2D.zSize[2]);
         outputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[0] * c2D.zSize[1] * c2D.zSize[2]);
 
-        planx = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, FFTW_REDFT10, FFTW_ESTIMATE);
-        plany = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, FFTW_REDFT10, FFTW_ESTIMATE);
-        planz = fftwr_plan_r2r_1d(c2D.zSize[2], inputZ, outputZ, FFTW_REDFT10, FFTW_ESTIMATE);
+        planx = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, params.periodicX ? FFTW_R2HC : FFTW_REDFT10, FFTW_ESTIMATE);
+        plany = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, params.periodicY ? FFTW_R2HC : FFTW_REDFT10, FFTW_ESTIMATE);
+        planz = fftwr_plan_r2r_1d(c2D.zSize[2], inputZ, outputZ, params.periodicZ ? FFTW_R2HC : FFTW_REDFT10, FFTW_ESTIMATE);
 
-        planz_i = fftwr_plan_r2r_1d(c2D.zSize[2], inputZ, outputZ, FFTW_REDFT01, FFTW_ESTIMATE);
-        plany_i = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, FFTW_REDFT01, FFTW_ESTIMATE);
-        planx_i = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, FFTW_REDFT01, FFTW_ESTIMATE);
+        planz_i = fftwr_plan_r2r_1d(c2D.zSize[2], inputZ, outputZ, params.periodicX ? FFTW_HC2R : FFTW_REDFT01, FFTW_ESTIMATE);
+        plany_i = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, params.periodicY ? FFTW_HC2R : FFTW_REDFT01, FFTW_ESTIMATE);
+        planx_i = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, params.periodicZ ? FFTW_HC2R : FFTW_REDFT01, FFTW_ESTIMATE);
 
         this->base_buffer = base_buffer;
         c2D.allocY(u2);

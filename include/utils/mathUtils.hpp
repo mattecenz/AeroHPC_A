@@ -36,7 +36,7 @@ namespace mathUtils {
     }
 
     inline Real dp_dx_U(const Real *data, int i, int j, int k) {
-        return (P(data, i, j, k) - P(data, i - 1, j, k)) / params.dX;
+        return (P(data, i+1, j, k) - P(data, i, j, k)) / params.dX;
     }
 
     inline Real dp_dy_V(const Real *data, int i, int j, int k) {
