@@ -5,7 +5,7 @@
 #include "data/SolverData.hpp"
 #include "utils/macroUtils.hpp"
 
-inline void computeL2Norm(const Real *data, const Real time, Real &pErr, Real &uErr) {
+inline void computeL2Norm(const Real *data, const Real time, Real &uErr, Real &pErr) {
     Real sumU = 0.0;
     Real sumP = 0.0;
 
