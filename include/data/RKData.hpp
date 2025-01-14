@@ -22,12 +22,12 @@ public:
         rhs_data = new Real[(VELOCITY_COMPONENTS + 1) * params.grid_ndim];
     }
 
-#define destroy(data) delete [] data; data=nullptr;
+#define my_destroy(data) delete [] data; data=nullptr;
 
     ~RKData() {
-        destroy(model_data);
-        destroy(buffer_data);
-        destroy(rhs_data);
+        my_destroy(model_data);
+        my_destroy(buffer_data);
+        my_destroy(rhs_data);
     }
 };
 

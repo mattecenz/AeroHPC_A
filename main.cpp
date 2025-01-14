@@ -63,7 +63,7 @@ int runTestCase(int rank, int size, int argc, char **argv) {
             dim_x = 1.0;
             dim_y = 1.0;
             dim_z = 2.0;
-            Re = 1000;
+            Re = 1000.0;
 
             origin_x = 0.0;
             origin_y = 0.0;
