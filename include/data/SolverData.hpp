@@ -68,10 +68,10 @@ inline Real interpData = nullptr;
 #define rhs_P(i,j,k) get_P(rkData.rhs_data)[indexing(i, j, k)]
 
 // ELEMENTS FOR PHYSICAL BUFFERS
-#define U(data_ptr, i, j, k) get_U_physical(data_ptr)[physical_indexing(i,j,k)]
-#define V(data_ptr, i, j, k) get_V_physical(data_ptr)[physical_indexing(i,j,k)]
-#define W(data_ptr, i, j, k) get_W_physical(data_ptr)[physical_indexing(i,j,k)]
-#define P(data_ptr, i, j, k) get_P_physical(data_ptr)[physical_indexing(i,j,k)]
+#define PU(data_ptr, i, j, k) get_U_physical(data_ptr)[physical_indexing(i,j,k)]
+#define PV(data_ptr, i, j, k) get_V_physical(data_ptr)[physical_indexing(i,j,k)]
+#define PW(data_ptr, i, j, k) get_W_physical(data_ptr)[physical_indexing(i,j,k)]
+#define PP(data_ptr, i, j, k) get_P_physical(data_ptr)[physical_indexing(i,j,k)]
 
 void inline initSolverData(const Real dimX, const Real dimY, const Real dimZ,
                      const Real originX, const Real originY, const Real originZ,
@@ -114,7 +114,7 @@ void inline initInterpolationData(const Parameters &parameters) {
     interpData_ptr = new Real[(VELOCITY_COMPONENTS + 1) * parameters.phy_ndim];
 }
 
-void inline destryInterpolationData() {
+void inline destroyInterpolationData() {
     if (interpData_ptr != nullptr) delete[] interpData_ptr;
     interpData_ptr = nullptr;
 }
