@@ -21,6 +21,8 @@ public:
     // Physical Grid Info
     Real dX, dY, dZ; // Physical spacing between nodes
     Real dX2, dY2, dZ2; // Physical spacing between staggered nodes
+    index_t phy_nX, phy_nY, phy_nZ; // Physical grid number of nodes (1 more than logical)
+    index_t phy_ndim; // Physical grid total number of nodes
 
     // Domain Info
     int neigh_front, neigh_back,
@@ -76,6 +78,12 @@ public:
 
         grid_ndim = loc_nX * loc_nY * loc_nZ;
         grid_gndim = loc_gnX * loc_gnY * loc_gnZ;
+
+        phy_nX = loc_nX + 1;
+        phy_nY = loc_nY + 1;
+        phy_nZ = loc_nZ + 1;
+
+        phy_ndim = phy_nX * phy_nY * phy_nZ;
 
         // GENERATE MPI VECTORS
         MPI_Type_vector(loc_nY, loc_gnX, loc_gnX, Real_MPI, &XYFace);
