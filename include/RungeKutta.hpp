@@ -26,7 +26,7 @@ inline void rungeKutta(const Real time) {
     enabledBufferPrinter.print(rkData.buffer_data, "Y2star", BufferPrinter::PRINT_VELOCITY);
 
 #if !DISABLE_PRESSURE
-    P_Eq(consts.k_0, rkData.buffer_data, rkData.buffer_data)
+    P_Eq(consts.inv_k_0, rkData.buffer_data, rkData.buffer_data)
 
     enabledBufferPrinter.print(rkData.buffer_data, "PHI2-PN incomplete", BufferPrinter::PRINT_PRESSURE);
     // apply_boundaries(rkData.buffer_data, t_0, TYPE_PRESSURE);
@@ -49,7 +49,7 @@ inline void rungeKutta(const Real time) {
     apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY);
 
 #if !DISABLE_PRESSURE
-    P_Eq(consts.k_3, rkData.model_data, rkData.model_data)
+    P_Eq(consts.inv_k_3, rkData.model_data, rkData.model_data)
     // apply_boundaries(rkData.model_data, t_1, TYPE_PRESSURE);
 
     Y3(rkData.model_data, rkData.model_data, rkData.model_data, rkData.model_data, rkData.buffer_data)
@@ -65,7 +65,7 @@ inline void rungeKutta(const Real time) {
     apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY);
 
 #if !DISABLE_PRESSURE
-    P_Eq(consts.k_6, rkData.buffer_data, rkData.buffer_data)
+    P_Eq(consts.inv_k_6, rkData.buffer_data, rkData.buffer_data)
     // apply_boundaries(rkData.buffer_data, t_2, TYPE_PRESSURE);
 
     U_N1(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data);
