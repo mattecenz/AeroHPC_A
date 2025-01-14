@@ -10,7 +10,7 @@ namespace mu = mathUtils;
 
 //// RHS ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define compute_rhs(C)                                                                                          \
-    inline Real compute_rhs_##C(Real *data, const Real nu, const index_t i, const index_t j, const index_t k)   \
+    inline Real compute_rhs_##C(Real *data, const index_t i, const index_t j, const index_t k)   \
     {                                                                                                           \
         return -mu::conv_##C(data, i, j, k) + consts.nu * mu::lap_##C(data, i, j, k);                           \
     }
@@ -52,7 +52,7 @@ compute_rhs(W)
 ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, P_N, i, j, k);                  \
-    const Real r = compute_rhs_##C(U_N, consts.nu, i, j, k);    \
+    const Real r = compute_rhs_##C(U_N, i, j, k);    \
     rhs_##C(i, j, k) = (r + force);                             \
     C(Y2star, i, j, k) = C(U_N, i, j, k)                        \
                             + consts.k_0 * (r + force)          \
@@ -71,7 +71,7 @@ ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, PHI_2, i, j, k);                \
     const Real r1 = rhs_##C(i, j, k);                           \
-    const Real r2 = compute_rhs_##C(Y2, consts.nu, i, j, k);    \
+    const Real r2 = compute_rhs_##C(Y2, i, j, k);    \
     rhs_##C(i, j, k) = (r2 + force);                            \
     C(Y3star, i, j, k) = C(Y2, i, j, k)                         \
                        - consts.k_1 * r1                        \
@@ -90,7 +90,7 @@ ITERATE_DOMAIN_END()
 ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, PHI_3, i, j, k);                \
-    const Real r = compute_rhs_##C(Y3, consts.nu, i, j, k);     \
+    const Real r = compute_rhs_##C(Y3, i, j, k);     \
     C(U_N1star, i, j, k) = C(Y3, i, j, k)                       \
                             - consts.k_4 * rhs_##C(i, j, k)     \
                             + consts.k_5 * (r + force)          \
