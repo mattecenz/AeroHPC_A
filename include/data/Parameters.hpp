@@ -25,8 +25,7 @@ public:
     index_t phy_ndim; // Physical grid total number of nodes
 
     // Domain Info
-    int neigh_front, neigh_back,
-            neigh_north, neigh_south,
+    int neigh_north, neigh_south,
             neigh_east, neigh_west,
             neigh_north_east, neigh_north_west,
             neigh_south_east, neigh_south_west;
