@@ -73,11 +73,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             if (params.neigh_north != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
-            } else {
-                ITERATE_XZ_FACE(i, k, x, z)
-                    P(data, i, north_ghost_j, k) = P(data, i, north_inner_j, k)
-                                                   + domData.northBF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
-                ITERATE_FACE_END()
             }
         }
     }
@@ -114,11 +109,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             if (params.neigh_south != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
-            } else {
-                ITERATE_XZ_FACE(i, k, x, z)
-                    P(data, i, south_ghost_j, k) = P(data, i, south_inner_j, k)
-                                                   - domData.southBF.PF(x + params.dX2, y, z + params.dZ2, currentTime) * params.dY;
-                ITERATE_FACE_END()
             }
         }
     }
@@ -158,11 +148,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             if (params.neigh_east != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
-            } else {
-                ITERATE_XY_FACE(i, j, x, y)
-                    P(data, i, j, east_ghost_k) = P(data, i, j, east_inner_k)
-                                                  + domData.eastBF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
-                ITERATE_FACE_END()
             }
         }
     }
@@ -199,11 +184,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
             if (params.neigh_west != MPI_PROC_NULL) {
                 add_request_pressure(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 add_request_pressure(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
-            } else {
-                ITERATE_XY_FACE(i, j, x, y)
-                    P(data, i, j, west_ghost_k) = P(data, i, j, west_inner_k)
-                                                  - domData.westBF.PF(x + params.dX2, y + params.dY2, z, currentTime) * params.dZ;
-                ITERATE_FACE_END()
             }
         }
     }
@@ -242,19 +222,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 }
             }
         }
-        // PRESSURE
-        if (apply_pressure) {
-            if (params.periodicX) {
-                ITERATE_YZ_FACE(j, k, y, z)
-                    P(data, back_ghost_i, j, k) = P(data, back_periodic_i, j, k);
-                ITERATE_FACE_END()
-            } else {
-                ITERATE_YZ_FACE(j, k, y, z)
-                    P(data, back_ghost_i, j, k) = P(data, back_inner_i, j, k)
-                                                  + domData.backBF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
-                ITERATE_FACE_END()
-            }
-        }
     }
 
     // FRONT
@@ -287,19 +254,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 } else {
                     // TODO Write neumann condition
                 }
-            }
-        }
-        // PRESSURE
-        if (apply_pressure) {
-            if (params.periodicX) {
-                ITERATE_YZ_FACE(j, k, y, z)
-                    P(data, front_ghost_i, j, k) = P(data, front_periodic_i, j, k);
-                ITERATE_FACE_END()
-            } else {
-                ITERATE_YZ_FACE(j, k, y, z)
-                    P(data, front_ghost_i, j, k) = P(data, front_inner_i, j, k)
-                                                   - domData.frontBF.PF(x, y + params.dY2, z + params.dZ2, currentTime) * params.dX;
-                ITERATE_FACE_END()
             }
         }
     }
