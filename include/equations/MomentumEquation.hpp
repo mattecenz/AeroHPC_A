@@ -49,7 +49,7 @@ compute_rhs(W)
 
 /// MOMENTUM EQUATIONS /////////////////////////////////////////////////////////////////////////////////////////////////
 #define Y2star_C(C, Y2star, U_N, P_N)                           \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
+ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, NO_SKIP)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, P_N, i, j, k);                  \
     const Real r = compute_rhs_##C(U_N, i, j, k);    \
@@ -67,7 +67,7 @@ ITERATE_DOMAIN_END()
 
 
 #define Y3star_C(C, Y3star, Y2, PHI_2)                          \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
+ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, NO_SKIP)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, PHI_2, i, j, k);                \
     const Real r1 = rhs_##C(i, j, k);                           \
@@ -87,7 +87,7 @@ ITERATE_DOMAIN_END()
 
 
 #define U_N1star_C(C, U_N1star, Y3, PHI_3)                      \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)            \
+ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, NO_SKIP)            \
     getForce##C(force, i, j, k);                                \
     getPressureGrad##C(d_press, PHI_3, i, j, k);                \
     const Real r = compute_rhs_##C(Y3, i, j, k);     \

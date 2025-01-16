@@ -91,9 +91,11 @@ public:
         fftwr_destroy_plan(planz_i);
     }
 
-#define eig(i, delta, N) (2.0 / delta * std::cos((i * M_PI) / (2.0 * N)))
+// #define eig(i, delta, N) (2.0 / delta * std::cos((i * M_PI) / (2.0 * N)))
+#define eig(i, delta, N) -std::pow(2.0 / delta * std::sin((M_PI*i) / (2.0 * N)),2)
 
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
+        std::cout << "-------------------START EIGENVALUES FOR POISSON SOLVER------------------" << std::endl;
         for (int j = 0; j < c2D.zSize[1]; j++){
             const Real lambda_2 = eig(j + c2D.zStart[1], params.dY, params.glob_nY);
             const index_t layer_idx = j * c2D.zSize[0] * c2D.zSize[2];
@@ -104,10 +106,12 @@ public:
 
                 for (int k = 0; k < c2D.zSize[2]; k++){
                     const Real lambda_3 = eig(k, params.dZ, params.glob_nZ);
-                    eigs[row_idx + k] = (lambda_1 * lambda_1 + lambda_2 * lambda_2 + lambda_3 * lambda_3);
+                    eigs[row_idx + k] = lambda_1 + lambda_2 + lambda_3;
+                    std::cout << eigs[row_idx+k] << std::endl;
                 }
             }
         }
+        std::cout << "---------------------END EIGENVALUES FOR POISSON SOLVER--------------------" << std::endl;
     }
 };
 

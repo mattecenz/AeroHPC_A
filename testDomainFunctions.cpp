@@ -48,8 +48,8 @@ TFunction oneFunction = [](const Real x, const Real y, const Real z, const Real 
 
 SpatialFunctionsCollect northC(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
 SpatialFunctionsCollect southC(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
-SpatialFunctionsCollect backC(zeroFunction, oneFunction, zeroFunction, zeroFunction);
-SpatialFunctionsCollect frontC(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
+SpatialFunctionsCollect backC(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
+SpatialFunctionsCollect frontC(zeroFunction, oneFunction, zeroFunction, zeroFunction);
 SpatialFunctionsCollect eastC(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
 SpatialFunctionsCollect westC(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
 SpatialFunctionsCollect domain(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
