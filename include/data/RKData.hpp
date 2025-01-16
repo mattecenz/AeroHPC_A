@@ -4,8 +4,6 @@
 #include "Traits.hpp"
 #include "data/Parameters.hpp"
 
-#define VELOCITY_COMPONENTS 3
-
 class RKData {
 public:
     Real *model_data = nullptr;

@@ -9,13 +9,35 @@
 #include "data/SolverData.hpp"
 
 namespace mathUtils {
+
+#define interpolate_on_grid(C) \
+    inline Real interp_##C##_onGrid(const Real *data, const index_t i, const index_t j, const index_t k) { \
+        const index_t U = 0; \
+        const index_t V = 1; \
+        const index_t W = 2; \
+        if constexpr (C == U) { \
+            return (U(data, i - 1, j, k) + U(data, i - 1, j - 1, k) + U(data, i - 1, j, k - 1) + U(data, i - 1, j - 1, k - 1)) / 4; \
+        } else if constexpr (C == V) {  \
+            return (V(data, i, j - 1, k) + V(data, i - 1, j - 1, k) + V(data, i, j - 1, k - 1) + V(data, i - 1, j - 1, k - 1)) / 4; \
+        } else { \
+            return (W(data, i, j, k - 1) + W(data, i - 1, j, k - 1) + W(data, i, j - 1, k - 1) + W(data, i - 1, j - 1, k - 1)) / 4; \
+        } \
+    }
+
+    interpolate_on_grid(U)
+
+    interpolate_on_grid(V)
+
+    interpolate_on_grid(W)
+
+
 #define interpolate(C) inline Real intp_##C(const Real *data, const int i, const int j, const int k) { \
     const int U = 0; \
     const int V = 1; \
     const int W = 2; \
-    if constexpr (C == 0) { \
+    if constexpr (C == U) { \
         return (U(data, i, j, k) + U(data, i - 1, j, k)) / 2; \
-    } else if constexpr (C == 1) { \
+    } else if constexpr (C == V) { \
         return (V(data, i, j, k) + V(data, i, j - 1, k)) / 2; \
     } else { \
         return (W(data, i, j, k) + W(data, i, j, k - 1)) / 2; \

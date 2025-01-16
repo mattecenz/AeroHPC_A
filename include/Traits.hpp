@@ -27,6 +27,8 @@ typedef double Real;
 #define real(val) static_cast<Real>(val)
 #define real_p(pntr) static_cast<Real*>(pntr)
 
+#define VELOCITY_COMPONENTS 3
+
 /**
  * Typedef for array indexing
  */
