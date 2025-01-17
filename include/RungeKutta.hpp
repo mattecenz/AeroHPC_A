@@ -29,16 +29,16 @@ inline void rungeKutta(const Real time) {
     P_Eq(consts.inv_k_0, rkData.buffer_data, rkData.buffer_data)
 
     enabledBufferPrinter.print(rkData.buffer_data, "PHI2-PN incomplete", BufferPrinter::PRINT_PRESSURE);
-    // apply_boundaries(rkData.buffer_data, t_0, TYPE_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_PRESSURE);
     enabledBufferPrinter.print(rkData.buffer_data, "PHI2-PN", BufferPrinter::PRINT_PRESSURE);
 
     Y2(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data)
 
     enabledBufferPrinter.print(rkData.buffer_data, "Y2 and PHI 2 no bounds",
                                BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
-    apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY /*| TYPE_PRESSURE*/);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY | TYPE_PRESSURE);
     enabledBufferPrinter.print(rkData.buffer_data, "Y2 and PHI 2 bounds",
-                            BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
 #endif
 
 #if ForcingT
@@ -46,14 +46,25 @@ inline void rungeKutta(const Real time) {
 #endif
 
     Y3star(rkData.model_data, rkData.buffer_data, rkData.buffer_data)
+
+    enabledBufferPrinter.print(rkData.model_data, "Y3star no bounds", BufferPrinter::PRINT_VELOCITY);
     apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY);
+    enabledBufferPrinter.print(rkData.model_data, "Y3star", BufferPrinter::PRINT_VELOCITY);
 
 #if !DISABLE_PRESSURE
     P_Eq(consts.inv_k_3, rkData.model_data, rkData.model_data)
-    // apply_boundaries(rkData.model_data, t_1, TYPE_PRESSURE);
+
+    enabledBufferPrinter.print(rkData.model_data, "PHI3-PHI2 incomplete", BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.model_data, t_1, TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.model_data, "PHI3-PHI2", BufferPrinter::PRINT_PRESSURE);
 
     Y3(rkData.model_data, rkData.model_data, rkData.model_data, rkData.model_data, rkData.buffer_data)
-    apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY /*| TYPE_PRESSURE*/);
+
+    enabledBufferPrinter.print(rkData.model_data, "Y3 and PHI 3 no bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY | TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.model_data, "Y3 and PHI 3 bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
 #endif
 
 
@@ -62,14 +73,26 @@ inline void rungeKutta(const Real time) {
 #endif
 
     U_N1star(rkData.buffer_data, rkData.model_data, rkData.model_data)
+
+    enabledBufferPrinter.print(rkData.buffer_data, "U_N1 no bounds", BufferPrinter::PRINT_VELOCITY);
     apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY);
+    enabledBufferPrinter.print(rkData.buffer_data, "U_N1", BufferPrinter::PRINT_VELOCITY);
+
 
 #if !DISABLE_PRESSURE
     P_Eq(consts.inv_k_6, rkData.buffer_data, rkData.buffer_data)
-    // apply_boundaries(rkData.buffer_data, t_2, TYPE_PRESSURE);
+
+    enabledBufferPrinter.print(rkData.buffer_data, "PN1-PHI3 incomplete", BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.buffer_data, "PN1-PHI3", BufferPrinter::PRINT_PRESSURE);
 
     U_N1(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data);
-    apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY /*| TYPE_PRESSURE*/);
+
+    enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 no bounds",
+                                   BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY | TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 bounds",
+                           BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
 #endif
 
     swap(rkData.buffer_data, rkData.model_data);
