@@ -77,12 +77,12 @@ public:
         if (type & PRINT_PRESSURE) {
             for (int j = params.loc_nY; j >= -1; --j) {
                 for (int k = -1; k <= params.loc_nZ ; ++k) {
-                    outputFile << space;
+                    outputFile << prev_space;
                     for (int i = -1; i <= params.loc_nX; ++i) {
                         outputFile << P(data, i, j, k) << " ";
                     }
                     outputFile << endl;
-                    space += "\t";
+                    prev_space = prev_space.substr(0, prev_space.size() - 1);
                 }
                 space = "";
                 for (int k = -1; k <= params.loc_nZ ; ++k) prev_space += '\t';

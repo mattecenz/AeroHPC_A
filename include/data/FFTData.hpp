@@ -91,7 +91,7 @@ public:
         fftwr_destroy_plan(planz_i);
     }
 
-#define eig(i, delta, N) (2.0 / delta * std::cos((i * M_PI) / (2.0 * N)))
+#define eig(i, delta, N) ( -pow((2.0 / delta * std::sin((i * M_PI) / (2.0 * N))), 2) )
 
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
         for (int j = 0; j < c2D.zSize[1]; j++){
@@ -104,7 +104,9 @@ public:
 
                 for (int k = 0; k < c2D.zSize[2]; k++){
                     const Real lambda_3 = eig(k, params.dZ, params.glob_nZ);
-                    eigs[row_idx + k] = (lambda_1 * lambda_1 + lambda_2 * lambda_2 + lambda_3 * lambda_3);
+                    Real e = lambda_1 + lambda_2 + lambda_3;
+                    if (e == 0) e = 1e-10;
+                    eigs[row_idx + k] = e;
                 }
             }
         }
