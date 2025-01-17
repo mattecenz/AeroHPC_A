@@ -47,6 +47,25 @@
                 if constexpr (compute_physics)                                          \
                     x = real(i + params.st_nX) * params.dX + params.originX;
 
+#define ITERATE_DOMAIN_PHYSICAL(i,j,k, compute_physics)                                 \
+{                                                                                       \
+    const index_t nz = params.phy_nZ - 1;                                               \
+    const index_t ny = params.phy_nY - 1;                                               \
+    const index_t nx = params.phy_nX - 1;                                               \
+    for (index_t k = 1; k < nz; ++k) {                                                  \
+        Real z = 0;                                                                     \
+        if constexpr (compute_physics)                                                  \
+            z = real(k + params.st_nZ) * params.dZ + params.originZ;                    \
+        for (index_t j = 1; j < ny; ++j) {                                              \
+            Real y = 0;                                                                 \
+            if constexpr (compute_physics)                                              \
+                y = real(j + params.st_nY) * params.dY + params.originY;                \
+        _Pragma("omp simd")                                                             \
+            for (index_t i = 1; i < nx; ++i) {                                          \
+                Real x = 0;                                                             \
+                if constexpr (compute_physics)                                          \
+                    x = real(i + params.st_nX) * params.dX + params.originX;
+
 
 #define ITERATE_DOMAIN_END()    \
             }                   \
@@ -54,8 +73,8 @@
     }                           \
 }
 
-#define ITERATE_X_ROW(i,x)                                                  \
-    for (index_t i = 0; i < params.loc_nX; i++) {                           \
+#define ITERATE_X_ROW(i,x)                                                      \
+    for (index_t i = 0; i < params.loc_nX; i++) {                               \
         const Real x = real(i + params.st_nX) * params.dX + params.originX;
 
 #define ITERATE_XZ_FACE(i,k,x,z)                                                \
@@ -73,6 +92,34 @@
         const Real y = real(j + params.st_nY) * params.dY + params.originY;     \
         for (index_t k = 0; k < params.loc_nZ; k++) {                           \
             const Real z = real(k + params.st_nZ) * params.dZ + params.originZ;
+
+#define ITERATE_X_PHYSICAL_ROW(i, x, compute_physics)                           \
+    for (index_t i = 1; i < params.phy_nX - 1; i++) {                           \
+        Real x = 0;                                                             \
+        if constexpr (compute_physics)                                          \
+            x = real(i + params.st_nX) * params.dX + params.originX;
+
+#define ITERATE_Y_PHYSICAL_ROW(j, y, compute_physics)                           \
+    for (index_t j = 1; j < params.phy_nY - 1; j++) {                           \
+        Real y = 0;                                                             \
+        if constexpr (compute_physics)                                          \
+            y = real(j + params.st_nY) * params.dY + params.originY;
+
+#define ITERATE_Z_PHYSICAL_ROW(k, z, compute_physics)                           \
+    for (index_t k = 1; k < params.phy_nZ - 1; k++) {                           \
+        Real z = 0;                                                             \
+        if constexpr (compute_physics)                                          \
+            z = real(k + params.st_nZ) * params.dZ + params.originZ;
+
+#define ITERATE_XY_PHYSICAL_FACE(i, j, x, y, compute_physics)                   \
+    ITERATE_Y_PHYSICAL_ROW(j, y, compute_physics)                               \
+        ITERATE_X_PHYSICAL_ROW(i, x, compute_physics)
+
+#define ITERATE_XZ_PHYSICAL_FACE(i, k, x, z, compute_physics)                   \
+    ITERATE_Z_PHYSICAL_ROW(k, z, compute_physics)                               \
+        ITERATE_X_PHYSICAL_ROW(i, x, compute_physics)
+
+#define ITERATE_ROW_END() }
 
 #define ITERATE_FACE_END()  \
     }                       \

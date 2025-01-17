@@ -275,7 +275,7 @@ public:
     /**
      * Build a class with the given file description
      */
-    explicit VTKFile(std::string description = "") : _description(std::move(description)) {
+    explicit VTKFile(const std::string &description = "") : _description(std::move(description)) {
         // ensure description maximum length
         if (_description.length() > 255)
             _description = _description.substr(0, 255) + "\n";
@@ -285,19 +285,18 @@ public:
      * Construct a class with the given file description
      * Initialize the dataset with the given physical dimension and node number
      */
-    VTKFile(Vector physical_dimension, std::array<size_t, 3> nodes, std::string description = "")
+    VTKFile(const Vector &spacing, const Vector &origin, const std::array<size_t, 3> &nodes, std::string description = "")
             : VTKFile(std::move(description)) {
-        setupDataset(physical_dimension, nodes);
+        setupDataset(spacing, origin, nodes);
     }
 
     /**
      * Initialize the dataset with the given physical dimension and node number
      */
-    void setupDataset(Vector physical_dimension, std::array<size_t, 3> n) {
+    void setupDataset(const Vector &spacing, const Vector &origin, const std::array<size_t, 3> &n) {
         _nodes = n;
-        _spacing = {physical_dimension[0] / real(_nodes[0]),
-                    physical_dimension[1] / real(_nodes[1]),
-                    physical_dimension[2] / real(_nodes[2])};
+        _spacing = spacing;
+        _origin = origin;
         _data_size = nodes[0] * nodes[1] * nodes[2];
 
         _valid_dataset = true;
@@ -397,6 +396,8 @@ public:
      */
     const Vector &spacing = _spacing;
 
+    const Vector &origin = _origin;
+
 private:
     /**
      * Description of the file
@@ -410,6 +411,9 @@ private:
      * Node spacing of the dataset
      */
     Vector _spacing{};
+
+    Vector _origin{};
+
     /**
      * Size of dataset (total number of nodes)
      */
@@ -444,7 +448,7 @@ private:
         output << "DATASET STRUCTURED_POINTS\n";
         output << "DIMENSIONS " << _nodes[0] << " " << _nodes[1] << " " << _nodes[2] << "\n";
         output << "SPACING " << _spacing[0] << " " << _spacing[1] << " " << _spacing[2] << "\n";
-        output << "ORIGIN 0.0 0.0 0.0\n";
+        output << "ORIGIN " << _origin[0] << " " << _origin[1] << " " << _origin[2] << "\n";
         return output;
     }
 

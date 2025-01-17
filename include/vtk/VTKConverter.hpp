@@ -6,9 +6,9 @@
 
 namespace VTKConverter{
 
-    VTKFile exportGrid(Real* grid, std::string description = "");
+    VTKFile exportGrid(const Real* grid, std::string description = "");
 
-    std::vector<DataSection *> exportData(Real* grid);
+    std::vector<DataSection *> exportData(const Real* physical_grid);
 }
 
 #endif //AEROHPC_A_VTKCONVERTER_H

@@ -15,12 +15,16 @@ namespace mathUtils {
         const index_t U = 0; \
         const index_t V = 1; \
         const index_t W = 2; \
+        const index_t P = 3; \
         if constexpr (C == U) { \
             return (U(data, i - 1, j, k) + U(data, i - 1, j - 1, k) + U(data, i - 1, j, k - 1) + U(data, i - 1, j - 1, k - 1)) / 4; \
         } else if constexpr (C == V) {  \
             return (V(data, i, j - 1, k) + V(data, i - 1, j - 1, k) + V(data, i, j - 1, k - 1) + V(data, i - 1, j - 1, k - 1)) / 4; \
-        } else { \
+        } else if constexpr (C == W){ \
             return (W(data, i, j, k - 1) + W(data, i - 1, j, k - 1) + W(data, i, j - 1, k - 1) + W(data, i - 1, j - 1, k - 1)) / 4; \
+        } else if constexpr (C == P){ \
+            return (P(data, i, j, k) + P(data, i, j, k - 1) + P(data, i, j - 1, k) + P(data, i, j - 1, k - 1)  \
+                    + P(data, i - 1, j, k) + P(data, i - 1, j, k - 1) + P(data, i - 1, j - 1, k) + P(data, i - 1, j - 1, k - 1)) / 8;  \
         } \
     }
 
@@ -29,6 +33,8 @@ namespace mathUtils {
     interpolate_on_grid(V)
 
     interpolate_on_grid(W)
+
+    interpolate_on_grid(P)
 
 
 #define interpolate(C) inline Real intp_##C(const Real *data, const int i, const int j, const int k) { \
