@@ -52,7 +52,7 @@ int testSolver() {
 
         Real l2norm = runSolver(0.0, 0.0, 0.0);
 
-        destroyData();
+        destroySolverData();
 
         enabledLogger.printTitle("Data destroyed")
                 .closeSection().empty();
