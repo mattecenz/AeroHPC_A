@@ -89,10 +89,10 @@ inline void rungeKutta(const Real time) {
     U_N1(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data);
 
     enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 no bounds",
-                                   BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
     apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY | TYPE_PRESSURE);
     enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 bounds",
-                           BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
 #endif
 
     swap(rkData.buffer_data, rkData.model_data);
