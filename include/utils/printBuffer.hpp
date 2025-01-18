@@ -36,6 +36,14 @@ public:
 #if DEBUG_PRINT_BUFFERS
         if (outputFile.is_open()) outputFile.close();
         outputFile.open(printer_dir_path + "/" + iterationFilePath);
+        outputFile << "y     z" << std::endl;
+        outputFile << "↑   ↗" << std::endl;
+        outputFile << "| ∕" << std::endl;
+        outputFile << "0 — → x" << std::endl;
+        outputFile << std::endl
+        << "=============================================================================================="
+        << "=============================================================================================="
+        << "==============================================================================================" << std::endl;
 #endif
     }
 
