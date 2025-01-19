@@ -88,7 +88,11 @@ inline void solveEigenvalues(){
         for (int i = 0; i < zDirXSize; i++){
             const index_t row_idx = layer_idx + i * zDirZSize;
             for (int k = 0; k < zDirZSize; k++){
-                fftData.u3[row_idx + k] /= fftData.eigs[row_idx + k];
+                if(fftData.eigs[row_idx+k]!=0.0){
+                    fftData.u3[row_idx + k] /= fftData.eigs[row_idx + k];
+                }else{
+                    fftData.u3[row_idx + k] = 0.0;
+                }
             }
         }
     }

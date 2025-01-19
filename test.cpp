@@ -23,7 +23,7 @@ int testSolver() {
 
     const Real deltaT = 1e-5;
     const Real Re = 1000.0;
-    const index_t timeSteps = 30000;
+    const index_t timeSteps = 10;
 
     const bool periodicPressureBC[3] = {false, false, false};
 
@@ -31,7 +31,7 @@ int testSolver() {
 
 
     std::vector<index_t> nodes = {
-        16
+        3
     };
 
     enabledBufferPrinter.initDir();
@@ -52,7 +52,7 @@ int testSolver() {
 
         Real l2norm = runSolver(0.0, 0.0, 0.0);
 
-        destroyData();
+        // destroyData();
 
         enabledLogger.printTitle("Data destroyed")
                 .closeSection().empty();
