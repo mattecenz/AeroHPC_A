@@ -8,6 +8,7 @@
 #include "data/DomainData.hpp"
 #include "C2Decomp.hpp"
 
+// Define variable pointer name
 #define params_ptr _params
 #define c2D_ptr _c2D
 #define rkData_ptr _rkData
@@ -16,6 +17,7 @@
 #define domData_ptr _domData
 #define interpData_ptr _interpData
 
+// Shortening dereferencing pointer
 #define params (*params_ptr)
 #define c2D (*c2D_ptr)
 #define rkData (*rkData_ptr)
@@ -24,6 +26,7 @@
 #define domData (*domData_ptr)
 #define interpData (*interpData_ptr)
 
+//********************/ GLOBAL APPLICATION VARIABLES /*******************************//
 inline Parameters params = nullptr;
 inline C2Decomp c2D = nullptr;
 inline RKData rkData = nullptr;
@@ -31,6 +34,7 @@ inline FFTData fftData = nullptr;
 inline Constants consts = nullptr;
 inline DomainData domData = nullptr;
 inline Real interpData = nullptr;
+//**********************************************************************************//
 
 // INDEXING MACRO
 #define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)
@@ -96,17 +100,13 @@ void inline initSolverData(const Real dimX, const Real dimY, const Real dimZ,
 }
 
 void inline destroySolverData() {
-    if (params_ptr != nullptr) delete params_ptr;
-    if (c2D_ptr != nullptr) delete c2D_ptr;
-    if (rkData_ptr != nullptr) delete rkData_ptr;
-    if (fftData_ptr != nullptr) delete fftData_ptr;
-    if (consts_ptr != nullptr) delete consts_ptr;
+#define solverData_destroy(data) delete data; data = nullptr;
+    solverData_destroy(params_ptr);
+    solverData_destroy(c2D_ptr);
+    solverData_destroy(rkData_ptr);
+    solverData_destroy(fftData_ptr);
+    solverData_destroy(consts_ptr);
 
-    params_ptr = nullptr;
-    c2D_ptr = nullptr;
-    rkData_ptr = nullptr;
-    fftData_ptr = nullptr;
-    consts_ptr = nullptr;
     domData_ptr = nullptr;
 }
 
@@ -115,7 +115,7 @@ void inline initInterpolationData(const Parameters &parameters) {
 }
 
 void inline destroyInterpolationData() {
-    if (interpData_ptr != nullptr) delete[] interpData_ptr;
+    delete[] interpData_ptr;
     interpData_ptr = nullptr;
 }
 

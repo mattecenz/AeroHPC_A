@@ -38,11 +38,12 @@ class FFTData {
 public:
     Real *inputX, *inputY, *inputZ; // FFT input buffer
     Real *outputX, *outputY, *outputZ; // FFT input buffer
-    fftwr_plan planx, plany, planz, planx_i, plany_i, planz_i;
+    fftwr_plan planx, plany, planz, // FFT forward plans
+                planx_i, plany_i, planz_i; // FFT inverse plans
 
     Real *base_buffer, *u2, *u3, *eigs; // Intermediate buffers
 
-    Real scalingFactor;
+    Real scalingFactor; // Inverse FFT final scaling
 
     FFTData(const Parameters &params, const C2Decomp &c2D, Real *base_buffer) {
         // Allocate FFT buffers
@@ -53,6 +54,7 @@ public:
         inputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[2]);
         outputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[2]);
 
+        // Define FFT plans
         planx = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, FFT_KIND(params, X), FFTW_ESTIMATE);
         plany = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, FFT_KIND(params, Y), FFTW_ESTIMATE);
         planz = fftwr_plan_r2r_1d(c2D.zSize[2], inputZ, outputZ, FFT_KIND(params, Z), FFTW_ESTIMATE);
@@ -61,15 +63,20 @@ public:
         plany_i = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, FFT_I_KIND(params, Y), FFTW_ESTIMATE);
         planx_i = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, FFT_I_KIND(params, X), FFTW_ESTIMATE);
 
-        this->base_buffer = base_buffer;
-        c2D.allocY(u2);
-        c2D.allocZ(u3);
+        // Define and allocate buffers for poisson solver
+        this->base_buffer = base_buffer; // Starting/Final buffer (X representation)
+        c2D.allocY(u2); // Y representation
+        c2D.allocZ(u3); // Z representation
+
+        // Allocate space for eigenvalues to be applied to Z representation
         c2D.allocZ(eigs);
 
-#define scal(params, Axis) (params.periodic##Axis ? 2 * params.glob_n##Axis : 1)
 
+        // Calculate scaling factor
+#define scal(params, Axis) (params.periodic##Axis ? 2 * params.glob_n##Axis : 1)
         scalingFactor = real(scal(params, X) * scal(params, Y) * scal(params, Z));
 
+        // Calculate eigenValues
         computeEigs(params, c2D);
     }
 
@@ -95,7 +102,7 @@ public:
 
 
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
-        std::cout << "-------------------------- EIGENVALUES -------------------------" << std::endl;
+        // std::cout << "-------------------------- EIGENVALUES -------------------------" << std::endl;
         int zDirXSize = c2D.zSize[2];
         int zDirYSize = c2D.zSize[0];
         int zDirZSize = c2D.zSize[1];
@@ -104,9 +111,7 @@ public:
         int zDirZStart = c2D.zStart[1];
 
         // In Z transpose form we have Z on X-axis, Y on Z-axis and X on Y-axis
-
 #define eig(i, delta, N) ( -pow( 2.0 / delta * std::sin( (real(i) * M_PI) / (2.0 * real(N)) ) , 2) )
-
         for (int k = 0; k < zDirZSize; k++) {
             const index_t layer_idx = k * zDirXSize * zDirYSize;
             const Real lambda_1 = eig(k + zDirZStart, params.dY, params.glob_nY);
@@ -120,7 +125,7 @@ public:
                 }
             }
         }
-        std::cout << "--------------------------------------------------------------" << std::endl;
+        // std::cout << "--------------------------------------------------------------" << std::endl;
     }
 };
 

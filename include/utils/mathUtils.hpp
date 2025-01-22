@@ -10,6 +10,7 @@
 
 namespace mathUtils {
 
+
 #define interpolate_on_grid(C) \
     inline Real interp_##C##_onGrid(const Real *data, const index_t i, const index_t j, const index_t k) { \
         const index_t U = 0; \

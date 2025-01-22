@@ -14,115 +14,89 @@
 #define zDirZSize c2D.zSize[1]
 
 inline void computeFFT() {
-    // Perform FFT along x (for each y and z slice)
-    // std::cout << std::setprecision(3) << std::fixed;
+    //**********/ FFT FORWARD ON X AXIS /******************************************************************//
     for (int k = 0; k < xDirZSize; k++) {
         for (int j = 0; j < xDirYSize; j++) {
             const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
-            // for (int i = 0; i < xDirXSize; i++) {
-            //     std::cout << fftData.base_buffer[row_idx + i] << " ";
-            // }
-            // std::cout << std::endl;
             memcpy(fftData.inputX, &fftData.base_buffer[row_idx], sizeof(Real) * xDirXSize);
             fftwr_execute(fftData.planx); // Execute FFT on each slice
             memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
         }
-        // std::cout << std::endl;
     }
-    // std::cout << "=====================" << std::endl;
+    //*****************************************************************************************************//
 
-
+    // GET Y REPRESENTATION
     c2D.transposeX2Y_MajorIndex(fftData.base_buffer, fftData.u2);
 
-
+    //**********/ FFT FORWARD ON Y AXIS /******************************************************************//
     for (int k = 0; k < yDirZSize; k++) {
         for (int j = 0; j < yDirYSize; j++) {
             const int row_idx = yDirXSize * yDirYSize * k + yDirXSize * j;
-            // for (int i = 0; i < yDirXSize; i++) {
-            //     std::cout << fftData.u2[row_idx + i] << " ";
-            // }
-            // std::cout << std::endl;
             memcpy(fftData.inputY, &fftData.u2[row_idx], sizeof(Real) * yDirXSize);
             fftwr_execute(fftData.plany); // Execute FFT on each slice
             memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirXSize);
         }
-        // std::cout << std::endl;
     }
-    // std::cout << "=====================" << std::endl;
+    //*****************************************************************************************************//
 
-
+    // GET Z REPRESENTATION
     c2D.transposeY2Z_MajorIndex(fftData.u2, fftData.u3);
 
+    //**********/ FFT FORWARD ON Z AXIS /******************************************************************//
     for (int k = 0; k < zDirZSize; k++) {
         for (int j = 0; j < zDirYSize; j++) {
             const int row_idx = zDirXSize * zDirYSize * k + zDirXSize * j;
-            // for (int i = 0; i < zDirXSize; i++) {
-            //     std::cout << fftData.u3[row_idx + i] << " ";
-            // }
-            // std::cout << std::endl;
             memcpy(fftData.inputZ, &fftData.u3[row_idx], sizeof(Real) * zDirXSize);
             fftwr_execute(fftData.planz); // Execute FFT on each slice
             memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirXSize);
         }
-        // std::cout << std::endl;
     }
-    // std::cout << "=====================" << std::endl;
-
+    //*****************************************************************************************************//
 }
 
 inline void computeIFFT() {
-    // std::cout << "========== INVERSO ===========" << std::endl;
-
+    //**********/ FFT BACKWARD ON Z AXIS /*****************************************************************//
     for (int k = 0; k < zDirZSize; k++) {
         for (int j = 0; j < zDirYSize; j++) {
             const int row_idx = zDirXSize * zDirYSize * k + zDirXSize * j;
-            // for (int i = 0; i < zDirXSize; i++) {
-            //     std::cout << fftData.u3[row_idx + i] << " ";
-            // }
-            // std::cout << std::endl;
             memcpy(fftData.inputZ, &fftData.u3[row_idx], sizeof(Real) * zDirXSize);
             fftwr_execute(fftData.planz_i);
             memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirXSize);
         }
-        // std::cout << std::endl;
     }
-    // std::cout << "=====================" << std::endl;
+    //*****************************************************************************************************//
 
+    // GET Y REPRESENTATION
     c2D.transposeZ2Y_MajorIndex(fftData.u3, fftData.u2);
 
+    //**********/ FFT BACKWARD ON Y AXIS /*****************************************************************//
     for (int k = 0; k < yDirZSize; k++) {
         for (int j = 0; j < yDirYSize; j++) {
             const int row_idx = yDirXSize * yDirYSize * k + yDirXSize * j;
-            // for (int i = 0; i < yDirXSize; i++) {
-            //     std::cout << fftData.u2[row_idx + i] << " ";
-            // }
-            // std::cout << std::endl;
             memcpy(fftData.inputY, &fftData.u2[row_idx], sizeof(Real) * yDirXSize);
             fftwr_execute(fftData.plany_i);
             memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirXSize);
         }
-        // std::cout << std::endl;
     }
-    // std::cout << "=====================" << std::endl;
+    //*****************************************************************************************************//
 
+    // GET X REPRESENTATION
     c2D.transposeY2X_MajorIndex(fftData.u2, fftData.base_buffer);
 
+    //**********/ FFT BACKWARD ON X AXIS /*****************************************************************//
     for (int k = 0; k < xDirZSize; k++) {
         for (int j = 0; j < xDirYSize; j++) {
             const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
-            // for (int i = 0; i < xDirXSize; i++) {
-            //     std::cout << fftData.base_buffer[row_idx + i] << " ";
-            // }
-            // std::cout << std::endl;
             memcpy(fftData.inputX, &fftData.base_buffer[row_idx], sizeof(Real) * xDirXSize);
             fftwr_execute(fftData.planx_i);
             memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
         }
-        // std::cout << std::endl;
     }
+    //*****************************************************************************************************//
 }
 
 inline void solveEigenvalues() {
+    // APPLY EIGENVALUES TO Z REPRESENTATION
     for (int k = 0; k < zDirZSize; k++) {
         const index_t layer_idx = k * zDirXSize * zDirYSize;
         for (int j = 0; j < zDirYSize; j++) {
@@ -141,6 +115,7 @@ inline void solvePressure() {
     solveEigenvalues();
     computeIFFT();
 
+    // APPLY SCALING FACTOR TO X REPRESENTATION
     for (index_t idx = 0; idx < xDirXSize * xDirYSize * xDirZSize; ++idx) {
         fftData.base_buffer[idx] /= fftData.scalingFactor;
     }

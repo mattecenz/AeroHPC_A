@@ -22,12 +22,12 @@ public:
     }
 };
 
-#define add_request_velocity(collection, data_ptr, i, j, k, type_ptr, neigh_rank, face_tag)\
+#define boundary_add_request_velocity(collection, data_ptr, i, j, k, type_ptr, neigh_rank, face_tag)\
     collection.emplace_back(&U(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | U_BUFFER_TAG);\
     collection.emplace_back(&V(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | V_BUFFER_TAG);\
     collection.emplace_back(&W(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | W_BUFFER_TAG)
 
-#define add_request_pressure(collection, data_ptr, i, j, k, type_ptr, neigh_rank, face_tag)\
+#define boundary_add_request_pressure(collection, data_ptr, i, j, k, type_ptr, neigh_rank, face_tag)\
     collection.emplace_back(&P(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | P_BUFFER_TAG);
 
 void inline apply_boundaries(Real *data, const Real currentTime, int type) {
@@ -36,7 +36,6 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
     std::vector<MPI_BCRequest> bcs_send;
     std::vector<MPI_BCRequest> bcs_recv;
-
 
     // NORTH
     {
@@ -47,8 +46,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // VELOCITY
         if (apply_velocity) {
             if (params.neigh_north != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             } else {
                 if (domData.northType == BOUNDARY_DIRICHLET) {
                     // apply on face
@@ -71,8 +70,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // PRESSURE
         if (apply_pressure) {
             if (params.neigh_north != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, north_inner_j, 0, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, north_ghost_j, 0, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             }
         }
     }
@@ -86,8 +85,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // VELOCITY
         if (apply_velocity) {
             if (params.neigh_south != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
             } else {
                 if (domData.southType == BOUNDARY_DIRICHLET) {
                     // apply on face
@@ -107,8 +106,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // PRESSURE
         if (apply_pressure) {
             if (params.neigh_south != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, south_inner_j, 0, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, south_ghost_j, 0, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
             }
         }
     }
@@ -122,8 +121,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // VELOCITY
         if (apply_velocity) {
             if (params.neigh_east != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
             } else {
                 if (domData.eastType == BOUNDARY_DIRICHLET) {
                     // apply on face
@@ -146,8 +145,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // PRESSURE
         if (apply_pressure) {
             if (params.neigh_east != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, 0, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, 0, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
             }
         }
     }
@@ -161,8 +160,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // VELOCITY
         if (apply_velocity) {
             if (params.neigh_west != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
             } else {
                 if (domData.westType == BOUNDARY_DIRICHLET) {
                     // apply on face
@@ -182,8 +181,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
         // PRESSURE
         if (apply_pressure) {
             if (params.neigh_west != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, 0, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, 0, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
             }
         }
     }
@@ -268,14 +267,14 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         if (apply_velocity) {
             if (params.neigh_north_east != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
             if (params.neigh_north_east != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_east, NORTH_EAST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_east, SOUTH_WEST_BUFFER_TAG);
             }
         }
     }
@@ -289,14 +288,14 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         if (apply_velocity) {
             if (params.neigh_north_west != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
             if (params.neigh_north_west != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_north_west, NORTH_WEST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_north_west, SOUTH_EAST_BUFFER_TAG);
             }
         }
     }
@@ -311,14 +310,14 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         if (apply_velocity) {
             if (params.neigh_south_east != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
             if (params.neigh_south_east != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_EAST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_WEST_BUFFER_TAG);
             }
         }
     }
@@ -332,14 +331,14 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
         if (apply_velocity) {
             if (params.neigh_south_west != MPI_PROC_NULL) {
-                add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
-                add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
+                boundary_add_request_velocity(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
             }
         }
         if (apply_pressure) {
             if (params.neigh_south_west != MPI_PROC_NULL) {
-                add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
-                add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_send, data, 0, ne_inner_j, ne_inner_k, &params.XRow, params.neigh_south_east, SOUTH_WEST_BUFFER_TAG);
+                boundary_add_request_pressure(bcs_recv, data, 0, ne_ghost_j, ne_ghost_k, &params.XRow, params.neigh_south_east, NORTH_EAST_BUFFER_TAG);
             }
         }
     }

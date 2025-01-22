@@ -9,6 +9,7 @@
 namespace mu = mathUtils;
 
 inline void interpolateData(const Real *data, const Real time) {
+    // INTERPOLATE INTO DOMAIN (WITHOUT BOUNDARIES)
     ITERATE_DOMAIN_PHYSICAL(i, j, k, false)
         PU(interpData_ptr, i, j, k) = mu::interp_U_onGrid(data, i, j, k);
         PV(interpData_ptr, i, j, k) = mu::interp_V_onGrid(data, i, j, k);
@@ -16,6 +17,7 @@ inline void interpolateData(const Real *data, const Real time) {
         PP(interpData_ptr, i, j, k) = mu::interp_P_onGrid(data, i, j, k);
     ITERATE_DOMAIN_END()
 
+    // INTERPOLATE NORTH BOUNDARY (WITHOUT EDGES)
     const index_t north_j = params.phy_nY - 1;
     if (params.isOnTop && !params.periodicY) {
         const Real y = real(north_j + params.st_nY) * params.dY + params.originY;
@@ -34,6 +36,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_FACE_END()
     }
 
+    // INTERPOLATE SOUTH BOUNDARY (WITHOUT EDGES)
     constexpr index_t south_j = 0;
     if (params.isOnBottom && !params.periodicY) {
         const Real y = real(south_j + params.st_nY) * params.dY + params.originY;
@@ -52,6 +55,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_FACE_END()
     }
 
+    // INTERPOLATE EAST BOUNDARY (WITHOUT EDGES)
     const index_t east_k = params.phy_nZ - 1;
     if (params.isOnRight && !params.periodicZ) {
         const Real z = real(east_k + params.st_nZ) * params.dZ + params.originZ;
@@ -70,6 +74,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_FACE_END()
     }
 
+    // INTERPOLATE WEST BOUNDARY (WITHOUT EDGES)
     constexpr index_t west_k = 0;
     if (params.isOnLeft && !params.periodicZ) {
         const Real z = real(west_k + params.st_nZ) * params.dZ + params.originZ;
@@ -88,6 +93,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_FACE_END()
     }
 
+    // INTERPOLATE BACK BOUNDARY
     const index_t back_i = params.phy_nX - 1;
     if (!params.periodicX) {
         const Real x = real(back_i + params.st_nX) * params.dX + params.originX;
@@ -112,6 +118,7 @@ inline void interpolateData(const Real *data, const Real time) {
         }
     }
 
+    // INTERPOLATE FRONT BOUNDARY
     constexpr index_t front_i = 0;
     if (!params.periodicX) {
         const Real x = real(front_i + params.st_nX) * params.dX + params.originX;
@@ -136,6 +143,7 @@ inline void interpolateData(const Real *data, const Real time) {
         }
     }
 
+    // INTERPOLATE NORTH-EAST EDGE
     if (params.isOnTop || params.isOnRight) {
         auto &UF = params.isOnTop ? domData.northBF.UF : domData.eastBF.UF;
         auto &VF = params.isOnTop ? domData.northBF.VF : domData.eastBF.VF;
@@ -159,6 +167,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_ROW_END()
     }
 
+    // INTERPOLATE NORTH-WEST EDGE
     if (params.isOnTop || params.isOnLeft) {
         auto &UF = params.isOnTop ? domData.northBF.UF : domData.westBF.UF;
         auto &VF = params.isOnTop ? domData.northBF.VF : domData.westBF.VF;
@@ -182,6 +191,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_ROW_END()
     }
 
+    // INTERPOLATE SOUTH-EAST EDGE
     if (params.isOnBottom || params.isOnRight) {
         auto &UF = params.isOnBottom ? domData.southBF.UF : domData.eastBF.UF;
         auto &VF = params.isOnBottom ? domData.southBF.VF : domData.eastBF.VF;
@@ -205,6 +215,7 @@ inline void interpolateData(const Real *data, const Real time) {
         ITERATE_ROW_END()
     }
 
+    // INTERPOLATE SOUTH-WEST EDGE
     if (params.isOnBottom || params.isOnLeft) {
         auto &UF = params.isOnBottom ? domData.southBF.UF : domData.westBF.UF;
         auto &VF = params.isOnBottom ? domData.southBF.VF : domData.westBF.VF;

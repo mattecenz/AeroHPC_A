@@ -3,6 +3,9 @@
 
 #include "Traits.hpp"
 
+/**
+ * This class contains the functions that defines exact values of Velocity and Pressure
+ */
 class SpatialFunctionsCollect {
 public:
     const TFunction &UF, &VF, &WF, &PF;
