@@ -66,7 +66,9 @@ public:
         c2D.allocZ(u3);
         c2D.allocZ(eigs);
 
-        scalingFactor = real(params.glob_nX * params.glob_nY * params.glob_nZ);
+#define scal(params, Axis) (params.periodic##Axis ? 2 * params.glob_n##Axis : 1)
+
+        scalingFactor = real(scal(params, X) * scal(params, Y) * scal(params, Z));
 
         computeEigs(params, c2D);
     }
@@ -91,7 +93,6 @@ public:
         fftwr_destroy_plan(planz_i);
     }
 
-#define eig(i, delta, N) ( -pow( 2.0 / delta * std::sin( (real(i) * M_PI) / (2.0 * real(N)) ) , 2) )
 
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
         std::cout << "-------------------------- EIGENVALUES -------------------------" << std::endl;
@@ -103,6 +104,8 @@ public:
         int zDirZStart = c2D.zStart[1];
 
         // In Z transpose form we have Z on X-axis, Y on Z-axis and X on Y-axis
+
+#define eig(i, delta, N) ( -pow( 2.0 / delta * std::sin( (real(i) * M_PI) / (2.0 * real(N)) ) , 2) )
 
         for (int k = 0; k < zDirZSize; k++) {
             const index_t layer_idx = k * zDirXSize * zDirYSize;
