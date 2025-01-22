@@ -1,10 +1,11 @@
 #ifndef MACROUTILS_HPP
 #define MACROUTILS_HPP
 
-#define NO_SKIP 0
-#define SKIP_U 1
-#define SKIP_V 2
-#define SKIP_W 4
+// Whether to skip the last index of ...
+#define NO_SKIP 0   // ... no one
+#define SKIP_U 1    // ... x
+#define SKIP_V 2    // ... y
+#define SKIP_W 4    // ... z
 
 #define ITERATE_DOMAIN_VELOCITY(i, j, k, compute_physics, skip_C)                           \
 {                                                                                           \

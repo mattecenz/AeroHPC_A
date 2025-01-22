@@ -7,14 +7,14 @@
 class Parameters {
 public:
     // Spatial Info
-    Real dimX, dimY, dimZ;
-    Real originX, originY, originZ;
+    Real dimX, dimY, dimZ; // Physical dimensions of global space
+    Real originX, originY, originZ; // Physical origin of global space
 
     // Logical Grid Info
-    index_t glob_nX, glob_nY, glob_nZ; // Number of gloabl nodes
+    index_t glob_nX, glob_nY, glob_nZ; // Number of global nodes
     index_t loc_nX, loc_nY, loc_nZ; // Number of local nodes
     index_t st_nX, st_nY, st_nZ; // Local nodes starting global index
-    index_t loc_gnX, loc_gnY, loc_gnZ; // Number of loocal nodes + ghosts
+    index_t loc_gnX, loc_gnY, loc_gnZ; // Number of local nodes + ghosts
     index_t grid_ndim; // Total number of local nodes
     index_t grid_gndim; // Total number of local nodes + ghosts
 
@@ -24,15 +24,15 @@ public:
     index_t phy_nX, phy_nY, phy_nZ; // Physical grid number of nodes (1 more than logical)
     index_t phy_ndim; // Physical grid total number of nodes
 
-    // Domain Info
+    // SubDomain domain info (rank of neighbours)
     int neigh_north, neigh_south,
             neigh_east, neigh_west,
             neigh_north_east, neigh_north_west,
             neigh_south_east, neigh_south_west;
 
-    // Boundary Info
-    bool isOnTop, isOnBottom, isOnRight, isOnLeft;
-    bool periodicX, periodicY, periodicZ;
+    // SubDomain boundary Info
+    bool isOnTop, isOnBottom, isOnRight, isOnLeft; // Where is globally positioned
+    bool periodicX, periodicY, periodicZ; // If the boundary is periodic on directions
 
     // MPI Types
     MPI_Datatype XYFace;
@@ -43,8 +43,8 @@ public:
     Real dt; // Physical delta Time between timesteps
 
     // Solver Info
-    index_t timesteps;
-    Real Re;
+    index_t timesteps; // Number of timesteps to perform
+    Real Re; // Reynolds number
 
     Parameters(const Real dimX, const Real dimY, const Real dimZ,
                const Real originX, const Real originY, const Real originZ,
@@ -55,6 +55,7 @@ public:
           originX(originX), originY(originY), originZ(originZ),
           glob_nX(glob_nX), glob_nY(glob_nY), glob_nZ(glob_nZ),
           dt(dt), timesteps(timesteps), Re(Re) {
+
         dX = dimX / real(glob_nX);
         dY = dimY / real(glob_nY);
         dZ = dimZ / real(glob_nZ);
