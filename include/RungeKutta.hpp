@@ -17,7 +17,7 @@ inline void rungeKutta(const Real time) {
 
 #if ForcingT
     ForcingTerm ft(params.Re, time);
-#endif
+#endif // ForcingT
 
     Y2star(rkData.buffer_data, rkData.model_data, rkData.model_data)
 
@@ -39,11 +39,11 @@ inline void rungeKutta(const Real time) {
     apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY | TYPE_PRESSURE);
     enabledBufferPrinter.print(rkData.buffer_data, "Y2 and PHI 2 bounds",
                                BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
-#endif
+#endif  // DISABLE_PRESSURE
 
 #if ForcingT
     ft.set_time(t_0);
-#endif
+#endif // ForcingT
 
     Y3star(rkData.model_data, rkData.buffer_data, rkData.buffer_data)
 
@@ -65,12 +65,12 @@ inline void rungeKutta(const Real time) {
     apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY | TYPE_PRESSURE);
     enabledBufferPrinter.print(rkData.model_data, "Y3 and PHI 3 bounds",
                                BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
-#endif
+#endif // DISABLE_PRESSURE
 
 
 #if ForcingT
     ft.set_time(t_1);
-#endif
+#endif // ForcingT
 
     U_N1star(rkData.buffer_data, rkData.model_data, rkData.model_data)
 
@@ -93,7 +93,7 @@ inline void rungeKutta(const Real time) {
     apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY | TYPE_PRESSURE);
     enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 bounds",
                                BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
-#endif
+#endif // DISABLE_PRESSURE
 
     swap(rkData.buffer_data, rkData.model_data);
 }
