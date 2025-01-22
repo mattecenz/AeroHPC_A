@@ -1,6 +1,6 @@
 #include "C2Decomp.hpp"
 
-void C2Decomp::allocX(C2D_DTYPE *&var) {
+void C2Decomp::allocX(C2D_DTYPE *&var) const {
 
     int xsize = decompMain.xsz[0];
     int ysize = decompMain.xsz[1];
@@ -10,7 +10,7 @@ void C2Decomp::allocX(C2D_DTYPE *&var) {
 
 }
 
-void C2Decomp::allocY(C2D_DTYPE *&var) {
+void C2Decomp::allocY(C2D_DTYPE *&var) const {
 
     int xsize = decompMain.ysz[0];
     int ysize = decompMain.ysz[1];
@@ -20,7 +20,7 @@ void C2Decomp::allocY(C2D_DTYPE *&var) {
 
 }
 
-void C2Decomp::allocZ(C2D_DTYPE *&var) {
+void C2Decomp::allocZ(C2D_DTYPE *&var) const {
 
     int xsize = decompMain.zsz[0];
     int ysize = decompMain.zsz[1];

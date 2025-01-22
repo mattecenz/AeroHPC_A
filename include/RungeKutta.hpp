@@ -1,335 +1,101 @@
 #ifndef AEROHPC_A_RUNGEKUTTA_H
 #define AEROHPC_A_RUNGEKUTTA_H
 
-#include "GridData.hpp"
+#include "data/SolverData.hpp"
+#include "equations/MomentumEquation.hpp"
+#include "equations/PressureEquation.hpp"
+
 #include "ForcingTerm.hpp"
 #include "Boundaries.hpp"
-#include "mathUtils.hpp"
-#include "poissonSolver.hpp"
 
-#include "printBuffer.hpp"
+#include "utils/printBuffer.hpp"
 
-namespace mu = mathUtils;
+inline void rungeKutta(const Real time) {
+    const Real t_0 = time + RKConst::beta0 * params.dt;
+    const Real t_1 = time + RKConst::beta1 * params.dt;
+    const Real t_2 = time + params.dt;
 
-////RHS function
-#define rhs(C)                                                                                            \
-inline Real rhs_##C(GridData &grid, const Real nu, const index_t i, const index_t j, const index_t k) \
-{                                                                                                     \
-return -mu::conv_##C(grid, i, j, k) + nu * mu::lap_##C(grid, i, j, k);                            \
-}
+#if ForcingT
+    ForcingTerm ft(params.Re, time);
+#endif // ForcingT
 
-rhs(U)
+    Y2star(rkData.buffer_data, rkData.model_data, rkData.model_data)
 
-rhs(V)
+    enabledBufferPrinter.print(rkData.buffer_data, "Y2star no bounds", BufferPrinter::PRINT_VELOCITY);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY);
+    enabledBufferPrinter.print(rkData.buffer_data, "Y2star", BufferPrinter::PRINT_VELOCITY);
 
-rhs(W)
+#if !DISABLE_PRESSURE
+    P_Eq(consts.inv_k_0, rkData.buffer_data, rkData.buffer_data)
 
+    enabledBufferPrinter.print(rkData.buffer_data, "PHI2-PN incomplete", BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.buffer_data, "PHI2-PN", BufferPrinter::PRINT_PRESSURE);
 
-/// FORCING TERM ///////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ForcingT
-#define getPhys(i, j, k)                         \
-    Real px = real(i + model.structure.px) * dx; \
-    Real py = real(j + model.structure.py) * dy; \
-    Real pz = real(k + model.structure.pz) * dz
-#define getForceU(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGx(px + dx, py + sdy, pz + sdz)
-#define getForceV(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGy(px + sdx, py + dy, pz + sdz)
-#define getForceW(force, i, j, k) getPhys(i, j, k); const Real force = ft.computeGz(px + sdx, py + sdy, pz + dz)
-#else
-#define getForceU(force, i, j, k) constexpr Real force = 0
-#define getForceV(force, i, j, k) constexpr Real force = 0
-#define getForceW(force, i, j, k) constexpr Real force = 0
-#endif
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    Y2(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data)
 
-/// PRESSURE TERM //////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifndef DISABLE_PRESSURE
-#define getPressureGradU(d_press, buff, i, j, k) const Real d_press = mu::dp_dx_U(buff, i, j, k)
-#define getPressureGradV(d_press, buff, i, j, k) const Real d_press = mu::dp_dy_V(buff, i, j, k)
-#define getPressureGradW(d_press, buff, i, j, k) const Real d_press = mu::dp_dz_W(buff, i, j, k)
-#else
-#define getPressureGradU(d_press, buff, i, j, k) constexpr Real d_press = 0
-#define getPressureGradV(d_press, buff, i, j, k) constexpr Real d_press = 0
-#define getPressureGradW(d_press, buff, i, j, k) constexpr Real d_press = 0
-#endif
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    enabledBufferPrinter.print(rkData.buffer_data, "Y2 and PHI 2 no bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_0, TYPE_VELOCITY | TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.buffer_data, "Y2 and PHI 2 bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+#endif  // DISABLE_PRESSURE
 
-
-/// RK STEPS ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define ITERATE_OVER_ALL_POINTS_START(i,j,k)    \
-for (index_t k = 0; k < nz; ++k) {              \
-    for (index_t j = 0; j < ny; ++j) {          \
-        for (index_t i = 0; i < nx; ++i) {
-#define ITERATE_OVER_ALL_POINTS_END()           \
-        }                                       \
-    }                                           \
-}
-
-#define Y2star(C, Y2star, U_N)                      \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
-    getForce##C(force, i, j, k);                    \
-    getPressureGrad##C(d_press, U_N, i, j, k);      \
-    const Real r = rhs_##C(U_N, nu, i, j, k);       \
-    rhs_buff.C(i, j, k) = (r + force);              \
-    Y2star.C(i, j, k) = U_N.C(i, j, k)              \
-                            + k_0 * (r + force)     \
-                            - k_0 * d_press;        \
-ITERATE_OVER_ALL_POINTS_END()
-
-#define Y2(Y2, Y2star, U_N)                                                 \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
-    Y2.U(i, j, k) = Y2star.U(i, j, k) - deltat * mu::dp_dx_U(Y2star, i, j, k); \
-    Y2.V(i, j, k) = Y2star.V(i, j, k) - deltat * mu::dp_dy_V(Y2star, i, j, k); \
-    Y2.W(i, j, k) = Y2star.W(i, j, k) - deltat * mu::dp_dz_W(Y2star, i, j, k); \
-ITERATE_OVER_ALL_POINTS_END()                                               \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
-    Y2.P(i, j, k) = Y2star.P(i, j, k) + U_N.P(i, j, k);                     \
-ITERATE_OVER_ALL_POINTS_END()
-
-#define Y3star(C, Y3star, Y2)                           \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                  \
-    getForce##C(force, i, j, k);                        \
-    getPressureGrad##C(d_press, Y2, i, j, k);           \
-    const Real r1 = rhs_buff.C(i, j, k);                \
-    const Real r2 = rhs_##C(Y2, nu, i, j, k);           \
-    rhs_buff.C(i, j, k) = (r2 + force);                 \
-    Y3star.C(i, j, k) = Y2.C(i, j, k)                   \
-                       - k_1 * r1                       \
-                       + k_2 * (r2 + force)             \
-                       - k_3 * d_press;                 \
-ITERATE_OVER_ALL_POINTS_END()
-
-#define Y3(Y3, Y3star, Y2)                                                  \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
-    Y3.U(i, j, k) = Y3star.U(i, j, k) - deltat * mu::dp_dx_U(Y3star, i, j, k); \
-    Y3.V(i, j, k) = Y3star.V(i, j, k) - deltat * mu::dp_dy_V(Y3star, i, j, k); \
-    Y3.W(i, j, k) = Y3star.W(i, j, k) - deltat * mu::dp_dz_W(Y3star, i, j, k); \
-ITERATE_OVER_ALL_POINTS_END()                                               \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                      \
-    Y3.P(i, j, k) = Y3star.P(i, j, k) + Y2.P(i, j, k);                      \
-ITERATE_OVER_ALL_POINTS_END()
-
-
-#define U_N1star(C, U_N1, Y3)                           \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                  \
-    getForce##C(force, i, j, k);                        \
-    getPressureGrad##C(d_press, Y3, i, j, k);           \
-    const Real r = rhs_##C(Y3, nu, i, j, k);            \
-    U_N1.C(i, j, k) = Y3.C(i, j, k)                     \
-                            - k_4 * rhs_buff.C(i, j, k) \
-                            + k_5 * (r + force)         \
-                            - k_6 * d_press;            \
-ITERATE_OVER_ALL_POINTS_END()
-
-#define U_N1(U_N1, U_N1star, Y3)                                                    \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
-    U_N1.U(i, j, k) = U_N1star.U(i, j, k) - deltat * mu::dp_dx_U(U_N1star, i, j, k);   \
-    U_N1.V(i, j, k) = U_N1star.V(i, j, k) - deltat * mu::dp_dy_V(U_N1star, i, j, k);   \
-    U_N1.W(i, j, k) = U_N1star.W(i, j, k) - deltat * mu::dp_dz_W(U_N1star, i, j, k);   \
-ITERATE_OVER_ALL_POINTS_END()                                                       \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
-    U_N1.P(i, j, k) = U_N1star.P(i, j, k) + Y3.P(i, j, k);                          \
-ITERATE_OVER_ALL_POINTS_END()
-
-
-#define Load_B(constant, b_buffer, velocity_in)                                     \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)                                              \
-    b_buffer.P(i, j, k) = constant * mu::vel_div(velocity_in, i, j, k);             \
-ITERATE_OVER_ALL_POINTS_END()
-
-#define Unload_B(b_buffer, pressure_out)            \
-ITERATE_OVER_ALL_POINTS_START(i, j, k)              \
-    pressure_out.P(i, j, k) = b_buffer.P(i, j, k);  \
-ITERATE_OVER_ALL_POINTS_END()
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-struct RKConst {
-    static constexpr Real alpha0 = 64.0 / 120.0;
-    static constexpr Real alpha1 = 34.0 / 120.0;
-    static constexpr Real alpha2 = 50.0 / 120.0;
-    static constexpr Real alpha3 = alpha2 - alpha1;
-    static constexpr Real alpha4 = 50.0 / 120.0;
-    static constexpr Real alpha5 = 90.0 / 120.0;
-    static constexpr Real alpha6 = alpha5 - alpha4;
-    static constexpr Real beta0 = 64.0 / 120.0;
-    static constexpr Real beta1 = 80.0 / 120.0;
-};
-
-// Runge-Kutta method
-inline void rungeKutta(GridData &model, GridData &model_buff, GridData &rhs_buff,
-                       Real reynolds, Real deltat, index_t iteration,
-                       Boundaries &boundary_cond, poissonSolver &p_solver) {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    std::string dir = "./iterations/" + to_string(iteration) + "/";
-
-    c_dir(dir);
-    b_print(model, dir, 0);
-
-    const Real time = deltat * real(iteration);
-
-    const Real nu = (real(1) / reynolds);
-
-    const Real dx = model.structure.dx;
-    const Real dy = model.structure.dy;
-    const Real dz = model.structure.dz;
-
-    const Real sdx = model.structure.sdx;
-    const Real sdy = model.structure.sdy;
-    const Real sdz = model.structure.sdz;
-
-    const index_t nx = model.structure.nx;
-    const index_t ny = model.structure.ny;
-    const index_t nz = model.structure.nz;
-
-    // kappa -> weighted_deltat
-    const Real k_0 = RKConst::alpha0 * deltat;
-    const Real k_1 = RKConst::alpha1 * deltat;
-    const Real k_2 = RKConst::alpha2 * deltat;
-    const Real k_3 = RKConst::alpha3 * deltat;
-    const Real k_4 = RKConst::alpha4 * deltat;
-    const Real k_5 = RKConst::alpha5 * deltat;
-    const Real k_6 = RKConst::alpha6 * deltat;
-    const Real inv_k_0 = real(1.0) / k_0;
-    const Real inv_k_3 = real(1.0) / k_3;
-    const Real inv_k_6 = real(1.0) / k_6;
-    const Real t_0 = time + RKConst::beta0 * deltat;
-    const Real t_1 = time + RKConst::beta1 * deltat;
-    const Real t_2 = time + deltat;
-
-
-#ifdef ForcingT
-    ForcingTerm ft(reynolds, time);
-#endif
-
-    /// Y2* //////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Y2star(U, model_buff, model);
-        Y2star(V, model_buff, model);
-        Y2star(W, model_buff, model);
-
-        b_print(model_buff, dir, 1);
-        boundary_cond.apply(model_buff, t_0);
-        b_print(model_buff, dir, 2);
-    }
-
-#ifndef DISABLE_PRESSURE
-    /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
-    {
-        Load_B(deltat, rhs_buff, model_buff)
-
-        // SOLVE FOR phi2-pn
-        p_solver.solve(&rhs_buff.P(0,0,0));
-    }
-
-    /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Unload_B(rhs_buff, model_buff)
-
-        b_print(model_buff, dir, 3);
-        boundary_cond.apply(model_buff, t_0);
-        b_print(model_buff, dir, 4);
-    }
-
-
-    /// Y2 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Y2(model_buff, model_buff, model);
-
-        b_print(model_buff, dir, 5);
-        boundary_cond.apply(model_buff, t_0);
-        b_print(model_buff, dir, 6);
-    }
-#endif
-
-#ifdef ForcingT
+#if ForcingT
     ft.set_time(t_0);
-#endif
+#endif // ForcingT
 
-    /// Y3* //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Y3star(U, model, model_buff);
-        Y3star(V, model, model_buff);
-        Y3star(W, model, model_buff);
+    Y3star(rkData.model_data, rkData.buffer_data, rkData.buffer_data)
 
-        b_print(model, dir, 7);
-        boundary_cond.apply(model, t_1);
-        b_print(model, dir, 8);
-    }
+    enabledBufferPrinter.print(rkData.model_data, "Y3star no bounds", BufferPrinter::PRINT_VELOCITY);
+    apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY);
+    enabledBufferPrinter.print(rkData.model_data, "Y3star", BufferPrinter::PRINT_VELOCITY);
 
-#ifndef DISABLE_PRESSURE
-    /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
-    {
-        Load_B(deltat, rhs_buff, model)
+#if !DISABLE_PRESSURE
+    P_Eq(consts.inv_k_3, rkData.model_data, rkData.model_data)
 
-        p_solver.solve(&rhs_buff.P(0,0,0));
-    }
+    enabledBufferPrinter.print(rkData.model_data, "PHI3-PHI2 incomplete", BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.model_data, t_1, TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.model_data, "PHI3-PHI2", BufferPrinter::PRINT_PRESSURE);
 
-    /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Unload_B(rhs_buff, model)
+    Y3(rkData.model_data, rkData.model_data, rkData.model_data, rkData.model_data, rkData.buffer_data)
 
-        b_print(model, dir, 9);
-        boundary_cond.apply(model, t_1);
-        b_print(model, dir, 10);
-    }
-
-    /// Y3 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Y3(model, model, model_buff);
-
-        b_print(model, dir, 11);
-        boundary_cond.apply(model, t_1);
-        b_print(model, dir, 12);
-    }
-#endif
+    enabledBufferPrinter.print(rkData.model_data, "Y3 and PHI 3 no bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.model_data, t_1, TYPE_VELOCITY | TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.model_data, "Y3 and PHI 3 bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+#endif // DISABLE_PRESSURE
 
 
-#ifdef ForcingT
+#if ForcingT
     ft.set_time(t_1);
-#endif
+#endif // ForcingT
 
-    /// u(n+1)* //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        U_N1star(U, model_buff, model);
-        U_N1star(V, model_buff, model);
-        U_N1star(W, model_buff, model);
+    U_N1star(rkData.buffer_data, rkData.model_data, rkData.model_data)
+
+    enabledBufferPrinter.print(rkData.buffer_data, "U_N1 no bounds", BufferPrinter::PRINT_VELOCITY);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY);
+    enabledBufferPrinter.print(rkData.buffer_data, "U_N1", BufferPrinter::PRINT_VELOCITY);
 
 
-        b_print(model_buff, dir, 13);
-        boundary_cond.apply(model_buff, t_2);
-        b_print(model_buff, dir, 14);
-    }
+#if !DISABLE_PRESSURE
+    P_Eq(consts.inv_k_6, rkData.buffer_data, rkData.buffer_data)
 
-#ifndef DISABLE_PRESSURE
-    /// POISSON SOLVER ///////////////////////////////////////////////////////////////////////////////////
-    {
-        Load_B(deltat, rhs_buff, model_buff)
+    enabledBufferPrinter.print(rkData.buffer_data, "PN1-PHI3 incomplete", BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.buffer_data, "PN1-PHI3", BufferPrinter::PRINT_PRESSURE);
 
-        p_solver.solve(&rhs_buff.P(0,0,0));
-    }
+    U_N1(rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.buffer_data, rkData.model_data);
 
-    /// UPDATE PRESSURE /////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        Unload_B(rhs_buff, model_buff)
+    enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 no bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+    apply_boundaries(rkData.buffer_data, t_2, TYPE_VELOCITY | TYPE_PRESSURE);
+    enabledBufferPrinter.print(rkData.buffer_data, "UN1 and PN1 bounds",
+                               BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
+#endif // DISABLE_PRESSURE
 
-        b_print(model_buff, dir, 15);
-        boundary_cond.apply(model_buff, t_2);
-        b_print(model_buff, dir, 16);
-    }
-
-    /// un+1 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    {
-        U_N1(model_buff, model_buff, model);
-
-        b_print(model_buff, dir, 17);
-        boundary_cond.apply(model_buff, t_2);
-        b_print(model_buff, dir, 18);
-    }
-#endif
-
-    model.swap(model_buff);
+    swap(rkData.buffer_data, rkData.model_data);
 }
 
 #endif // AEROHPC_A_RUNGEKUTTA_H

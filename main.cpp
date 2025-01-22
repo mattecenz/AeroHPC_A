@@ -52,9 +52,6 @@ int runTestCase(int rank, int size, int argc, char **argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     boundaryDomainFunctions boundaryDF;
-    Real dim_x, dim_y, dim_z;
-    Real Re;
-    Real origin_x, origin_y, origin_z;
     Real extr_px, extr_py, extr_pz;
 
     switch (testCase) {
@@ -66,7 +63,7 @@ int runTestCase(int rank, int size, int argc, char **argv) {
             dim_x = 1.0;
             dim_y = 1.0;
             dim_z = 2.0;
-            Re = 1000;
+            Re = 1000.0;
 
             origin_x = 0.0;
             origin_y = 0.0;
@@ -100,7 +97,11 @@ int runTestCase(int rank, int size, int argc, char **argv) {
     return 0;
 }
 
+#include "DomainInfo.h"
+
+
 int main(int argc, char **argv) {
+
     MPI_Init(&argc, &argv);
 
     int rank, size;

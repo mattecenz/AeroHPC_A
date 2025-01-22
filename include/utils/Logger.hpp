@@ -223,6 +223,31 @@ public:
     }
 
     /**
+    * Print a value information,
+    * formatRatio is the portion of line the info will be placed on,
+    * valueName is the information name,
+    * value is the information value
+    */
+    Logger &printValue(const long int formatRatio, const std::string &valueName, const bool value) {
+        const std::string value_str = value ? "true" : "false";
+        const size_t valueSpace = value_str.size() + paddingS;
+        const size_t titleSpace = (_buffSize - paddingS) / formatRatio - paddingS - 1;
+
+        if (titleSpace <= 0) return *this;
+        if ((_buffSize - paddingS) * (1 - 1 / formatRatio) < valueSpace) return *this;
+
+        sanitize(valueName, titleSpace);
+
+        getPrevNext(t, valueName.size(), (_buffSize - paddingS) / formatRatio);
+        const size_t vNext = (_buffSize - paddingS) - ((_buffSize - paddingS) / formatRatio) - valueSpace;
+
+        out << "║" << repeat(" ", tprev + tnext - 2) << valueName << ":  "
+                << value_str << repeat(" ", vNext) << " ║\n";
+
+        return *this;
+    }
+
+    /**
     * Open a table and print a table header given the column names,
     * rowIdName is the name of the first column,
     * colNames is a collection of column names
@@ -347,5 +372,7 @@ public:
  * Define global logger
  */
 inline Logger logger(100);
+
+#define enabledLogger if(IS_MAIN_PROC) logger
 
 #endif //AEROHPC_A_LOGGER_HPP

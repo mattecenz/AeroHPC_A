@@ -2,13 +2,12 @@
 #define _2DECOMPCH_
 
 #include "Traits.hpp"
-#include "MPITraits.hpp"
 
 #include "mpi.h"
 #include <cstdlib>
 #include <cstddef>
 #include <iostream>
-#include "math.h"
+#include <cmath>
 #include <string>
 #include <memory.h>
 
@@ -86,7 +85,8 @@ private:
 
 public:
 
-    C2Decomp(int nx, int ny, int nz, int pRow, int pCol, bool periodicBC[3]) {
+    C2Decomp(const int nx, const int ny, const int nz,
+            const int pRow, const int pCol, const bool periodicBC[3]) {
 
         nxGlobal = nx;
         nyGlobal = ny;
@@ -171,13 +171,13 @@ public:
 
 
     //only doing real
-    void allocX(C2D_DTYPE *&var);
+    void allocX(C2D_DTYPE *&var) const;
 
-    void allocY(C2D_DTYPE *&var);
+    void allocY(C2D_DTYPE *&var) const;
 
-    void allocZ(C2D_DTYPE *&var);
+    void allocZ(C2D_DTYPE *&var) const;
 
-    void deallocXYZ(C2D_DTYPE *&var);
+    static void deallocXYZ(C2D_DTYPE *&var);
 
     void updateHalo(C2D_DTYPE *in, C2D_DTYPE *&out, int level, int ipencil);
 
