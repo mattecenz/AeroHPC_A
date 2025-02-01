@@ -14,8 +14,8 @@ def plot_loglog_order_of_convergence(file_path):
     data = pd.read_csv(file_path)
     
     # Extract the 'error' column as an array
-    errors = data['error'].values
-    steps = data["step"].values
+    errors = data['Uerr'].values
+    steps = data["Nodes"].values
     
     # Plot the error on a log-log scale
     plt.figure(figsize=(10, 6))
