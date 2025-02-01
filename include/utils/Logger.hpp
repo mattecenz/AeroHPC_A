@@ -402,7 +402,7 @@ public:
 /**
  * Define global logger
  */
-inline Logger logger(150);
+inline Logger logger(100);
 
 #define enabledLogger if(IS_MAIN_PROC) logger
 
