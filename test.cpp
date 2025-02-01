@@ -10,8 +10,8 @@
 #include "testDomainFunctions.cpp"
 
 int testSolver() {
-    const int npy = 1;
-    const int npz = 1;
+    const int npy = 2;
+    const int npz = 2;
 
     const Real dim_x = 1.0;
     const Real dim_y = 1.0;
