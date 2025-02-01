@@ -70,7 +70,7 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
 
     chrono_start(compT);
 
-    apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
+    apply_boundaries(rkData.model_data, 0, VELOCITY);
 
     constexpr bool ENABLE_VTK_DEBUG = false;
     const std::string vtkdir = "vtk" + std::to_string(THIS_PROC_RANK);

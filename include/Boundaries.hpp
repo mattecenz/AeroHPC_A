@@ -5,9 +5,6 @@
 #include "data/SolverData.hpp"
 #include "utils/macroUtils.hpp"
 
-#define TYPE_VELOCITY 1
-#define TYPE_PRESSURE 2
-
 class MPI_BCRequest {
 public:
     Real *data_basePtr;
@@ -31,8 +28,8 @@ public:
     collection.emplace_back(&P(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | P_BUFFER_TAG);
 
 void inline apply_boundaries(Real *data, const Real currentTime, int type) {
-    const bool apply_velocity = type & TYPE_VELOCITY;
-    const bool apply_pressure = type & TYPE_PRESSURE;
+    const bool apply_velocity = type & VELOCITY;
+    const bool apply_pressure = type & PRESSURE;
 
     std::vector<MPI_BCRequest> bcs_send;
     std::vector<MPI_BCRequest> bcs_recv;
@@ -49,7 +46,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 boundary_add_request_velocity(bcs_send, data, -1, north_inner_j, -1, &params.XZFace, params.neigh_north, NORTH_BUFFER_TAG);
                 boundary_add_request_velocity(bcs_recv, data, -1, north_ghost_j, -1, &params.XZFace, params.neigh_north, SOUTH_BUFFER_TAG);
             } else {
-                if (domData.northType == BOUNDARY_DIRICHLET) {
+                if (domData.northType == DIRICHLET) {
                     // apply on face
                     ITERATE_XZ_FACE(i, k, true)
                         // On y = phy_dim for domain point we have exact for V
@@ -88,7 +85,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 boundary_add_request_velocity(bcs_send, data, -1, south_inner_j, -1, &params.XZFace, params.neigh_south, SOUTH_BUFFER_TAG);
                 boundary_add_request_velocity(bcs_recv, data, -1, south_ghost_j, -1, &params.XZFace, params.neigh_south, NORTH_BUFFER_TAG);
             } else {
-                if (domData.southType == BOUNDARY_DIRICHLET) {
+                if (domData.southType == DIRICHLET) {
                     // apply on face
                     ITERATE_XZ_FACE(i, k, true)
                         // On y = 0 for ghost point we hae exact for V, other approximate
@@ -124,7 +121,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 boundary_add_request_velocity(bcs_send, data, -1, -1, east_inner_k, &params.XYFace, params.neigh_east, EAST_BUFFER_TAG);
                 boundary_add_request_velocity(bcs_recv, data, -1, -1, east_ghost_k, &params.XYFace, params.neigh_east, WEST_BUFFER_TAG);
             } else {
-                if (domData.eastType == BOUNDARY_DIRICHLET) {
+                if (domData.eastType == DIRICHLET) {
                     // apply on face
                     ITERATE_XY_FACE(i, j, true)
                         // On y = phy_dim for domain point we have exact for V
@@ -163,7 +160,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                 boundary_add_request_velocity(bcs_send, data, -1, -1, west_inner_k, &params.XYFace, params.neigh_west, WEST_BUFFER_TAG);
                 boundary_add_request_velocity(bcs_recv, data, -1, -1, west_ghost_k, &params.XYFace, params.neigh_west, EAST_BUFFER_TAG);
             } else {
-                if (domData.westType == BOUNDARY_DIRICHLET) {
+                if (domData.westType == DIRICHLET) {
                     // apply on face
                     ITERATE_XY_FACE(i, j, true)
                         // On y = 0 for ghost point we hae exact for V, other approximate
@@ -204,7 +201,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                     W(data, back_ghost_i, j, k) = W(data, back_periodic_i, j, k);
                 ITERATE_FACE_END()
             } else {
-                if (domData.backType == BOUNDARY_DIRICHLET) {
+                if (domData.backType == DIRICHLET) {
                     // apply on face
                     ITERATE_YZ_FACE(j, k, true)
                         // On y = phy_dim for domain point we have exact for V
@@ -240,7 +237,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
                     W(data, front_ghost_i, j, k) = W(data, front_periodic_i, j, k);
                 ITERATE_FACE_END()
             } else {
-                if (domData.frontType == BOUNDARY_DIRICHLET) {
+                if (domData.frontType == DIRICHLET) {
                     // apply on face
                     ITERATE_YZ_FACE(j, k, true)
                         // On y = 0 for ghost point we hae exact for V, other approximate

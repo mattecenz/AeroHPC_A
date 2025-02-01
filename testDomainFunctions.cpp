@@ -26,12 +26,12 @@ SpatialFunctionsCollect westC(exactU, exactV, exactW, exactP);
 SpatialFunctionsCollect domain(exactU, exactV, exactW, exactP);
 
 
-DomainData testDomainData(BOUNDARY_DIRICHLET, northC,
-                          BOUNDARY_DIRICHLET, southC,
-                          BOUNDARY_DIRICHLET, eastC,
-                          BOUNDARY_DIRICHLET, westC,
-                          BOUNDARY_DIRICHLET, frontC,
-                          BOUNDARY_DIRICHLET, backC,
+DomainData testDomainData(DIRICHLET, northC,
+                          DIRICHLET, southC,
+                          DIRICHLET, eastC,
+                          DIRICHLET, westC,
+                          DIRICHLET, frontC,
+                          DIRICHLET, backC,
                           domain);
 
 /*
@@ -55,11 +55,11 @@ SpatialFunctionsCollect westC(zeroFunction, zeroFunction, zeroFunction, zeroFunc
 SpatialFunctionsCollect domain(zeroFunction, zeroFunction, zeroFunction, zeroFunction);
 
 
-DomainData testDomainData(BOUNDARY_DIRICHLET, northC,
-                          BOUNDARY_DIRICHLET, southC,
-                          BOUNDARY_DIRICHLET, eastC,
-                          BOUNDARY_DIRICHLET, westC,
-                          BOUNDARY_DIRICHLET, frontC,
-                          BOUNDARY_DIRICHLET, backC,
+DomainData testDomainData(DIRICHLET, northC,
+                          DIRICHLET, southC,
+                          DIRICHLET, eastC,
+                          DIRICHLET, westC,
+                          DIRICHLET, frontC,
+                          DIRICHLET, backC,
                           domain);
 */
