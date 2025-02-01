@@ -399,6 +399,8 @@ public:
     }
 };
 
+#undef getPrevNext
+
 /**
  * Define global logger
  */
