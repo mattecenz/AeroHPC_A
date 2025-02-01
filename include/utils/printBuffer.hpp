@@ -60,7 +60,7 @@ public:
 
         if (type & PRINT_VELOCITY) {
             for (int j = params.loc_nY; j >= -1; --j) {
-                for (int k = -1; k <= params.loc_nZ ; ++k) {
+                for (int k = params.loc_nZ; k >= -1; --k) {
                     outputFile << prev_space;
                     for (int i = -1; i <= params.loc_nX; ++i) {
                         outputFile << U(data, i, j, k) << " ";
