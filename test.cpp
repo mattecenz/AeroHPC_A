@@ -27,7 +27,7 @@ int testSolver() {
 
     const bool periodicPressureBC[3] = {false, false, false};
 
-    std::vector<Real> error;
+    std::vector<result_t> results;
 
 
     std::vector<index_t> nodes = {
@@ -50,20 +50,37 @@ int testSolver() {
 
         enabledLogger.printTitle("Data initialized");
 
-        Real l2norm = runSolver(0.0, 0.0, 0.0);
+        result_t result = runSolver(0.0, 0.0, 0.0);
 
         destroySolverData();
 
         enabledLogger.printTitle("Data destroyed")
                 .closeSection().empty();
 
-        error.push_back(l2norm);
+        results.push_back(result);
     }
 
     if (IS_MAIN_PROC) {
         std::ofstream csvFile("output.csv");
-        csvFile << "step,error" << std::endl;
-        for (int i = 0; i < nodes.size(); ++i) csvFile << nodes[i] << "," << error[i] << std::endl;
+
+        // Print header of csv
+        auto header_iter = results.front().begin();
+        csvFile << header_iter->first;
+        ++header_iter;
+        for (; header_iter != results.front().end(); ++header_iter) {
+            csvFile << "," << header_iter->first;
+        }
+        csvFile << std::endl;
+
+        for (const auto &result : results) {
+            auto res_iter = result.begin();
+            csvFile << res_iter->second;
+            ++res_iter;
+            for (; res_iter != result.end(); ++res_iter) {
+                csvFile << "," << res_iter->second;
+            }
+            csvFile << std::endl;
+        }
     }
 
     return 0;

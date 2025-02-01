@@ -17,7 +17,7 @@
 
 #include "utils/printBuffer.hpp"
 
-inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz) {
+inline result_t runSolver(const Real extr_px, const Real extr_py, const Real extr_pz) {
     initInterpolationData(params);
 
     enabledLogger.printTitle("Subdomain settings")
@@ -32,7 +32,9 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
                 .printValue(5, "Iterations", params.timesteps)
                 .printValue(5, "dT", params.dt)
                 .printValue(5, "Re num", params.Re)
-                .printValue(5, "Phy dim", std::to_string(params.dimX) + " x " + std::to_string(params.dimY) + " x " + std::to_string(params.dimZ));
+                .printValue(5, "Phy dim", std::to_string(params.dimX)
+                                          + " x " + std::to_string(params.dimY)
+                                          + " x " + std::to_string(params.dimZ));
 
 
     enabledLogger.printTitle("Grid parameters")
@@ -51,6 +53,12 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
     Real globalL2NormU = 0.0;
     Real localL2NormP = 0.0;
     Real globalL2NormP = 0.0;
+
+    // Avg solver info
+    Real avgRKTime = 0.0;
+    Real avgL2Time = 0.0;
+    Real avgPerf = 0.0;
+    int avgCount = 0;
 
     // Printing variables
     index_t maxTablePrintLine = 10;
@@ -75,37 +83,55 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
     for (index_t step = 0; step < params.timesteps; ++step) {
         enabledBufferPrinter.setFile(to_string(step));
 
+        // Compute RK step
         const Real time = real(step) * params.dt;
-
         chrono_start(rkTime);
         rungeKutta(time);
         chrono_stop(rkTime);
 
-        if (!((step + 1) % printIt) || step == params.timesteps - 1) // prints every n iteration or if is the last one
+        // Prints Log every n iteration or if is the last one
+        if (!((step + 1) % printIt) || step == params.timesteps - 1)
         {
+            // Compute l2 norm error of velocity and pressure
             Real currentTime = time + params.dt;
             chrono_start(l2Time);
             computeL2Norm(rkData.model_data, currentTime, localL2NormU, localL2NormP);
             chrono_stop(l2Time);
-            const Real perf = rkTime / params.grid_ndim;
-
+            // Collect error from all processors
             globalL2NormU = 0.0;
             globalL2NormP = 0.0;
             MPI_Allreduce(&localL2NormU, &globalL2NormU, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
             MPI_Allreduce(&localL2NormP, &globalL2NormP, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
             globalL2NormU = std::sqrt(globalL2NormU);
             globalL2NormP = std::sqrt(globalL2NormP);
-            enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
-            interpolateData(rkData.model_data, currentTime);
 
+            // Compute per-node performance
+            const Real perf = rkTime / params.grid_ndim;
+
+            // Print log info
+            enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
+
+            // Export complete vtk if needed
             if (ENABLE_VTK_DEBUG) {
-                VTKConverter::exportGrid(interpData_ptr).writeFile( vtkdir + "/solution_" + std::to_string(step) + ".vtk");
+                interpolateData(rkData.model_data, currentTime);
+                VTKConverter::exportGrid(interpData_ptr).writeFile(vtkdir + "/solution_" + std::to_string(step) + ".vtk");
             }
+
+            // Compute solver result info
+            avgCount++;
+            avgRKTime += rkTime;
+            avgL2Time += l2Time;
+            avgPerf += perf;
         }
     }
     chrono_stop(compT);
 
     enabledLogger.closeTable().printTitle("End of computation", compT);
+
+    // Finalize solver result info
+    avgRKTime /= avgCount;
+    avgL2Time /= avgCount;
+    avgPerf /= avgCount;
 
     //TODO EXPORTING
     /*
@@ -152,5 +178,13 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
 
     destroyInterpolationData();
 
-    return globalL2NormU;
+    return {
+        {"Nodes", params.glob_nX},
+        {"Uerr", globalL2NormU},
+        {"Perr", globalL2NormP},
+        {"CompT", compT},
+        {"AvgRKT", avgRKTime},
+        {"AvgL2T", avgL2Time},
+        {"AvgPerf", avgPerf}
+    };
 }
