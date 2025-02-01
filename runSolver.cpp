@@ -21,6 +21,7 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
     initInterpolationData(params);
 
     enabledLogger.printTitle("Subdomain settings")
+                .printValue(5, "ID", THIS_PROC_RANK)
                 .printValue(5, "IsOnTop", params.isOnTop)
                 .printValue(5, "IsOnBottom", params.isOnBottom)
                 .printValue(5, "IsOnLeft", params.isOnLeft)

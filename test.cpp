@@ -69,13 +69,14 @@ int testSolver() {
     return 0;
 }
 
+
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &THIS_PROC_RANK);
     MPI_Comm_size(MPI_COMM_WORLD, &THIS_WORLD_SIZE);
 
-    int ris = testSolver();
+    const int ris = testSolver();
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
