@@ -86,9 +86,9 @@ public:
         phy_ndim = phy_nX * phy_nY * phy_nZ;
 
         // GENERATE MPI VECTORS
-        MPI_Type_vector(loc_nY, loc_gnX, loc_gnX, Real_MPI, &XYFace);
+        MPI_Type_vector(loc_gnY, loc_gnX, loc_gnX, Real_MPI, &XYFace);
         MPI_Type_commit(&XYFace);
-        MPI_Type_vector(loc_nZ, loc_gnX, loc_gnX * loc_gnY, Real_MPI, &XZFace);
+        MPI_Type_vector(loc_gnZ, loc_gnX, loc_gnX * loc_gnY, Real_MPI, &XZFace);
         MPI_Type_commit(&XZFace);
         MPI_Type_vector(1, loc_gnX, 0, Real_MPI, &XRow);
         MPI_Type_commit(&XRow);

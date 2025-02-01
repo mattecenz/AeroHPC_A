@@ -21,6 +21,7 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
     initInterpolationData(params);
 
     enabledLogger.printTitle("Subdomain settings")
+                .printValue(5, "ID", THIS_PROC_RANK)
                 .printValue(5, "IsOnTop", params.isOnTop)
                 .printValue(5, "IsOnBottom", params.isOnBottom)
                 .printValue(5, "IsOnLeft", params.isOnLeft)
@@ -52,7 +53,7 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
     Real globalL2NormP = 0.0;
 
     // Printing variables
-    index_t maxTablePrintLine = 100;
+    index_t maxTablePrintLine = 10;
     index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +64,14 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
 
     apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
 
-    VTKConverter::exportGrid(rkData.model_data).writeFile("vtk/solution_0.vtk");
+    const bool ENABLE_VTK_DEBUG = false;
+    const std::string vtkdir = "vtk" + std::to_string(THIS_PROC_RANK);
+
+    if (ENABLE_VTK_DEBUG) {
+        create_directories(vtkdir);
+        VTKConverter::exportGrid(rkData.model_data).writeFile(vtkdir + "/solution_0.vtk");
+    }
+
     for (index_t step = 0; step < params.timesteps; ++step) {
         enabledBufferPrinter.setFile(to_string(step));
 
@@ -89,7 +97,10 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
             globalL2NormP = std::sqrt(globalL2NormP);
             enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
             interpolateData(rkData.model_data, currentTime);
-            VTKConverter::exportGrid(interpData_ptr).writeFile("vtk/solution_" + std::to_string(step) + ".vtk");
+
+            if (ENABLE_VTK_DEBUG) {
+                VTKConverter::exportGrid(interpData_ptr).writeFile( vtkdir + "/solution_" + std::to_string(step) + ".vtk");
+            }
         }
     }
     chrono_stop(compT);
@@ -141,5 +152,5 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
 
     destroyInterpolationData();
 
-    return 0;
+    return globalL2NormU;
 }

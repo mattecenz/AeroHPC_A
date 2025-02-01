@@ -62,9 +62,9 @@ ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)                            
 ITERATE_DOMAIN_END()
 
 
-#define Y2star(Y2star, U_N, P_N)  \
-    Y2star_C(U, Y2star, U_N, P_N) \
-    Y2star_C(V, Y2star, U_N, P_N) \
+#define Y2star(Y2star, U_N, P_N)                                                                                    \
+    Y2star_C(U, Y2star, U_N, P_N)                                                                                   \
+    Y2star_C(V, Y2star, U_N, P_N)                                                                                   \
     Y2star_C(W, Y2star, U_N, P_N)
 
 
@@ -82,9 +82,9 @@ ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)                            
 ITERATE_DOMAIN_END()
 
 
-#define Y3star(Y3star, Y2, PHI_2)  \
-    Y3star_C(U, Y3star, Y2, PHI_2) \
-    Y3star_C(V, Y3star, Y2, PHI_2) \
+#define Y3star(Y3star, Y2, PHI_2)                                                                                   \
+    Y3star_C(U, Y3star, Y2, PHI_2)                                                                                  \
+    Y3star_C(V, Y3star, Y2, PHI_2)                                                                                  \
     Y3star_C(W, Y3star, Y2, PHI_2)
 
 

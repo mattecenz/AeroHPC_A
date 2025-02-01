@@ -202,6 +202,37 @@ public:
     * Print a value information,
     * formatRatio is the portion of line the info will be placed on,
     * valueName is the information name,
+    * value is the information value
+    */
+    Logger &printValue(const long int formatRatio, const std::string &valueName, const int value) {
+        long int copy = value;
+        size_t valueSize = 1;
+        while (copy / 10 > 0) {
+            valueSize++;
+            copy /= 10;
+        }
+
+        const size_t valueSpace = valueSize + paddingS;
+        const size_t titleSpace = (_buffSize - paddingS) / formatRatio - paddingS - 1;
+
+        if (titleSpace <= 0) return *this;
+        if ((_buffSize - paddingS) * (1 - 1 / formatRatio) < valueSpace) return *this;
+
+        sanitize(valueName, titleSpace);
+
+        getPrevNext(t, valueName.size(), (_buffSize - paddingS) / formatRatio);
+        const size_t vNext = (_buffSize - paddingS) - ((_buffSize - paddingS) / formatRatio) - valueSpace;
+
+        out << "║" << repeat(" ", tprev + tnext - 2) << valueName << ":  "
+                << std::dec << value << repeat(" ", vNext) << " ║\n";
+
+        return *this;
+    }
+
+    /**
+    * Print a value information,
+    * formatRatio is the portion of line the info will be placed on,
+    * valueName is the information name,
     * str is the information string description
     */
     Logger &printValue(const int formatRatio, const std::string &valueName, const std::string &str) {

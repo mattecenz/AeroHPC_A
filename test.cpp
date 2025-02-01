@@ -22,8 +22,8 @@ int testSolver() {
     const Real origin_z = 0.0;
 
     const Real deltaT = 1e-4;
-    const Real Re = 1000.0;
-    const index_t timeSteps = 100;
+    const Real Re = 5000.0;
+    const index_t timeSteps = 1000;
 
     const bool periodicPressureBC[3] = {false, false, false};
 
@@ -31,7 +31,7 @@ int testSolver() {
 
 
     std::vector<index_t> nodes = {
-        8
+        8, 16, 32, 64
     };
 
     enabledBufferPrinter.initDir();
@@ -69,13 +69,14 @@ int testSolver() {
     return 0;
 }
 
+
 int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &THIS_PROC_RANK);
     MPI_Comm_size(MPI_COMM_WORLD, &THIS_WORLD_SIZE);
 
-    int ris = testSolver();
+    const int ris = testSolver();
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();

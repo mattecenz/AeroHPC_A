@@ -10,30 +10,31 @@ inline void computeL2Norm(const Real *data, const Real time, Real &uErr, Real &p
     Real sumP = 0.0;
 
     // Loop through the entire grid
-    ITERATE_DOMAIN_VELOCITY(i, j, k, true, NO_SKIP)
+    ITERATE_DOMAIN_VELOCITY(i, j, k, true, SKIP_U)
         const Real exactU = domData.domainF.UF(x + params.dX, y + params.dY2, z + params.dZ2, time);
-        const Real exactV = domData.domainF.VF(x + params.dX2, y + params.dY, z + params.dZ2, time);
-        const Real exactW = domData.domainF.WF(x + params.dX2, y + params.dY2, z + params.dZ, time);
-
-        const Real exactP = domData.domainF.PF(x + params.dX2, y + params.dY2, z + params.dZ2, time);
-
-        // Access the computed grid components
         const Real gridU = U(data, i, j, k);
-        const Real gridV = V(data, i, j, k);
-        const Real gridW = W(data, i, j, k);
-
-        const Real gridP = P(data, i, j, k);
-
-        // Calculate the differences
         const Real diffU = gridU - exactU;
+        sumU += (diffU * diffU);
+    ITERATE_DOMAIN_END()
+
+    ITERATE_DOMAIN_VELOCITY(i, j, k, true, SKIP_V)
+        const Real exactV = domData.domainF.VF(x + params.dX2, y + params.dY, z + params.dZ2, time);
+        const Real gridV = V(data, i, j, k);
         const Real diffV = gridV - exactV;
+        sumU += (diffV * diffV);
+    ITERATE_DOMAIN_END()
+
+    ITERATE_DOMAIN_VELOCITY(i, j, k, true, SKIP_W)
+        const Real exactW = domData.domainF.WF(x + params.dX2, y + params.dY2, z + params.dZ, time);
+        const Real gridW = W(data, i, j, k);
         const Real diffW = gridW - exactW;
+        sumU += (diffW * diffW);
+    ITERATE_DOMAIN_END()
 
+    ITERATE_DOMAIN_PRESSURE(i, j, k, true)
+        const Real exactP = domData.domainF.PF(x + params.dX2, y + params.dY2, z + params.dZ2, time);
+        const Real gridP = P(data, i, j, k);
         const Real diffP = gridP - exactP;
-
-        // Add the squares of the differences to sum
-        sumU += (diffU * diffU) + (diffV * diffV) + (diffW * diffW);
-
         sumP += (diffP * diffP);
     ITERATE_DOMAIN_END()
 
