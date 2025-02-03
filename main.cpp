@@ -2,11 +2,15 @@
 #include "Traits.hpp"
 #include "DataExporter.hpp"
 #include "runSolver.cpp"
+#include "testcaseDomainFunctions.cpp"
+#include "utils/Logger.hpp"
+#include "data/SolverData.hpp"
+#include "data/DomainData.hpp"
 #include <fstream>
 
 using namespace std;
 
-int runTestCase(int rank, int size, int argc, char **argv) {
+int runTestCase(int argc, char **argv) {
     int npy, npz;
     int nx, ny, nz;
     int timeSteps;
@@ -14,7 +18,7 @@ int runTestCase(int rank, int size, int argc, char **argv) {
     int testCase;
 
     // Processor 0 read the file
-    if (!rank) {
+    if (IS_MAIN_PROC) {
         if (argc < 2) {
             cout << "Test case file not found: Abort" << endl;
             MPI_Abort(MPI_COMM_WORLD, 1);
@@ -51,12 +55,16 @@ int runTestCase(int rank, int size, int argc, char **argv) {
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    boundaryDomainFunctions boundaryDF;
-    Real extr_px, extr_py, extr_pz;
+    Real dim_x = 0.0, dim_y = 0.0, dim_z = 0.0;
+    Real origin_x = 0.0, origin_y = 0.0, origin_z = 0.0;
+    Real extr_px = 0.0, extr_py = 0.0, extr_pz = 0.0;
+    Real Re = 0.0;
+    bool periodicPressureBC[3];
+    DomainData *domainData = nullptr;
 
     switch (testCase) {
         default:
-            if (!rank) cout << "Test case not listed: Abort" << endl;
+            if (IS_MAIN_PROC) cout << "Test case not listed: Abort" << endl;
             MPI_Abort(MPI_COMM_WORLD, 1);
             break;
         case 0:
@@ -73,42 +81,49 @@ int runTestCase(int rank, int size, int argc, char **argv) {
             extr_py = 0.5;
             extr_pz = 0.5;
 
-            TFunction zeroFunction = [](Real x, Real y, Real z, Real t) { return real(0); };
-            TFunction oneFunction = [](Real x, Real y, Real z, Real t) { return real(1); };
+            periodicPressureBC[0] = false;
+            periodicPressureBC[1] = false;
+            periodicPressureBC[2] = false;
 
-            boundaryDF[NORTH_FACE_ID] = {zeroFunction, zeroFunction, zeroFunction};
-            boundaryDF[SOUTH_FACE_ID] = {zeroFunction, zeroFunction, zeroFunction};
-            boundaryDF[EAST_FACE_ID] = {zeroFunction, zeroFunction, zeroFunction};
-            boundaryDF[WEST_FACE_ID] = {zeroFunction, zeroFunction, zeroFunction};
-            boundaryDF[FRONT_FACE_ID] = {zeroFunction, zeroFunction, zeroFunction};
-            boundaryDF[BACK_FACE_ID] = {zeroFunction, oneFunction, zeroFunction};
+            domainData = &testcase1DomainData;
+            break;
+        case 1:
+            //TODO
             break;
     }
 
-    runSolver(rank, size,
-              npy, npz,
-              nx, ny, nz,
-              dim_x, dim_y, dim_z,
-              deltaT, timeSteps, Re,
-              boundaryDF,
-              origin_x, origin_y, origin_z,
-              extr_px, extr_py, extr_pz);
+    enabledLogger.openSection("RUN TEST CASE");
+
+    initSolverData(
+        dim_x, dim_y, dim_z,
+        origin_x, origin_y, origin_z,
+        deltaT, timeSteps, Re,
+        nx, ny, nz,
+        npy, npz,
+        periodicPressureBC,
+        domainData
+    );
+
+    enabledLogger.printTitle("Data initialized");
+
+    runSolver(extr_px, extr_py, extr_pz);
+
+    destroySolverData();
+
+    enabledLogger.printTitle("Data destroyed").closeSection();
 
     return 0;
 }
-
-#include "DomainInfo.h"
 
 
 int main(int argc, char **argv) {
 
     MPI_Init(&argc, &argv);
 
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &THIS_PROC_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &THIS_WORLD_SIZE);
 
-    int ris = runTestCase(rank, size, argc, argv);
+    int ris = runTestCase(argc, argv);
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
