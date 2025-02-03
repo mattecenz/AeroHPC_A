@@ -76,7 +76,7 @@ enum BOUNDARY_TYPE {
 /// Problem unknowns
 enum UNKNOWNS {
     VELOCITY = 1,
-    PRESSURE = 2,
+    PRESSURE = 2
 };
 
 
