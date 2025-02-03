@@ -102,9 +102,7 @@ inline void solveEigenvalues() {
         for (int j = 0; j < zDirYSize; j++) {
             const index_t row_idx = layer_idx + j * zDirXSize;
             for (int i = 0; i < zDirXSize; i++) {
-                const Real e = fftData.eigs[row_idx + i];
-                if (e == 0) fftData.u3[row_idx + i] = 0;
-                else fftData.u3[row_idx + i] /= e;
+                fftData.u3[row_idx + i] *= fftData.eigs[row_idx + i];
             }
         }
     }
@@ -114,11 +112,12 @@ inline void solvePressure() {
     computeFFT();
     solveEigenvalues();
     computeIFFT();
-
+    /*
     // APPLY SCALING FACTOR TO X REPRESENTATION
     for (index_t idx = 0; idx < xDirXSize * xDirYSize * xDirZSize; ++idx) {
         fftData.base_buffer[idx] /= fftData.scalingFactor;
     }
+    */
 }
 
 

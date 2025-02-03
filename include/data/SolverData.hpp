@@ -38,8 +38,11 @@ inline Real interpData = nullptr;
 
 // INDEXING MACRO
 #define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)
+// #define indexing(i,j,k) (k + params.loc_nZ * (j + params.loc_nY * i))
 #define ghosted_indexing(i,j,k) ((i+1) + (j+1) * params.loc_gnX + (k+1) * params.loc_gnX * params.loc_gnY)
+// #define ghosted_indexing(i,j,k) ((k+1) + params.loc_gnZ * ((j+1) + params.loc_gnY * (i+1)))
 #define physical_indexing(i,j,k) (i + j * params.phy_nX + k * params.phy_nX * params.phy_nY)
+// #define physical_indexing(i,j,k) (k + params.phy_nZ * (j + params.phy_nY * i))
 
 // COMPONENTS FOR GHOSTED BUFFERS
 #define get_U_ghosted(data_ptr) (&data_ptr[0])

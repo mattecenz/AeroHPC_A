@@ -61,7 +61,7 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
     int avgCount = 0;
 
     // Printing variables
-    index_t maxTablePrintLine = 10;
+    index_t maxTablePrintLine = 200;
     index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////

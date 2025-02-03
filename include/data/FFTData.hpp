@@ -28,7 +28,7 @@
 
 #define FFT_NEUMANN FFTW_REDFT10
 #define FFT_PERIODIC FFTW_R2HC
-#define FFT_KIND(params, Axis)  params.periodic##Axis ? FFT_PERIODIC : FFT_I_NEUMANN
+#define FFT_KIND(params, Axis)  params.periodic##Axis ? FFT_PERIODIC : FFT_NEUMANN
 
 #define FFT_I_NEUMANN FFTW_REDFT01
 #define FFT_I_PERIODIC FFTW_HC2R
@@ -121,7 +121,10 @@ public:
                 for (int i = 0; i < zDirXSize; i++) {
                     const Real lambda_3 = eig(i, params.dZ, params.glob_nZ);
                     Real e = lambda_1 + lambda_2 + lambda_3;
-                    eigs[row_idx + i] = e;
+                    if(i+j+k == 0)
+                        eigs[row_idx + i] = 0.0;
+                    else
+                        eigs[row_idx + i] = 1.0 / (scalingFactor * e) ;
                 }
             }
         }
