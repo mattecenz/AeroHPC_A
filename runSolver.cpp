@@ -77,7 +77,8 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
 
     if (ENABLE_VTK_DEBUG) {
         create_directories(vtkdir);
-        VTKConverter::exportGrid(rkData.model_data).writeFile(vtkdir + "/solution_0.vtk");
+        interpolateData(rkData.model_data, 0);
+        VTKConverter::exportGrid(interpData_ptr).writeFile(vtkdir + "/solution_0.vtk");
     }
 
     for (index_t step = 0; step < params.timesteps; ++step) {

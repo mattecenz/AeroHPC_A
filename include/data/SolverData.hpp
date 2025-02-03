@@ -43,9 +43,9 @@ inline Real interpData = nullptr;
 
 // COMPONENTS FOR GHOSTED BUFFERS
 #define get_U_ghosted(data_ptr) (&data_ptr[0])
-#define get_V_ghosted(data_ptr) (&(data_ptr[params.grid_gndim]))
-#define get_W_ghosted(data_ptr) (&(data_ptr[params.grid_gndim * 2]))
-#define get_P_ghosted(data_ptr) (&(data_ptr[params.grid_gndim * 3]))
+#define get_V_ghosted(data_ptr) (&data_ptr[params.grid_gndim])
+#define get_W_ghosted(data_ptr) (&data_ptr[params.grid_gndim * 2])
+#define get_P_ghosted(data_ptr) (&data_ptr[params.grid_gndim * 3])
 
 // COMPONENTS FOR BUFFERS
 #define get_U(data_ptr) (&data_ptr[0])
