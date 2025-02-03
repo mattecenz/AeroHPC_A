@@ -73,7 +73,7 @@ public:
 
 
         // Calculate scaling factor
-#define scal(params, Axis) (params.periodic##Axis ? 2.0 * params.glob_n##Axis : 1.0 )
+#define scal(params, Axis) (params.periodic##Axis ? 1.0 : (2.0 * params.glob_n##Axis))
         scalingFactor = real(scal(params, X) * scal(params, Y) * scal(params, Z));
 #undef scal
         // Calculate eigenValues
