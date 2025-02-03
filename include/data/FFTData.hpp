@@ -28,7 +28,7 @@
 
 #define FFT_NEUMANN FFTW_REDFT10
 #define FFT_PERIODIC FFTW_R2HC
-#define FFT_KIND(params, Axis)  params.periodic##Axis ? FFT_PERIODIC : FFT_I_NEUMANN
+#define FFT_KIND(params, Axis)  params.periodic##Axis ? FFT_PERIODIC : FFT_NEUMANN
 
 #define FFT_I_NEUMANN FFTW_REDFT01
 #define FFT_I_PERIODIC FFTW_HC2R
@@ -46,12 +46,12 @@ public:
 
     FFTData(const Parameters &params, const C2Decomp &c2D, Real *base_buffer) {
         // Allocate FFT buffers
-        inputX = fftwr_malloc(sizeof(Real) * c2D.xSize[0] * c2D.xSize[1] * c2D.xSize[2]);
-        outputX = fftwr_malloc(sizeof(Real) * c2D.xSize[0] * c2D.xSize[1] * c2D.xSize[2]);
-        inputY = fftwr_malloc(sizeof(Real) * c2D.ySize[0] * c2D.ySize[1] * c2D.ySize[2]);
-        outputY = fftwr_malloc(sizeof(Real) * c2D.ySize[0] * c2D.ySize[1] * c2D.ySize[2]);
-        inputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[0] * c2D.zSize[1] * c2D.zSize[2]);
-        outputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[0] * c2D.zSize[1] * c2D.zSize[2]);
+        inputX = fftwr_malloc(sizeof(Real) * c2D.xSize[0]);
+        outputX = fftwr_malloc(sizeof(Real) * c2D.xSize[0]);
+        inputY = fftwr_malloc(sizeof(Real) * c2D.ySize[1]);
+        outputY = fftwr_malloc(sizeof(Real) * c2D.ySize[1]);
+        inputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[2]);
+        outputZ = fftwr_malloc(sizeof(Real) * c2D.zSize[2]);
 
         planx = fftwr_plan_r2r_1d(c2D.xSize[0], inputX, outputX, FFT_KIND(params, X), FFTW_ESTIMATE);
         plany = fftwr_plan_r2r_1d(c2D.ySize[1], inputY, outputY, FFT_KIND(params, Y), FFTW_ESTIMATE);
@@ -66,7 +66,7 @@ public:
         c2D.allocZ(u3);
         c2D.allocZ(eigs);
 
-        scalingFactor = params.glob_nX * params.glob_nY * params.glob_nZ;
+        scalingFactor = 1.0/(2.0 * params.glob_nX * 2.0 * params.glob_nY * 2.0 * params.glob_nZ);
 
         computeEigs(params, c2D);
     }
@@ -91,27 +91,36 @@ public:
         fftwr_destroy_plan(planz_i);
     }
 
-// #define eig(i, delta, N) (2.0 / delta * std::cos((i * M_PI) / (2.0 * N)))
-#define eig(i, delta, N) -std::pow(2.0 / delta * std::sin((M_PI*i) / (2.0 * N)),2)
+#define eig(i, delta, N) ( -pow( 2.0 / delta * std::sin( (real(i) * M_PI) / (2.0 * real(N)) ) , 2) )
 
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
-        std::cout << "-------------------START EIGENVALUES FOR POISSON SOLVER------------------" << std::endl;
-        for (int j = 0; j < c2D.zSize[1]; j++){
-            const Real lambda_2 = eig(j + c2D.zStart[1], params.dY, params.glob_nY);
-            const index_t layer_idx = j * c2D.zSize[0] * c2D.zSize[2];
+        // std::cout << "-------------------------- EIGENVALUES -------------------------" << std::endl;
+        int zDirXSize = c2D.zSize[2];
+        int zDirYSize = c2D.zSize[0];
+        int zDirZSize = c2D.zSize[1];
+        int zDirXStart = c2D.zStart[2];
+        int zDirYStart = c2D.zStart[0];
+        int zDirZStart = c2D.zStart[1];
 
-            for (int i = 0; i < c2D.zSize[0]; i++){
-                const index_t row_idx = layer_idx + i * c2D.zSize[2];
-                const Real lambda_1 = eig(i + c2D.zStart[0], params.dX, params.glob_nX);
+        // In Z transpose form we have Z on X-axis, Y on Z-axis and X on Y-axis
 
-                for (int k = 0; k < c2D.zSize[2]; k++){
-                    const Real lambda_3 = eig(k, params.dZ, params.glob_nZ);
-                    eigs[row_idx + k] = lambda_1 + lambda_2 + lambda_3;
-                    std::cout << eigs[row_idx+k] << std::endl;
+        for (int k = 0; k < zDirZSize; k++) {
+            const index_t layer_idx = k * zDirXSize * zDirYSize;
+            const Real lambda_1 = eig(k + zDirZStart, params.dY, params.glob_nY);
+            for (int j = 0; j < zDirYSize; j++) {
+                const index_t row_idx = layer_idx + j * zDirXSize;
+                const Real lambda_2 = eig(j + zDirYStart, params.dX, params.glob_nX);
+                for (int i = 0; i < zDirXSize; i++) {
+                    const Real lambda_3 = eig(i, params.dZ, params.glob_nZ);
+                    Real e = lambda_1 + lambda_2 + lambda_3;
+                    if(i+j+k==0)
+                        eigs[row_idx+i] = 0.0;
+                    else
+                        eigs[row_idx + i] = scalingFactor/e;
                 }
             }
         }
-        std::cout << "---------------------END EIGENVALUES FOR POISSON SOLVER--------------------" << std::endl;
+        // std::cout << "--------------------------------------------------------------" << std::endl;
     }
 };
 

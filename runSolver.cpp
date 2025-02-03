@@ -74,19 +74,20 @@ inline Real runSolver(const Real extr_px, const Real extr_py, const Real extr_pz
 
         if (!((step + 1)  % printIt) || step == params.timesteps - 1) // prints every n iteration or if is the last one
         {
-            Real currentTime = time + params.dt;
-            chrono_start(l2Time);
-            computeL2Norm(rkData.model_data, currentTime, localL2NormU, localL2NormP);
-            chrono_stop(l2Time);
-            const Real perf = rkTime / params.grid_ndim;
+            // Real currentTime = time + params.dt;
+            // chrono_start(l2Time);
+            // computeL2Norm(rkData.model_data, currentTime, localL2NormU, localL2NormP);
+            // chrono_stop(l2Time);
+            // const Real perf = rkTime / params.grid_ndim;
 
-            globalL2NormU = 0.0;
-            globalL2NormP = 0.0;
-            MPI_Allreduce(&localL2NormU, &globalL2NormU, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
-            MPI_Allreduce(&localL2NormP, &globalL2NormP, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
-            globalL2NormU = std::sqrt(globalL2NormU);
-            globalL2NormP = std::sqrt(globalL2NormP);
-            enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
+            // globalL2NormU = 0.0;
+            // globalL2NormP = 0.0;
+            // MPI_Allreduce(&localL2NormU, &globalL2NormU, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
+            // MPI_Allreduce(&localL2NormP, &globalL2NormP, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
+            // globalL2NormU = std::sqrt(globalL2NormU);
+            // globalL2NormP = std::sqrt(globalL2NormP);
+            // enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
+            enabledLogger.printTableValues(step + 1, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0});
             VTKConverter::exportGrid(rkData.model_data).writeFile("vtk/solution_"+std::to_string(step)+".vtk");
         }
     }
