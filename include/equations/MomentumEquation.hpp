@@ -25,9 +25,9 @@ compute_rhs(W)
 
 //***********/ FORCING TERM /**************************************************************************************//
 #if ForcingT
-#define getForceU(force, i, j, k) const Real force = ft.computeGx(x + params.dX, y + params.dX2, z + params.dZ2)
-#define getForceV(force, i, j, k) const Real force = ft.computeGy(x + params.dX2, y + params.dY, z + params.dZ2)
-#define getForceW(force, i, j, k) const Real force = ft.computeGz(x + params.dX2, y + params.dY2, z + params.dZ)
+#define getForceU(force, i, j, k) const Real force = ft.computeGx(X + params.dX, Y + params.dX2, Z + params.dZ2)
+#define getForceV(force, i, j, k) const Real force = ft.computeGy(X + params.dX2, Y + params.dY, Z + params.dZ2)
+#define getForceW(force, i, j, k) const Real force = ft.computeGz(X + params.dX2, Y + params.dY2, Z + params.dZ)
 #else
 #define getForceU(force, i, j, k) constexpr Real force = 0
 #define getForceV(force, i, j, k) constexpr Real force = 0

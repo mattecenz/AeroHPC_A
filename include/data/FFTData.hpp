@@ -28,7 +28,7 @@
 
 #define FFT_NEUMANN FFTW_REDFT10
 #define FFT_PERIODIC FFTW_R2HC
-#define FFT_KIND(params, Axis)  params.periodic##Axis ? FFT_PERIODIC : FFT_I_NEUMANN
+#define FFT_KIND(params, Axis)  params.periodic##Axis ? FFT_PERIODIC : FFT_NEUMANN
 
 #define FFT_I_NEUMANN FFTW_REDFT01
 #define FFT_I_PERIODIC FFTW_HC2R
@@ -73,9 +73,9 @@ public:
 
 
         // Calculate scaling factor
-#define scal(params, Axis) (params.periodic##Axis ? 2.0 * params.glob_n##Axis : 1.0)
+#define scal(params, Axis) (params.periodic##Axis ? 1.0 : (2.0 * params.glob_n##Axis))
         scalingFactor = real(scal(params, X) * scal(params, Y) * scal(params, Z));
-
+#undef scal
         // Calculate eigenValues
         computeEigs(params, c2D);
     }
@@ -102,7 +102,6 @@ public:
 
 
     void computeEigs(const Parameters &params, const C2Decomp &c2D) const {
-        // std::cout << "-------------------------- EIGENVALUES -------------------------" << std::endl;
         int zDirXSize = c2D.zSize[2];
         int zDirYSize = c2D.zSize[0];
         int zDirZSize = c2D.zSize[1];
@@ -111,21 +110,24 @@ public:
         int zDirZStart = c2D.zStart[1];
 
         // In Z transpose form we have Z on X-axis, Y on Z-axis and X on Y-axis
-#define eig(i, delta, N) ( -pow( 2.0 / delta * std::sin( (real(i) * M_PI) / (2.0 * real(N)) ) , 2) )
+#define eig(prm, i, axis) (-pow( 2.0 / prm.d##axis * std::sin( (real(i) * M_PI) / ((prm.periodic##axis ? 1.0 : 2.0) * real(prm.glob_n##axis))), 2))
         for (int k = 0; k < zDirZSize; k++) {
             const index_t layer_idx = k * zDirXSize * zDirYSize;
-            const Real lambda_1 = eig(k + zDirZStart, params.dY, params.glob_nY);
+            const Real lambda_1 = eig(params, k + zDirZStart, Y);
             for (int j = 0; j < zDirYSize; j++) {
                 const index_t row_idx = layer_idx + j * zDirXSize;
-                const Real lambda_2 = eig(j + zDirYStart, params.dX, params.glob_nX);
+                const Real lambda_2 = eig(params, j + zDirYStart, X);
                 for (int i = 0; i < zDirXSize; i++) {
-                    const Real lambda_3 = eig(i, params.dZ, params.glob_nZ);
+                    const Real lambda_3 = eig(params, i, Z);
                     Real e = lambda_1 + lambda_2 + lambda_3;
-                    eigs[row_idx + i] = e;
+                    if(i + j + k + zDirXStart + zDirYStart + zDirZStart == 0)
+                        eigs[row_idx + i] = 0.0;
+                    else
+                        eigs[row_idx + i] = 1.0 / (scalingFactor * e) ;
                 }
             }
         }
-        // std::cout << "--------------------------------------------------------------" << std::endl;
+#undef eig
     }
 };
 

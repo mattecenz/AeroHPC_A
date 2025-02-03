@@ -43,9 +43,9 @@ inline Real interpData = nullptr;
 
 // COMPONENTS FOR GHOSTED BUFFERS
 #define get_U_ghosted(data_ptr) (&data_ptr[0])
-#define get_V_ghosted(data_ptr) (&(data_ptr[params.grid_gndim]))
-#define get_W_ghosted(data_ptr) (&(data_ptr[params.grid_gndim * 2]))
-#define get_P_ghosted(data_ptr) (&(data_ptr[params.grid_gndim * 3]))
+#define get_V_ghosted(data_ptr) (&data_ptr[params.grid_gndim])
+#define get_W_ghosted(data_ptr) (&data_ptr[params.grid_gndim * 2])
+#define get_P_ghosted(data_ptr) (&data_ptr[params.grid_gndim * 3])
 
 // COMPONENTS FOR BUFFERS
 #define get_U(data_ptr) (&data_ptr[0])
@@ -96,16 +96,17 @@ void inline initSolverData(const Real dimX, const Real dimY, const Real dimZ,
 
     consts_ptr = new Constants(Re, deltaT);
 
-    _domData = domainData;
+    domData_ptr = domainData;
 }
 
 void inline destroySolverData() {
-#define solverData_destroy(data) delete data; data = nullptr;
-    solverData_destroy(params_ptr);
-    solverData_destroy(c2D_ptr);
-    solverData_destroy(rkData_ptr);
-    solverData_destroy(fftData_ptr);
-    solverData_destroy(consts_ptr);
+#define destroyData(data) delete data; data = nullptr;
+    destroyData(params_ptr);
+    destroyData(c2D_ptr);
+    destroyData(rkData_ptr);
+    destroyData(fftData_ptr);
+    destroyData(consts_ptr);
+#undef destroyData
 
     domData_ptr = nullptr;
 }

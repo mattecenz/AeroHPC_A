@@ -26,11 +26,11 @@ public:
     }
 
     ~RKData() {
-#define rkData_destroy(data) delete [] data; data=nullptr;
-
-        rkData_destroy(model_data);
-        rkData_destroy(buffer_data);
-        rkData_destroy(rhs_data);
+#define destroyData(data) delete [] data; data=nullptr;
+        destroyData(model_data);
+        destroyData(buffer_data);
+        destroyData(rhs_data);
+#undef destroyData
     }
 };
 

@@ -61,7 +61,7 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
     int avgCount = 0;
 
     // Printing variables
-    index_t maxTablePrintLine = 10;
+    index_t maxTablePrintLine = 200;
     index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
@@ -70,14 +70,15 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
 
     chrono_start(compT);
 
-    apply_boundaries(rkData.model_data, 0, TYPE_VELOCITY);
+    apply_boundaries(rkData.model_data, 0, VELOCITY);
 
-    const bool ENABLE_VTK_DEBUG = false;
+    constexpr bool ENABLE_VTK_DEBUG = false;
     const std::string vtkdir = "vtk" + std::to_string(THIS_PROC_RANK);
 
     if (ENABLE_VTK_DEBUG) {
         create_directories(vtkdir);
-        VTKConverter::exportGrid(rkData.model_data).writeFile(vtkdir + "/solution_0.vtk");
+        interpolateData(rkData.model_data, 0);
+        VTKConverter::exportGrid(interpData_ptr).writeFile(vtkdir + "/solution_0.vtk");
     }
 
     for (index_t step = 0; step < params.timesteps; ++step) {

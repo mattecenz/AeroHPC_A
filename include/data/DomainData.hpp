@@ -9,17 +9,15 @@
 class DomainData {
 public:
     /// This flags define whether the condition on the boundary is a Dirichlet or a Neumann one
-#define BOUNDARY_DIRICHLET 0
-#define BOUNDARY_NEUMANN 1
     const int northType, southType, eastType, westType, frontType, backType;
 
     /// Collections of functions that defines exact values of U, V, W and P on boundaries
     /// These collections are used only if the corresponding boundary type is Dirichlet
-    const SpatialFunctionsCollect &northBF, &southBF, &eastBF, &westBF, &frontBF, &backBF;
+    const SpatialFunctionsCollect northBF, southBF, eastBF, westBF, frontBF, backBF;
 
     /// Collection of functions that defines exact values of U, V, W and P on all domain
     /// This collection is used only to check L2Norm on domain (so only for test purposes)
-    const SpatialFunctionsCollect &domainF;
+    const SpatialFunctionsCollect domainF;
 
     DomainData() = delete;
 

@@ -29,8 +29,6 @@ typedef double Real;
 #define real(val) static_cast<Real>(val)
 #define real_p(pntr) static_cast<Real*>(pntr)
 
-#define VELOCITY_COMPONENTS 3
-
 /**
  * Typedef for array indexing
  */
@@ -66,6 +64,21 @@ typedef Real (*Function)(Real x, Real y, Real z);
  */
 typedef Vector (*VectorFunction)(Real x, Real y, Real z);
 
+/// Number of velocity components
+constexpr unsigned int VELOCITY_COMPONENTS = 3;
+
+/// Types of boundary condition
+enum BOUNDARY_TYPE {
+    DIRICHLET,
+    NEUMANN
+};
+
+/// Problem unknowns
+enum UNKNOWNS {
+    VELOCITY = 1,
+    PRESSURE = 2
+};
+
 
 #include "mpi.h"
 
@@ -80,18 +93,21 @@ inline int THIS_WORLD_SIZE = -1;
 #define Real_MPI MPI_DOUBLE
 #endif
 
-#define NORTH_BUFFER_TAG 1
-#define SOUTH_BUFFER_TAG 2
-#define WEST_BUFFER_TAG 4
-#define EAST_BUFFER_TAG 8
-#define NORTH_EAST_BUFFER_TAG 16
-#define NORTH_WEST_BUFFER_TAG 32
-#define SOUTH_EAST_BUFFER_TAG 64
-#define SOUTH_WEST_BUFFER_TAG 128
-
-#define U_BUFFER_TAG 256
-#define V_BUFFER_TAG 512
-#define W_BUFFER_TAG 1024
-#define P_BUFFER_TAG 2048
+enum BUFFER_TAGS {
+    // Position buffer
+    NORTH_BUFFER_TAG = 1,
+    SOUTH_BUFFER_TAG = 2,
+    WEST_BUFFER_TAG = 4,
+    EAST_BUFFER_TAG = 8,
+    NORTH_EAST_BUFFER_TAG = 16,
+    NORTH_WEST_BUFFER_TAG = 32,
+    SOUTH_EAST_BUFFER_TAG = 64,
+    SOUTH_WEST_BUFFER_TAG = 128,
+    // Component buffer
+    U_BUFFER_TAG = 256,
+    V_BUFFER_TAG = 512,
+    W_BUFFER_TAG = 1024,
+    P_BUFFER_TAG = 2048
+};
 
 #endif //AEROHPC_A_TRAITS_H

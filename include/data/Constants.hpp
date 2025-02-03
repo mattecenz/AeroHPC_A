@@ -20,7 +20,7 @@ public:
             inv_k_0, inv_k_3, inv_k_6;
 
     Constants(const Real Re, const Real dt) {
-        nu = (real(1) / Re);
+        nu = (real(1.0) / Re);
 
         k_0 = RKConst::alpha0 * dt;
         k_1 = RKConst::alpha1 * dt;
