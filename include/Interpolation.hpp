@@ -101,10 +101,10 @@ inline void interpolateData(const Real *data, const Real time) {
             Real Z = real(k + params.st_nZ) * params.dZ + params.originZ;
             for (index_t j = 0; j < params.phy_nY; j++) {
                 const Real Y = real(j + params.st_nY) * params.dY + params.originY;
-                PU(interpData_ptr, back_i, j, k) = domData.westBF.UF(X, Y, Z, time);
-                PV(interpData_ptr, back_i, j, k) = domData.westBF.VF(X, Y, Z, time);
-                PW(interpData_ptr, back_i, j, k) = domData.westBF.WF(X, Y, Z, time);
-                PP(interpData_ptr, back_i, j, k) = domData.westBF.PF(X, Y, Z, time);
+                PU(interpData_ptr, back_i, j, k) = domData.backBF.UF(X, Y, Z, time);
+                PV(interpData_ptr, back_i, j, k) = domData.backBF.VF(X, Y, Z, time);
+                PW(interpData_ptr, back_i, j, k) = domData.backBF.WF(X, Y, Z, time);
+                PP(interpData_ptr, back_i, j, k) = domData.backBF.PF(X, Y, Z, time);
             }
         }
     } else {
@@ -126,10 +126,10 @@ inline void interpolateData(const Real *data, const Real time) {
             Real Z = real(k + params.st_nZ) * params.dZ + params.originZ;
             for (index_t j = 0; j < params.phy_nY; j++) {
                 const Real Y = real(j + params.st_nY) * params.dY + params.originY;
-                PU(interpData_ptr, front_i, j, k) = domData.westBF.UF(X, Y, Z, time);
-                PV(interpData_ptr, front_i, j, k) = domData.westBF.VF(X, Y, Z, time);
-                PW(interpData_ptr, front_i, j, k) = domData.westBF.WF(X, Y, Z, time);
-                PP(interpData_ptr, front_i, j, k) = domData.westBF.PF(X, Y, Z, time);
+                PU(interpData_ptr, front_i, j, k) = domData.frontBF.UF(X, Y, Z, time);
+                PV(interpData_ptr, front_i, j, k) = domData.frontBF.VF(X, Y, Z, time);
+                PW(interpData_ptr, front_i, j, k) = domData.frontBF.WF(X, Y, Z, time);
+                PP(interpData_ptr, front_i, j, k) = domData.frontBF.PF(X, Y, Z, time);
             }
         }
     } else {
