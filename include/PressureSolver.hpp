@@ -14,7 +14,7 @@
 #define zDirZSize c2D.zSize[1]
 
 inline void computeFFT() {
-    //**********/ FFT FORWARD ON X AXIS /******************************************************************//
+    //----------/ FFT FORWARD ON X AXIS /------------------------------------------------------------------//
     for (int k = 0; k < xDirZSize; k++) {
         for (int j = 0; j < xDirYSize; j++) {
             const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
@@ -23,12 +23,12 @@ inline void computeFFT() {
             memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
         }
     }
-    //*****************************************************************************************************//
+    //-----------------------------------------------------------------------------------------------------//
 
     // GET Y REPRESENTATION
     c2D.transposeX2Y_MajorIndex(fftData.base_buffer, fftData.u2);
 
-    //**********/ FFT FORWARD ON Y AXIS /******************************************************************//
+    //----------/ FFT FORWARD ON Y AXIS /------------------------------------------------------------------//
     for (int k = 0; k < yDirZSize; k++) {
         for (int j = 0; j < yDirYSize; j++) {
             const int row_idx = yDirXSize * yDirYSize * k + yDirXSize * j;
@@ -37,12 +37,12 @@ inline void computeFFT() {
             memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirXSize);
         }
     }
-    //*****************************************************************************************************//
+    //-----------------------------------------------------------------------------------------------------//
 
     // GET Z REPRESENTATION
     c2D.transposeY2Z_MajorIndex(fftData.u2, fftData.u3);
 
-    //**********/ FFT FORWARD ON Z AXIS /******************************************************************//
+    //----------/ FFT FORWARD ON Z AXIS /------------------------------------------------------------------//
     for (int k = 0; k < zDirZSize; k++) {
         for (int j = 0; j < zDirYSize; j++) {
             const int row_idx = zDirXSize * zDirYSize * k + zDirXSize * j;
@@ -51,11 +51,11 @@ inline void computeFFT() {
             memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirXSize);
         }
     }
-    //*****************************************************************************************************//
+    //-----------------------------------------------------------------------------------------------------//
 }
 
 inline void computeIFFT() {
-    //**********/ FFT BACKWARD ON Z AXIS /*****************************************************************//
+    //----------/ FFT BACKWARD ON Z AXIS /-----------------------------------------------------------------//
     for (int k = 0; k < zDirZSize; k++) {
         for (int j = 0; j < zDirYSize; j++) {
             const int row_idx = zDirXSize * zDirYSize * k + zDirXSize * j;
@@ -64,12 +64,12 @@ inline void computeIFFT() {
             memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirXSize);
         }
     }
-    //*****************************************************************************************************//
+    //-----------------------------------------------------------------------------------------------------//
 
     // GET Y REPRESENTATION
     c2D.transposeZ2Y_MajorIndex(fftData.u3, fftData.u2);
 
-    //**********/ FFT BACKWARD ON Y AXIS /*****************************************************************//
+    //----------/ FFT BACKWARD ON Y AXIS /-----------------------------------------------------------------//
     for (int k = 0; k < yDirZSize; k++) {
         for (int j = 0; j < yDirYSize; j++) {
             const int row_idx = yDirXSize * yDirYSize * k + yDirXSize * j;
@@ -78,12 +78,12 @@ inline void computeIFFT() {
             memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirXSize);
         }
     }
-    //*****************************************************************************************************//
+    //-----------------------------------------------------------------------------------------------------//
 
     // GET X REPRESENTATION
     c2D.transposeY2X_MajorIndex(fftData.u2, fftData.base_buffer);
 
-    //**********/ FFT BACKWARD ON X AXIS /*****************************************************************//
+    //----------/ FFT BACKWARD ON X AXIS /-----------------------------------------------------------------//
     for (int k = 0; k < xDirZSize; k++) {
         for (int j = 0; j < xDirYSize; j++) {
             const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
@@ -92,7 +92,7 @@ inline void computeIFFT() {
             memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
         }
     }
-    //*****************************************************************************************************//
+    //-----------------------------------------------------------------------------------------------------//
 }
 
 inline void solveEigenvalues() {
@@ -112,12 +112,6 @@ inline void solvePressure() {
     computeFFT();
     solveEigenvalues();
     computeIFFT();
-    /*
-    // APPLY SCALING FACTOR TO X REPRESENTATION
-    for (index_t idx = 0; idx < xDirXSize * xDirYSize * xDirZSize; ++idx) {
-        fftData.base_buffer[idx] /= fftData.scalingFactor;
-    }
-    */
 }
 
 

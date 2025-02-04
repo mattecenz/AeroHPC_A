@@ -4,7 +4,7 @@
 #include "PressureSolver.hpp"
 #include "utils/macroUtils.hpp"
 
-//***********/ PRESSURE EQUATIONS /****************************************************************//
+//-----------/ PRESSURE EQUATIONS /----------------------------------------------------------------//
 #define Y2(Y2, Y2star, PHI_2, PHI_2_P_N, P_N)                                                       \
 ITERATE_DOMAIN_VELOCITY(i, j, k, false, SKIP_U)                                                     \
     U(Y2, i, j, k) = U(Y2star, i, j, k) - consts.k_0 * mu::dp_dx_U(PHI_2_P_N, i, j, k);             \
@@ -60,14 +60,14 @@ ITERATE_DOMAIN_END()
 ITERATE_DOMAIN_PRESSURE(i, j, k, false)                                                             \
     P(PRESSURE, i, j, k) = rhs_P(i, j, k);                                                          \
 ITERATE_DOMAIN_END()
-//*************************************************************************************************//
+//-------------------------------------------------------------------------------------------------//
 
 
-//***********/ PRESSURE SOLVER MACRO /*************************************************************//
+//-----------/ PRESSURE SOLVER MACRO /-------------------------------------------------------------//
 #define P_Eq(constant, VELOCITY_IN, PRESSURE_OUT)                                                   \
     Load_B(constant, VELOCITY_IN)                                                                   \
     solvePressure();                                                                                \
     Unload_B(PRESSURE_OUT)
-//*************************************************************************************************//
+//-------------------------------------------------------------------------------------------------//
 
 #endif //PRESSUREEQUATION_HPP

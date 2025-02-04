@@ -26,7 +26,7 @@
 #define domData (*domData_ptr)
 #define interpData (*interpData_ptr)
 
-//********************/ GLOBAL APPLICATION VARIABLES /*******************************//
+//--------------------/ GLOBAL APPLICATION VARIABLES /-------------------------------//
 inline Parameters params = nullptr;
 inline C2Decomp c2D = nullptr;
 inline RKData rkData = nullptr;
@@ -34,7 +34,7 @@ inline FFTData fftData = nullptr;
 inline Constants consts = nullptr;
 inline DomainData domData = nullptr;
 inline Real interpData = nullptr;
-//**********************************************************************************//
+//----------------------------------------------------------------------------------//
 
 // INDEXING MACRO
 #define indexing(i,j,k) (i + j * params.loc_nX + k * params.loc_nX * params.loc_nY)

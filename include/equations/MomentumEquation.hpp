@@ -8,7 +8,7 @@
 
 namespace mu = mathUtils;
 
-//***********/ RHS /***********************************************************************************************//
+//-----------/ RHS /-----------------------------------------------------------------------------------------------//
 #define compute_rhs(C)                                                                                              \
     inline Real compute_rhs_##C(Real *data, const index_t i, const index_t j, const index_t k)                      \
     {                                                                                                               \
@@ -20,10 +20,10 @@ compute_rhs(U)
 compute_rhs(V)
 
 compute_rhs(W)
-//*****************************************************************************************************************//
+//-----------------------------------------------------------------------------------------------------------------//
 
 
-//***********/ FORCING TERM /**************************************************************************************//
+//-----------/ FORCING TERM /--------------------------------------------------------------------------------------//
 #if ForcingT
 #define getForceU(force, i, j, k) const Real force = ft.computeGx(X + params.dX, Y + params.dX2, Z + params.dZ2)
 #define getForceV(force, i, j, k) const Real force = ft.computeGy(X + params.dX2, Y + params.dY, Z + params.dZ2)
@@ -33,10 +33,10 @@ compute_rhs(W)
 #define getForceV(force, i, j, k) constexpr Real force = 0
 #define getForceW(force, i, j, k) constexpr Real force = 0
 #endif
-//*****************************************************************************************************************//
+//-----------------------------------------------------------------------------------------------------------------//
 
 
-//***********/ PRESSURE TERM /*************************************************************************************//
+//-----------/ PRESSURE TERM /-------------------------------------------------------------------------------------//
 # if DISABLE_PRESSURE
 #define getPressureGradU(d_press, buff, i, j, k) constexpr Real d_press = 0
 #define getPressureGradV(d_press, buff, i, j, k) constexpr Real d_press = 0
@@ -46,10 +46,10 @@ compute_rhs(W)
 #define getPressureGradV(d_press, buff, i, j, k) const Real d_press = mu::dp_dy_V(buff, i, j, k)
 #define getPressureGradW(d_press, buff, i, j, k) const Real d_press = mu::dp_dz_W(buff, i, j, k)
 #endif
-//*****************************************************************************************************************//
+//-----------------------------------------------------------------------------------------------------------------//
 
 
-//***********/ MOMENTUM EQUATIONS /********************************************************************************//
+//-----------/ MOMENTUM EQUATIONS /--------------------------------------------------------------------------------//
 #define Y2star_C(C, Y2star, U_N, P_N)                                                                               \
 ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)                                                                \
     getForce##C(force, i, j, k);                                                                                    \
@@ -104,7 +104,7 @@ ITERATE_DOMAIN_END()
     U_N1star_C(U, U_N1star, Y3, PHI_3)                                                                              \
     U_N1star_C(V, U_N1star, Y3, PHI_3)                                                                              \
     U_N1star_C(W, U_N1star, Y3, PHI_3)
-//*****************************************************************************************************************//
+//-----------------------------------------------------------------------------------------------------------------//
 
 
 #endif //MOMENTUMEQUATION_HPP
