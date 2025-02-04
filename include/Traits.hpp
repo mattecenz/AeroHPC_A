@@ -75,8 +75,8 @@ enum BOUNDARY_TYPE {
 
 /// Problem unknowns
 enum UNKNOWNS {
-    VELOCITY = 1,
-    PRESSURE = 2
+    VELOCITY = (1 << 0),
+    PRESSURE = (1 << 1)
 };
 
 
@@ -95,19 +95,19 @@ inline int THIS_WORLD_SIZE = -1;
 
 enum BUFFER_TAGS {
     // Position buffer
-    NORTH_BUFFER_TAG = 1,
-    SOUTH_BUFFER_TAG = 2,
-    WEST_BUFFER_TAG = 4,
-    EAST_BUFFER_TAG = 8,
-    NORTH_EAST_BUFFER_TAG = 16,
-    NORTH_WEST_BUFFER_TAG = 32,
-    SOUTH_EAST_BUFFER_TAG = 64,
-    SOUTH_WEST_BUFFER_TAG = 128,
+    NORTH_BUFFER_TAG = (1 << 0),
+    SOUTH_BUFFER_TAG = (1 << 1),
+    WEST_BUFFER_TAG = (1 << 2),
+    EAST_BUFFER_TAG = (1 << 3),
+    NORTH_EAST_BUFFER_TAG = (1 << 4),
+    NORTH_WEST_BUFFER_TAG = (1 << 5),
+    SOUTH_EAST_BUFFER_TAG = (1 << 6),
+    SOUTH_WEST_BUFFER_TAG = (1 << 7),
     // Component buffer
-    U_BUFFER_TAG = 256,
-    V_BUFFER_TAG = 512,
-    W_BUFFER_TAG = 1024,
-    P_BUFFER_TAG = 2048
+    U_BUFFER_TAG = (1 << 8),
+    V_BUFFER_TAG = (1 << 9),
+    W_BUFFER_TAG = (1 << 10),
+    P_BUFFER_TAG = (1 << 11)
 };
 
 #endif //AEROHPC_A_TRAITS_H
