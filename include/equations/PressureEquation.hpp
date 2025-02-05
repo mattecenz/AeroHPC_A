@@ -3,6 +3,7 @@
 
 #include "PressureSolver.hpp"
 #include "utils/macroUtils.hpp"
+#include "Boundaries.hpp"
 
 //-----------/ PRESSURE EQUATIONS /----------------------------------------------------------------//
 #define Y2(Y2, Y2star, PHI_2, PHI_2_P_N, P_N)                                                       \
@@ -54,7 +55,12 @@ ITERATE_DOMAIN_END()
 ITERATE_DOMAIN_PRESSURE(i, j, k, false)                                                             \
     rhs_P(i, j, k) = constant * mu::vel_div(VELOCITY, i, j, k);                                     \
 ITERATE_DOMAIN_END()
-
+/*
+#define Load_B(constant, VELOCITY)                                                                  \
+ITERATE_DOMAIN_PRESSURE(i, j, k, false)                                                             \
+    rhs_P(i, j, k) = THIS_PROC_RANK + i_st * 0.1 + j_st * 0.01 + k_st * 0.001;                                     \
+ITERATE_DOMAIN_END()
+*/
 
 #define Unload_B(PRESSURE)                                                                          \
 ITERATE_DOMAIN_PRESSURE(i, j, k, false)                                                             \
@@ -66,6 +72,7 @@ ITERATE_DOMAIN_END()
 //-----------/ PRESSURE SOLVER MACRO /-------------------------------------------------------------//
 #define P_Eq(constant, VELOCITY_IN, PRESSURE_OUT)                                                   \
     Load_B(constant, VELOCITY_IN)                                                                   \
+    exchange_periodicLayer();\
     solvePressure();                                                                                \
     Unload_B(PRESSURE_OUT)
 //-------------------------------------------------------------------------------------------------//

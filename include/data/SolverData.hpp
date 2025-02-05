@@ -78,17 +78,15 @@ inline Real interpData = nullptr;
 #define PP(data_ptr, i, j, k) get_P_physical(data_ptr)[physical_indexing(i,j,k)]
 
 void inline initSolverData(const Real dimX, const Real dimY, const Real dimZ,
-                     const Real originX, const Real originY, const Real originZ,
-                     const Real deltaT, const index_t timestep, const Real Re,
-                     const index_t nX, const index_t nY, const index_t nZ,
-                     const index_t nPY, const index_t nPZ,
-                     const bool periodicBC[3],
-                     DomainData *domainData) {
-
+                           const Real originX, const Real originY, const Real originZ,
+                           const Real deltaT, const index_t timestep, const Real Re,
+                           const index_t nX, const index_t nY, const index_t nZ,
+                           const index_t nPY, const index_t nPZ, const bool periodicBC[3],
+                           DomainData *domainData) {
     c2D_ptr = new C2Decomp(nX, nY, nZ, nPY, nPZ, periodicBC);
 
     params_ptr = new Parameters(dimX, dimY, dimZ, originX, originY, originZ,
-                             nX, nY, nZ, deltaT, timestep, Re, periodicBC, c2D);
+                                deltaT, timestep, Re, periodicBC, c2D);
 
     rkData_ptr = new RKData(params);
 

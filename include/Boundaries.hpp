@@ -27,6 +27,11 @@ public:
 #define boundary_add_request_pressure(collection, data_ptr, i, j, k, type_ptr, neigh_rank, face_tag)\
     collection.emplace_back(&P(data_ptr, i, j, k), type_ptr, neigh_rank, face_tag | P_BUFFER_TAG);
 
+#define boundary_add_request_periodic(collection, i, j, k, type_ptr, neigh_rank, face_tag)\
+    collection.emplace_back(&rhs_P(i, j, k), type_ptr, neigh_rank, face_tag | P_BUFFER_TAG);
+
+
+
 void inline apply_boundaries(Real *data, const Real currentTime, int type) {
     const bool apply_velocity = type & VELOCITY;
     const bool apply_pressure = type & PRESSURE;
@@ -36,8 +41,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
     // NORTH
     {
-        const index_t north_inner_j = params.loc_nY - 1;
-        const index_t north_ghost_j = params.loc_nY;
+        const index_t north_inner_j = params.loc_nY - params.hasPeriodicLayerY - 1;
+        const index_t north_ghost_j = params.loc_nY - params.hasPeriodicLayerY;
 
         const Real Y = real(north_ghost_j + params.st_nY) * params.dY + params.originY;
         // VELOCITY
@@ -111,8 +116,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
     // EAST
     {
-        const index_t east_inner_k = params.loc_nZ - 1;
-        const index_t east_ghost_k = params.loc_nZ;
+        const index_t east_inner_k = params.loc_nZ - params.hasPeriodicLayerZ - 1;
+        const index_t east_ghost_k = params.loc_nZ - params.hasPeriodicLayerZ;
 
         const Real Z = real(east_ghost_k + params.st_nZ) * params.dZ + params.originZ;
         // VELOCITY
@@ -186,8 +191,8 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
     // BACK
     {
-        const index_t back_inner_i = params.loc_nX - 1;
-        const index_t back_ghost_i = params.loc_nX;
+        const index_t back_inner_i = params.loc_nX - params.hasPeriodicLayerX - 1;
+        const index_t back_ghost_i = params.loc_nX - params.hasPeriodicLayerX;
 
         constexpr index_t back_periodic_i = 0;
 
@@ -257,10 +262,10 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
     // NORTH EAST
     {
-        const index_t ne_inner_j = params.loc_nY - 1;
-        const index_t ne_inner_k = params.loc_nZ - 1;
-        const index_t ne_ghost_j = params.loc_nY;
-        const index_t ne_ghost_k = params.loc_nZ;
+        const index_t ne_inner_j = params.loc_nY - params.hasPeriodicLayerY - 1;
+        const index_t ne_inner_k = params.loc_nZ - params.hasPeriodicLayerZ - 1;
+        const index_t ne_ghost_j = params.loc_nY - params.hasPeriodicLayerY;
+        const index_t ne_ghost_k = params.loc_nZ - params.hasPeriodicLayerZ;
 
         if (apply_velocity) {
             if (params.neigh_north_east != MPI_PROC_NULL) {
@@ -278,9 +283,9 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
 
     // NORTH WEST
     {
-        const index_t ne_inner_j = params.loc_nY - 1;
+        const index_t ne_inner_j = params.loc_nY - params.hasPeriodicLayerY - 1;
         constexpr index_t ne_inner_k = 0;
-        const index_t ne_ghost_j = params.loc_nY;
+        const index_t ne_ghost_j = params.loc_nY - params.hasPeriodicLayerY;
         constexpr index_t ne_ghost_k = -1;
 
         if (apply_velocity) {
@@ -301,9 +306,9 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
     // SOUTH EAST
     {
         constexpr index_t ne_inner_j = 0;
-        const index_t ne_inner_k = params.loc_nZ - 1;
+        const index_t ne_inner_k = params.loc_nZ - params.hasPeriodicLayerZ - 1;
         constexpr index_t ne_ghost_j = -1;
-        const index_t ne_ghost_k = params.loc_nZ;
+        const index_t ne_ghost_k = params.loc_nZ - params.hasPeriodicLayerZ;
 
         if (apply_velocity) {
             if (params.neigh_south_east != MPI_PROC_NULL) {
@@ -355,5 +360,76 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
     }
 }
 
+void inline exchange_periodicLayer() {
+    std::vector<MPI_BCRequest> bcs_send;
+    std::vector<MPI_BCRequest> bcs_recv;
+
+    // NORTH
+    {
+        const index_t periodic_j = params.loc_nY - 1;
+
+        // PRESSURE
+        if (params.periodicY && params.isOnTop) {
+            boundary_add_request_periodic(bcs_recv, 0, periodic_j, 0, &params.XZFace_Periodic, params.neigh_north, SOUTH_BUFFER_TAG);
+        }
+    }
+
+    // SOUTH
+    {
+        constexpr index_t inner_j = 0;
+
+        // PRESSURE
+        if (params.periodicY && params.isOnBottom) {
+            boundary_add_request_periodic(bcs_send, 0, inner_j, 0, &params.XZFace_Periodic, params.neigh_south, SOUTH_BUFFER_TAG);
+        }
+    }
+
+    // EAST
+    {
+        const index_t periodic_k = params.loc_nZ - 1;
+
+        // PRESSURE
+        if (params.periodicZ && params.isOnRight) {
+            boundary_add_request_periodic(bcs_recv, 0, 0, periodic_k, &params.XYFace_Periodic, params.neigh_east, WEST_BUFFER_TAG);
+        }
+    }
+
+    // WEST
+    {
+        constexpr index_t inner_k = 0;
+
+        // PRESSURE
+        if (params.periodicZ && params.isOnLeft) {
+            boundary_add_request_periodic(bcs_send, 0, 0, inner_k, &params.XYFace_Periodic, params.neigh_west, WEST_BUFFER_TAG);
+        }
+    }
+
+    // FRONT
+    {
+        constexpr index_t inner_i = 0;
+
+        const index_t periodic_i = params.loc_nX - 1;
+
+        if (params.periodicX) {
+            ITERATE_YZ_FACE(j, k, false)
+                rhs_P(periodic_i, j, k) = rhs_P(inner_i, j, k);
+            ITERATE_FACE_END()
+        }
+
+        // EXCHANGE FACES WITH OTHER SUBDOMAINS
+        for (MPI_BCRequest &req: bcs_send) {
+            MPI_Isend(req.data_basePtr, 1, *req.datatype, req.neighRank, req.bufferTag, MPI_COMM_WORLD, &req.request);
+        }
+        for (MPI_BCRequest &req: bcs_recv) {
+            MPI_Irecv(req.data_basePtr, 1, *req.datatype, req.neighRank, req.bufferTag, MPI_COMM_WORLD, &req.request);
+        }
+        for (MPI_BCRequest &req: bcs_send) {
+            MPI_Wait(&req.request, MPI_STATUS_IGNORE);
+        }
+        for (MPI_BCRequest &req: bcs_recv) {
+            MPI_Wait(&req.request, MPI_STATUS_IGNORE);
+        }
+    }
+}
 
 #endif //AEROHPC_A_BOUNDARIES_HPP

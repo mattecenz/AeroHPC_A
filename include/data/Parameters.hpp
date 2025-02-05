@@ -33,11 +33,15 @@ public:
     // SubDomain boundary Info
     bool isOnTop, isOnBottom, isOnRight, isOnLeft; // Where is globally positioned
     bool periodicX, periodicY, periodicZ; // If the boundary is periodic on directions
+    bool hasPeriodicLayerX, hasPeriodicLayerY, hasPeriodicLayerZ;
 
     // MPI Types
     MPI_Datatype XYFace;
     MPI_Datatype XZFace;
     MPI_Datatype XRow;
+
+    MPI_Datatype XYFace_Periodic;
+    MPI_Datatype XZFace_Periodic;
 
     // Time Info
     Real dt; // Physical delta Time between timesteps
@@ -48,17 +52,39 @@ public:
 
     Parameters(const Real dimX, const Real dimY, const Real dimZ,
                const Real originX, const Real originY, const Real originZ,
-               const index_t glob_nX, const index_t glob_nY, const index_t glob_nZ,
                const Real dt, const index_t timesteps, const Real Re,
                const bool periodicBC[3], const C2Decomp &c2D)
         : dimX(dimX), dimY(dimY), dimZ(dimZ),
           originX(originX), originY(originY), originZ(originZ),
-          glob_nX(glob_nX), glob_nY(glob_nY), glob_nZ(glob_nZ),
           dt(dt), timesteps(timesteps), Re(Re) {
 
-        dX = dimX / real(glob_nX);
-        dY = dimY / real(glob_nY);
-        dZ = dimZ / real(glob_nZ);
+        periodicX = periodicBC[0];
+        periodicY = periodicBC[1];
+        periodicZ = periodicBC[2];
+
+        // global position of this process
+        const int n_y_proc = c2D.dims[0];
+        const int n_z_proc = c2D.dims[1];
+        const int this_y_pos = c2D.coord[0];
+        const int this_z_pos = c2D.coord[1];
+
+        // flags to define if the processor is on a physical boundary
+        isOnTop = (this_y_pos == n_y_proc - 1);
+        isOnBottom = (this_y_pos == 0);
+        isOnLeft = (this_z_pos == 0);
+        isOnRight = (this_z_pos == n_z_proc - 1);
+
+        hasPeriodicLayerX = periodicX;
+        hasPeriodicLayerY = periodicY && isOnBottom;
+        hasPeriodicLayerZ = periodicZ && isOnRight;
+
+        glob_nX = c2D.nxGlobal;
+        glob_nY = c2D.nyGlobal;
+        glob_nZ = c2D.nzGlobal;
+
+        dX = dimX / real(glob_nX - periodicX);
+        dY = dimY / real(glob_nY - periodicY);
+        dZ = dimZ / real(glob_nZ - periodicZ);
 
         dX2 = dX / real(2);
         dY2 = dY / real(2);
@@ -79,9 +105,9 @@ public:
         grid_ndim = loc_nX * loc_nY * loc_nZ;
         grid_gndim = loc_gnX * loc_gnY * loc_gnZ;
 
-        phy_nX = loc_nX + 1;
-        phy_nY = loc_nY + 1;
-        phy_nZ = loc_nZ + 1;
+        phy_nX = loc_nX - hasPeriodicLayerX + 1;
+        phy_nY = loc_nY - hasPeriodicLayerY + 1;
+        phy_nZ = loc_nZ - hasPeriodicLayerZ + 1;
 
         phy_ndim = phy_nX * phy_nY * phy_nZ;
 
@@ -93,22 +119,10 @@ public:
         MPI_Type_vector(1, loc_gnX, 0, Real_MPI, &XRow);
         MPI_Type_commit(&XRow);
 
-        periodicX = periodicBC[0];
-        periodicY = periodicBC[1];
-        periodicZ = periodicBC[2];
-
-        // FIND NEIGHBORS
-        // global position of this process
-        const int n_y_proc = c2D.dims[0];
-        const int n_z_proc = c2D.dims[1];
-        const int this_y_pos = c2D.coord[0];
-        const int this_z_pos = c2D.coord[1];
-
-        // flags to define if the processor is on a physical boundary
-        isOnTop = (this_y_pos == n_y_proc - 1);
-        isOnBottom = (this_y_pos == 0);
-        isOnLeft = (this_z_pos == 0);
-        isOnRight = (this_z_pos == n_z_proc - 1);
+        MPI_Type_vector(loc_nY, loc_nX, loc_nX, Real_MPI, &XYFace_Periodic);
+        MPI_Type_commit(&XYFace_Periodic);
+        MPI_Type_vector(loc_nZ, loc_nX, loc_nX * loc_nY, Real_MPI, &XZFace_Periodic);
+        MPI_Type_commit(&XZFace_Periodic);
 
         if (periodicY || !isOnTop) {
             int coord[] = {this_y_pos + 1, this_z_pos};

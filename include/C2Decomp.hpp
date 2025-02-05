@@ -42,7 +42,7 @@ public:
 	//Defining neighboring blocks
 	int neighbor[3][6];
 
-	private:
+private:
 	//Flags for periodic condition in 3D
 	bool periodicX, periodicY, periodicZ;
 
@@ -88,13 +88,13 @@ public:
     C2Decomp(const int nx, const int ny, const int nz,
             const int pRow, const int pCol, const bool periodicBC[3]) {
 
-        nxGlobal = nx;
-        nyGlobal = ny;
-        nzGlobal = nz;
-
         periodicX = periodicBC[0];
         periodicY = periodicBC[1];
         periodicZ = periodicBC[2];
+
+        nxGlobal = nx + periodicX;
+        nyGlobal = ny + periodicY;
+        nzGlobal = nz + periodicZ;
 
         decompBufSize = 0;
         work1_r = NULL;

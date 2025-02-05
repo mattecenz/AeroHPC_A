@@ -5,9 +5,10 @@
 /// (optional) compute the physical position on the given direction
 #define ITERATE_ROW(ix, min, max, compute_physics, phy)                                 \
     for(index_t ix = min; ix < max; ++ix) {                                             \
-        Real phy = 0;                                                                   \
+        Real phy = 0;\
+        index_t ix##_st = ix + params.st_n##phy;\
         if constexpr(compute_physics)                                                   \
-            phy = real(ix + params.st_n##phy) * params.d##phy + params.origin##phy;
+            phy = real(ix##_st) * params.d##phy + params.origin##phy;
 
 /// Iterate over a face of data, just a wrapper of nested call of ITERATE_ROW
 #define ITERATE_FACE(ixA, minA, maxA, ixB, minB, maxB, compute_physics, phyA, phyB)     \
@@ -34,31 +35,31 @@
 /// Iterate over velocity domain, allowing not to iterate on direction-last nodes
 /// (skip is useful for optimization, since direction-last nodes are on physical domain, so their value is set by boundaries)
 #define ITERATE_DOMAIN_VELOCITY(i, j, k, compute_physics, skip_C)                                           \
-    ITERATE_DOMAIN(k, 0, ((params.isOnRight && (skip_C & SKIP_W)) ? params.loc_nZ - 1 : params.loc_nZ),     \
-                   j, 0, ((params.isOnTop && (skip_C & SKIP_V)) ? params.loc_nY - 1 : params.loc_nY),       \
-                   i, 0, ((skip_C & SKIP_U) ? params.loc_nX - 1 : params.loc_nX),                           \
+    ITERATE_DOMAIN(k, 0, params.loc_nZ - params.isOnRight * ((skip_C & SKIP_W) + params.hasPeriodicLayerZ),     \
+                   j, 0, params.loc_nY - params.isOnTop * ((skip_C & SKIP_V) + params.hasPeriodicLayerY),       \
+                   i, 0, params.loc_nX - (skip_C & SKIP_U) - params.hasPeriodicLayerX,                           \
                    compute_physics, Z, Y, X)
 
 
 /// Iterate on pressure domain, since all pressure point are into domain skip is not allowed
 #define ITERATE_DOMAIN_PRESSURE(i, j, k, compute_physics)                                   \
-    ITERATE_DOMAIN(k, 0, params.loc_nZ,                                                     \
-                   j, 0, params.loc_nY,                                                     \
-                   i, 0, params.loc_nX,                                                     \
+    ITERATE_DOMAIN(k, 0, params.loc_nZ - params.hasPeriodicLayerZ,                                                     \
+                   j, 0, params.loc_nY - params.hasPeriodicLayerY,                                                     \
+                   i, 0, params.loc_nX - params.hasPeriodicLayerX,                                                     \
                    compute_physics, Z, Y, X)
 
 
 /// Iterate over a face on plane XZ
 #define ITERATE_XZ_FACE(i, k, compute_physics)                                              \
-    ITERATE_FACE(k, 0, params.loc_nZ, i, 0, params.loc_nX, compute_physics, Z, X)
+    ITERATE_FACE(k, 0, params.loc_nZ - params.hasPeriodicLayerZ, i, 0, params.loc_nX - params.hasPeriodicLayerX, compute_physics, Z, X)
 
 /// Iterate over a face on plane XY
 #define ITERATE_XY_FACE(i, j, compute_physics)                                              \
-    ITERATE_FACE(j, 0, params.loc_nY, i, 0, params.loc_nX, compute_physics, Y, X)
+    ITERATE_FACE(j, 0, params.loc_nY - params.hasPeriodicLayerY, i, 0, params.loc_nX - params.hasPeriodicLayerX, compute_physics, Y, X)
 
 /// Iterate over a face on plane YZ
 #define ITERATE_YZ_FACE(j, k, compute_physics)                                              \
-    ITERATE_FACE(k, 0, params.loc_nZ, j, 0, params.loc_nY, compute_physics, Z, Y)
+    ITERATE_FACE(k, 0, params.loc_nZ - params.hasPeriodicLayerZ, j, 0, params.loc_nY - params.hasPeriodicLayerY, compute_physics, Z, Y)
 
 
 /// Iterate on "physical" domain, that is, it excludes all boundary points, since they are all on real boundary,

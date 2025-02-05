@@ -2,6 +2,7 @@
 #define PRESSURESOLVER_HPP
 
 #include "data/SolverData.hpp"
+#include <fstream>
 
 #define xDirXSize c2D.xSize[0]
 #define xDirYSize c2D.xSize[1]
@@ -15,14 +16,25 @@
 
 inline void computeFFT() {
     //----------/ FFT FORWARD ON X AXIS /------------------------------------------------------------------//
+    //std::fstream of("test_" + std::to_string(THIS_PROC_RANK) + ".txt", std::ios::out);
+    //of << std::setprecision(3) << std::fixed;
     for (int k = 0; k < xDirZSize; k++) {
+        //std::string space = "";
         for (int j = 0; j < xDirYSize; j++) {
+            //of << space;
             const int row_idx = xDirXSize * xDirYSize * k + xDirXSize * j;
+            //for (int i = 0; i < xDirXSize; i++) {
+            //    of << fftData.base_buffer[row_idx + i] << " ";
+            //}
+            // of << std::endl;
+            // space += " ";
             memcpy(fftData.inputX, &fftData.base_buffer[row_idx], sizeof(Real) * xDirXSize);
             fftwr_execute(fftData.planx); // Execute FFT on each slice
             memcpy(&fftData.base_buffer[row_idx], fftData.outputX, sizeof(Real) * xDirXSize);
         }
+        // of << std::endl;
     }
+    // of << "===========================================================" << std::endl;
     //-----------------------------------------------------------------------------------------------------//
 
     // GET Y REPRESENTATION
@@ -30,13 +42,23 @@ inline void computeFFT() {
 
     //----------/ FFT FORWARD ON Y AXIS /------------------------------------------------------------------//
     for (int k = 0; k < yDirZSize; k++) {
+        // std::string space = "";
         for (int j = 0; j < yDirYSize; j++) {
+            // of << space;
             const int row_idx = yDirXSize * yDirYSize * k + yDirXSize * j;
+            // for (int i = 0; i < yDirXSize; i++) {
+            //     of << fftData.u2[row_idx + i] << " ";
+            // }
+            // of << std::endl;
+            // space += " ";
+            //
             memcpy(fftData.inputY, &fftData.u2[row_idx], sizeof(Real) * yDirXSize);
             fftwr_execute(fftData.plany); // Execute FFT on each slice
             memcpy(&fftData.u2[row_idx], fftData.outputY, sizeof(Real) * yDirXSize);
         }
+        // of << std::endl;
     }
+    // of << "============================================================" << std::endl;
     //-----------------------------------------------------------------------------------------------------//
 
     // GET Z REPRESENTATION
@@ -44,13 +66,22 @@ inline void computeFFT() {
 
     //----------/ FFT FORWARD ON Z AXIS /------------------------------------------------------------------//
     for (int k = 0; k < zDirZSize; k++) {
+        // std::string space = "";
         for (int j = 0; j < zDirYSize; j++) {
+            // of << space;
             const int row_idx = zDirXSize * zDirYSize * k + zDirXSize * j;
+            // for (int i = 0; i < zDirXSize; i++) {
+            //     of << fftData.u3[row_idx + i] << " ";
+            // }
+            // of << std::endl;
+            // space += " ";
             memcpy(fftData.inputZ, &fftData.u3[row_idx], sizeof(Real) * zDirXSize);
             fftwr_execute(fftData.planz); // Execute FFT on each slice
             memcpy(&fftData.u3[row_idx], fftData.outputZ, sizeof(Real) * zDirXSize);
         }
+        // of << std::endl;
     }
+
     //-----------------------------------------------------------------------------------------------------//
 }
 
