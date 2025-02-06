@@ -10,6 +10,14 @@ TFunction oneFunction = [](const Real x, const Real y, const Real z, const Real 
 };
 
 DomainData testcase1DomainData(DIRICHLET,  {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
+    DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
+                               DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
+                               DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
+                               DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
+                               DIRICHLET, {zeroFunction, oneFunction, zeroFunction, zeroFunction},
+                               {zeroFunction, zeroFunction, zeroFunction, zeroFunction});
+                               
+DomainData testcase2DomainData(DIRICHLET,  {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
                                DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
                                DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
                                DIRICHLET, {zeroFunction, zeroFunction, zeroFunction, zeroFunction},
