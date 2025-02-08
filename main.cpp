@@ -92,12 +92,15 @@ int runTestCase(int argc, char **argv) {
             dim_y = 1.0;
             dim_z = 1.0;
             Re = 1000.0;
+
             origin_x = -0.5;
             origin_y = -0.5;
             origin_z = -0.5;
+
             extr_px = 0.0;
             extr_py = 0.0;
             extr_pz = 0.0;
+
             periodicPressureBC[0] = false;
             periodicPressureBC[1] = false;
             periodicPressureBC[2] = true;

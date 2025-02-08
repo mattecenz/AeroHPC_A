@@ -3,11 +3,8 @@
 #include "Traits.hpp"
 #include "utils/chronoUtils.hpp"
 #include "utils/Logger.hpp"
-#include "C2Decomp.hpp"
 #include "L2NormCalculator.hpp"
 #include "RungeKutta.hpp"
-#include "DataExporter.hpp"
-#include <fstream>
 #include "data/SolverData.hpp"
 #include "Boundaries.hpp"
 #include "Initialization.hpp"
@@ -72,7 +69,7 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
 
     apply_boundaries(rkData.model_data, 0, VELOCITY);
 
-    constexpr bool ENABLE_VTK_DEBUG = true;
+    constexpr bool ENABLE_VTK_DEBUG = false;
     const std::string vtkdir = "vtk" + std::to_string(THIS_PROC_RANK);
 
     if (ENABLE_VTK_DEBUG) {
@@ -134,48 +131,45 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
     avgL2Time /= avgCount;
     avgPerf /= avgCount;
 
-    //TODO EXPORTING
-    /*
-        GridData interpolated_model(modelStructure);
-        interpData(model, interpolated_model);
 
-        std::array<Real, 3> originPoint = {origin_x, origin_y, origin_z};
+    const Real finalTime = real(params.timesteps) * params.dt;
+    interpolateData(rkData.model_data, finalTime);
 
-        std::string exportFaceFilename = "solution.vtk";
-        std::string exportFaceDescription = "test";
-        std::vector<Real> face_points, face_vel, face_pres;
-        extractFaceData(interpolated_model, face_points, face_vel, face_pres, originPoint, {0,0,0});
-        writeVtkFile(exportFaceFilename, exportFaceDescription, face_points, face_vel, face_pres);
+    if (IS_MAIN_PROC)
+        create_directories("solution");
 
-        if (!rank)
-            logger.printTitle("solution written");
+    MPI_Barrier(MPI_COMM_WORLD);
 
-        std::array<Real, 3> point = {extr_px, extr_py, extr_pz};
+    std::string exportFaceFilename = "solution.vtk";
+    std::string exportFaceDescription = "test";
+    std::vector<Real> face_points, face_vel, face_pres;
+    extractFaceData(face_points, face_vel, face_pres, {0, 0, 0});
+    writeVtkFile(exportFaceFilename, exportFaceDescription, face_points, face_vel, face_pres);
 
-        std::string exportLine1Filename = "profile1.dat";
-        std::vector<Real> line1_points, line1_vel, line1_pres;
-        extractLineData(interpolated_model, line1_points, line1_vel, line1_pres, 0, originPoint, point);
-        writeDatFile(exportLine1Filename, line1_points, line1_vel, line1_pres);
+    enabledLogger.printTitle("solution written");
 
-        if (!rank)
-            logger.printTitle("profile1 written");
+    std::array<Real, 3> point = {extr_px, extr_py, extr_pz};
 
-        std::string exportLine2Filename = "profile2.dat";
-        std::vector<Real> line2_points, line2_vel, line2_pres;
-        extractLineData(interpolated_model, line2_points, line2_vel, line2_pres, 1, originPoint, point);
-        writeDatFile(exportLine2Filename, line2_points, line2_vel, line2_pres);
+    std::string exportLine1Filename = "profile1.dat";
+    std::vector<Real> line1_points, line1_vel, line1_pres;
+    extractLineData(line1_points, line1_vel, line1_pres, 0, point);
+    writeDatFile(exportLine1Filename, line1_points, line1_vel, line1_pres);
 
-        if (!rank)
-            logger.printTitle("profile2 written");
+    enabledLogger.printTitle("profile1 written");
 
-        std::string exportLine3Filename = "profile3.dat";
-        std::vector<Real> line3_points, line3_vel, line3_pres;
-        extractLineData(interpolated_model, line3_points, line3_vel, line3_pres, 2, originPoint, point);
-        writeDatFile(exportLine3Filename, line3_points, line3_vel, line3_pres);
+    std::string exportLine2Filename = "profile2.dat";
+    std::vector<Real> line2_points, line2_vel, line2_pres;
+    extractLineData(line2_points, line2_vel, line2_pres, 1, point);
+    writeDatFile(exportLine2Filename, line2_points, line2_vel, line2_pres);
 
-        if (!rank)
-            logger.printTitle("profile3 written");
-    */
+    enabledLogger.printTitle("profile2 written");
+
+    std::string exportLine3Filename = "profile3.dat";
+    std::vector<Real> line3_points, line3_vel, line3_pres;
+    extractLineData(line3_points, line3_vel, line3_pres, 2, point);
+    writeDatFile(exportLine3Filename, line3_points, line3_vel, line3_pres);
+
+    enabledLogger.printTitle("profile3 written");
 
     destroyInterpolationData();
 
