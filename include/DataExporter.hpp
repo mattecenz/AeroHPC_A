@@ -10,53 +10,67 @@
 #include <cmath>
 #include <iomanip>
 #include "vtk/VTKFile.hpp"
+#include <iostream>
 
 inline void probePoint(std::vector<Real> &velocity, std::vector<Real> &pressure, const Real x, const Real y, const Real z) {
-    const Real local_x = x - params.originX;
-    const Real local_y = y - params.originY;
-    const Real local_z = z - params.originZ;
+    // center the domain onto cartesian grid
+    const Real centered_x = x - params.originX;
+    const Real centered_y = y - params.originY;
+    const Real centered_z = z - params.originZ;
 
-    const auto prev_x = static_cast<index_t>(floor(local_x / params.dX)) - params.st_nX;
-    const auto next_x = static_cast<index_t>(ceil(local_x / params.dX)) - params.st_nX;
+    // get coordinates on subdomain system
+    const Real local_x = centered_x - (params.st_nX * params.dX);
+    const Real local_y = centered_y - (params.st_nY * params.dY);
+    const Real local_z = centered_z - (params.st_nZ * params.dZ);
 
-    const auto prev_y = static_cast<index_t>(floor(local_y / params.dY)) - params.st_nY;
-    const auto next_y = static_cast<index_t>(ceil(local_y / params.dY)) - params.st_nY;
+    // get nodes on subdomain system
+    const auto prev_i = static_cast<index_t>(floor(local_x / params.dX));
+    const auto next_i = static_cast<index_t>(ceil(local_x / params.dX));
 
-    const auto prev_z = static_cast<index_t>(floor(local_z / params.dZ)) - params.st_nZ;
-    const auto next_z = static_cast<index_t>(ceil(local_z / params.dZ)) - params.st_nZ;
+    const auto prev_j = static_cast<index_t>(floor(local_y / params.dY));
+    const auto next_j = static_cast<index_t>(ceil(local_y / params.dY));
 
-    const Real prev_x_perc = 1.0 - ((local_x - prev_x) / params.dX);
-    const Real next_x_perc = 1.0 - prev_x_perc;
+    const auto prev_k = static_cast<index_t>(floor(local_z / params.dZ));
+    const auto next_k = static_cast<index_t>(ceil(local_z / params.dZ));
 
-    const Real prev_y_perc = 1.0 - ((local_y - prev_y) / params.dY);
-    const Real next_y_perc = 1.0 - prev_y_perc;
+    if (prev_i < 0) std::cout << "[ERROR] prev_i = " << prev_i << std::endl;
+    if (prev_j < 0) std::cout << "[ERROR] prev_j = " << prev_j << std::endl;
+    if (prev_k < 0) std::cout << "[ERROR] prev_k = " << prev_k << std::endl;
+    if (next_i > params.phy_nX - 1) std::cout << "[ERROR] next_i = " << next_i << std::endl;
+    if (next_j > params.phy_nY - 1) std::cout << "[ERROR] next_j = " << next_j << std::endl;
+    if (next_k > params.phy_nZ - 1) std::cout << "[ERROR] next_k = " << next_k << std::endl;
 
-    const Real prev_z_perc = 1.0 - ((local_z - prev_z) / params.dZ);
-    const Real next_z_perc = 1.0 - prev_z_perc;
+    // get coordinates of nodes
+    const Real prev_x = real(prev_i) * params.dX;
+    const Real prev_y = real(prev_j) * params.dY;
+    const Real prev_z = real(prev_k) * params.dZ;
 
-#define getComponentLetter(letter, x, y, z) \
-    const Real letter##U = PU(interpData_ptr, x, y, z); \
-    const Real letter##V = PV(interpData_ptr, x, y, z); \
-    const Real letter##W = PW(interpData_ptr, x, y, z); \
-    const Real letter##P = PP(interpData_ptr, x, y, z)
+    // get ratio of contribution
+    const Real pprev_x = 1.0 - ((local_x - prev_x) / params.dX);
+    const Real pnext_x = 1.0 - pprev_x;
 
-    getComponentLetter(A, prev_x, prev_y, next_z);
-    getComponentLetter(B, next_x, prev_y, next_z);
-    getComponentLetter(C, next_x, next_y, next_z);
-    getComponentLetter(D, prev_x, next_y, next_z);
+    const Real pprev_y = 1.0 - ((local_y - prev_y) / params.dY);
+    const Real pnext_y = 1.0 - pprev_y;
 
-    getComponentLetter(E, prev_x, next_y, prev_z);
-    getComponentLetter(F, prev_x, prev_y, prev_z);
-    getComponentLetter(G, next_x, prev_y, prev_z);
-    getComponentLetter(H, next_x, next_y, prev_z);
+    const Real pprev_z = 1.0 - ((local_z - prev_z) / params.dZ);
+    const Real pnext_z = 1.0 - pprev_z;
+
+#define getComponentLetter(letter, i, j, k) \
+    const Real letter##U = PU(interpData_ptr, i, j, k); \
+    const Real letter##V = PV(interpData_ptr, i, j, k); \
+    const Real letter##W = PW(interpData_ptr, i, j, k); \
+    const Real letter##P = PP(interpData_ptr, i, j, k)
+
+    getComponentLetter(A, prev_i, prev_j, next_k);
+    getComponentLetter(B, next_i, prev_j, next_k);
+    getComponentLetter(C, next_i, next_j, next_k);
+    getComponentLetter(D, prev_i, next_j, next_k);
+
+    getComponentLetter(E, prev_i, next_j, prev_k);
+    getComponentLetter(F, prev_i, prev_j, prev_k);
+    getComponentLetter(G, next_i, prev_j, prev_k);
+    getComponentLetter(H, next_i, next_j, prev_k);
 #undef getComponentLetter
-
-    const Real px = 1 + prev_x_perc;
-    const Real nx = 1 + next_x_perc;
-    const Real py = 1 + prev_y_perc;
-    const Real ny = 1 + next_y_perc;
-    const Real pz = 1 + prev_z_perc;
-    const Real nz = 1 + next_z_perc;
 
 #define getInterpolatedLetter(letter, perc_prev, perc_next, prev_letter, next_letter) \
     const Real letter##U = perc_prev * prev_letter##U + perc_next * next_letter##U; \
@@ -65,25 +79,25 @@ inline void probePoint(std::vector<Real> &velocity, std::vector<Real> &pressure,
     const Real letter##P = perc_prev * prev_letter##P + perc_next * next_letter##P
 
     // weighted interpolation along y dir
-    getInterpolatedLetter(J, py, ny, A, D);
-    getInterpolatedLetter(K, py, ny, B, C);
-    getInterpolatedLetter(L, py, ny, G, H);
-    getInterpolatedLetter(M, py, ny, F, E);
+    getInterpolatedLetter(J, pprev_y, pnext_y, A, D);
+    getInterpolatedLetter(K, pprev_y, pnext_y, B, C);
+    getInterpolatedLetter(L, pprev_y, pnext_y, G, H);
+    getInterpolatedLetter(M, pprev_y, pnext_y, F, E);
 
     // weighted interpolation along x dir
-    getInterpolatedLetter(U, px, nx, J, K);
-    getInterpolatedLetter(O, px, nx, M, L);
+    getInterpolatedLetter(U, pprev_x, pnext_x, J, K);
+    getInterpolatedLetter(O, pprev_x, pnext_x, M, L);
 
     // weighted interpolation along z dir
-    getInterpolatedLetter(probe, pz, nz, O, U);
+    getInterpolatedLetter(probe, pprev_z, pnext_z, O, U);
 
 #undef getInterpolatedLetter
 
     // add normalized values
-    velocity.push_back(probeU / 27.0);
-    velocity.push_back(probeV / 27.0);
-    velocity.push_back(probeW / 27.0);
-    pressure.push_back(probeP / 27.0);
+    velocity.push_back(probeU);
+    velocity.push_back(probeV);
+    velocity.push_back(probeW);
+    pressure.push_back(probeP);
 }
 
 inline void extractFaceData(std::vector<Real> &point_coord,
@@ -98,27 +112,23 @@ inline void extractFaceData(std::vector<Real> &point_coord,
     const index_t ny = params.phy_nY - 1;
     const index_t nz = params.phy_nZ - 1;
 
-    /// Get point index if it is in this domain
-    const index_t px = params.st_nX;
-    const index_t py = params.st_nY;
-    const index_t pz = params.st_nZ;
+    //                   domain origin  +   subdomain start       + optional padding for subdomain intersection discrimination
+    const Real start_x = params.originX + real(params.st_nX) * dx;
+    const Real start_y = params.originY + real(params.st_nY) * dy + (!params.isOnBottom * dy);
+    const Real start_z = params.originZ + real(params.st_nZ) * dz + (!params.isOnLeft * dz);
 
-    const Real origin_x = real(px) * dx + params.originX;
-    const Real origin_y = real(py) * dy + params.originY + (!params.isOnBottom * dy);
-    const Real origin_z = real(pz) * dz + params.originZ + (!params.isOnLeft * dz);
+    //                  domain origin +     subdomain start     + subdomain size
+    const Real end_x = params.originX + real(params.st_nX) * dx + real(nx) * dx;
+    const Real end_y = params.originY + real(params.st_nY) * dy + real(ny) * dy;
+    const Real end_z = params.originZ + real(params.st_nZ) * dz + real(nz) * dz;
 
-    const Real end_x = origin_x + real(nx) * dx;
-    const Real end_y = origin_y + real(ny) * dy;
-    const Real end_z = origin_z + real(nz) * dz;
-
-    const bool is_in_x_range = (point[0] >= origin_x && point[0] <= end_x);
-    const bool is_in_y_range = (point[1] >= origin_y && point[1] <= end_y);
-    const bool is_in_z_range = (point[2] >= origin_z && point[2] <= end_z);
-
+    const bool is_in_x_range = (point[0] >= start_x && point[0] <= end_x);
+    const bool is_in_y_range = (point[1] >= start_y && point[1] <= end_y);
+    const bool is_in_z_range = (point[2] >= start_z && point[2] <= end_z);
 
     if (is_in_x_range) {
-        for (Real y = origin_y; y <= end_y; y += dy) {
-            for (Real z = origin_z; z <= end_z; z += dz) {
+        for (Real y = start_y; y <= end_y; y += dy) {
+            for (Real z = start_z; z <= end_z; z += dz) {
                 point_coord.push_back(point[0]);
                 point_coord.push_back(y);
                 point_coord.push_back(z);
@@ -128,8 +138,8 @@ inline void extractFaceData(std::vector<Real> &point_coord,
     }
 
     if (is_in_y_range) {
-        for (Real x = origin_x; x <= end_x; x += dx) {
-            for (Real z = origin_z; z <= end_z; z += dz) {
+        for (Real x = start_x; x <= end_x; x += dx) {
+            for (Real z = start_z; z <= end_z; z += dz) {
                 point_coord.push_back(x);
                 point_coord.push_back(point[1]);
                 point_coord.push_back(z);
@@ -139,8 +149,8 @@ inline void extractFaceData(std::vector<Real> &point_coord,
     }
 
     if (is_in_z_range) {
-        for (Real x = origin_x; x <= end_x; x += dx) {
-            for (Real y = origin_y; y <= end_y; y += dy) {
+        for (Real x = start_x; x <= end_x; x += dx) {
+            for (Real y = start_y; y <= end_y; y += dy) {
                 point_coord.push_back(x);
                 point_coord.push_back(y);
                 point_coord.push_back(point[2]);
@@ -165,26 +175,23 @@ inline void extractLineData(std::vector<Real> &point_coord,
     const index_t ny = params.phy_nY - 1;
     const index_t nz = params.phy_nZ - 1;
 
-    /// Get point index if it is in this domain
-    const index_t px = params.st_nX;
-    const index_t py = params.st_nY;
-    const index_t pz = params.st_nZ;
+    //                   domain origin  +   subdomain start       + optional padding for subdomain intersection discrimination
+    const Real start_x = params.originX + real(params.st_nX) * dx;
+    const Real start_y = params.originY + real(params.st_nY) * dy + (!params.isOnBottom * dy);
+    const Real start_z = params.originZ + real(params.st_nZ) * dz + (!params.isOnLeft * dz);
 
-    const Real origin_x = real(px) * dx + params.originX;
-    const Real origin_y = real(py) * dy + params.originY + (!params.isOnBottom * dy);
-    const Real origin_z = real(pz) * dz + params.originZ + (!params.isOnLeft * dz);
+    //                  domain origin +     subdomain start     + subdomain size
+    const Real end_x = params.originX + real(params.st_nX) * dx + real(nx) * dx;
+    const Real end_y = params.originY + real(params.st_nY) * dy + real(ny) * dy;
+    const Real end_z = params.originZ + real(params.st_nZ) * dz + real(nz) * dz;
 
-    const Real end_x = origin_x + real(nx) * dx;
-    const Real end_y = origin_y + real(ny) * dy;
-    const Real end_z = origin_z + real(nz) * dz;
-
-    const bool is_in_x_range = (point[0] >= origin_x && point[0] <= end_x);
-    const bool is_in_y_range = (point[1] >= origin_y && point[1] <= end_y);
-    const bool is_in_z_range = (point[2] >= origin_z && point[2] <= end_z);
+    const bool is_in_x_range = (point[0] >= start_x && point[0] <= end_x);
+    const bool is_in_y_range = (point[1] >= start_y && point[1] <= end_y);
+    const bool is_in_z_range = (point[2] >= start_z && point[2] <= end_z);
 
     // If ask for x-axis then the point should be in range of y and z
     if (axis == 0 && is_in_y_range && is_in_z_range) {
-        for (Real x = origin_x; x <= end_x; x += dx) {
+        for (Real x = start_x; x <= end_x; x += dx) {
             point_coord.push_back(x);
             point_coord.push_back(point[1]);
             point_coord.push_back(point[2]);
@@ -194,7 +201,7 @@ inline void extractLineData(std::vector<Real> &point_coord,
 
     // If ask for y-axis then the point should be in range of x and z
     if (axis == 1 && is_in_x_range && is_in_z_range) {
-        for (Real y = origin_y; y <= end_y; y += dy) {
+        for (Real y = start_y; y <= end_y; y += dy) {
             point_coord.push_back(point[0]);
             point_coord.push_back(y);
             point_coord.push_back(point[2]);
@@ -204,7 +211,7 @@ inline void extractLineData(std::vector<Real> &point_coord,
 
     // If ask for z-axis then the point should be in range of x and y
     if (axis == 2 && is_in_x_range && is_in_y_range) {
-        for (Real z = origin_z; z <= end_z; z += dz) {
+        for (Real z = start_z; z <= end_z; z += dz) {
             point_coord.push_back(point[0]);
             point_coord.push_back(point[1]);
             point_coord.push_back(z);
@@ -365,7 +372,7 @@ inline void writeDatFile(
     for (int i = 0; i < local_n; i++) {
         ss << point_values[i * 3] << " " << point_values[i * 3 + 1] << " " << point_values[i * 3 + 2];
         ss << " " << velocity_values[i * 3] << " " << velocity_values[i * 3 + 1] << " " << velocity_values[i * 3 + 2];
-        ss << " " << pressure_values[i * 3] << "\n";
+        ss << " " << pressure_values[i] << "\n";
     }
 
     const std::string str = ss.str();

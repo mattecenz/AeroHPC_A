@@ -135,9 +135,6 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
     const Real finalTime = real(params.timesteps) * params.dt;
     interpolateData(rkData.model_data, finalTime);
 
-    if (IS_MAIN_PROC)
-        create_directories("solution");
-
     MPI_Barrier(MPI_COMM_WORLD);
 
     std::string exportFaceFilename = "solution.vtk";
