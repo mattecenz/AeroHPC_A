@@ -36,6 +36,7 @@ namespace mathUtils {
     interpolate_on_grid(W)
 
     interpolate_on_grid(P)
+#undef interpolate_on_grid
 
 
 #define interpolate(C) inline Real intp_##C(const Real *data, const int i, const int j, const int k) { \
@@ -56,6 +57,7 @@ namespace mathUtils {
     interpolate(V)
 
     interpolate(W)
+#undef interpolate
 
 
     inline Real vel_div(const Real *data, int i, int j, int k) {
@@ -93,6 +95,7 @@ namespace mathUtils {
     d_dx(V)
 
     d_dx(W)
+#undef d_dx
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -109,6 +112,7 @@ namespace mathUtils {
     d_dy(V)
 
     d_dy(W)
+#undef d_dy
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -126,6 +130,7 @@ namespace mathUtils {
     d_dz(V)
 
     d_dz(W)
+#undef d_dz
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -143,6 +148,7 @@ namespace mathUtils {
     d2_dx2(V)
 
     d2_dx2(W)
+#undef d2_dx2
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -160,6 +166,7 @@ namespace mathUtils {
     d2_dy2(V)
 
     d2_dy2(W)
+#undef d2_dy2
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -177,6 +184,7 @@ namespace mathUtils {
     d2_dz2(V)
 
     d2_dz2(W)
+#undef d2_dz2
 
 
     /**
@@ -195,6 +203,7 @@ namespace mathUtils {
     lap(V)
 
     lap(W)
+#undef lap
 
     /**
     @param[in] grid Staggered grid
@@ -246,6 +255,7 @@ namespace mathUtils {
     interp(W, U)
 
     interp(W, V)
+#undef interp
 
     /**
     @param[in] model Model containing both the staggered grid and the spacing
@@ -278,5 +288,7 @@ namespace mathUtils {
     conv(V)
 
     conv(W)
+#undef conv
+
 }
 #endif //AEROHPC_A_MATHUTILS_H

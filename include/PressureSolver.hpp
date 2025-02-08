@@ -112,12 +112,6 @@ inline void solvePressure() {
     computeFFT();
     solveEigenvalues();
     computeIFFT();
-    /*
-    // APPLY SCALING FACTOR TO X REPRESENTATION
-    for (index_t idx = 0; idx < xDirXSize * xDirYSize * xDirZSize; ++idx) {
-        fftData.base_buffer[idx] /= fftData.scalingFactor;
-    }
-    */
 }
 
 

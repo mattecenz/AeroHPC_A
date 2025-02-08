@@ -355,5 +355,7 @@ void inline apply_boundaries(Real *data, const Real currentTime, int type) {
     }
 }
 
+#undef boundary_add_request_velocity
+#undef boundary_add_request_pressure
 
 #endif //AEROHPC_A_BOUNDARIES_HPP
