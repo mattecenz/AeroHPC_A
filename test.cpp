@@ -27,7 +27,7 @@ int testSolver() {
 
     const bool periodicPressureBC[3] = {false, false, false};
 
-    std::vector<result_t> results;
+    std::vector<SolverInfo::result_t> results;
 
     std::vector<index_t> nodes = {
         8, 16, 32, 64
@@ -35,28 +35,36 @@ int testSolver() {
 
     enabledBufferPrinter.initDir();
 
+    SolverInfo solverInfo{
+        false,
+        -1,
+        "solution.vtk",
+        "profile.dat",
+        {0.0, 0.0, 0.0}
+    };
+
     // wrt dim
     for (index_t n: nodes) {
         enabledLogger.openSection("TEST");
 
         initSolverData(dim_x, dim_y, dim_z,
-                 origin_x, origin_y, origin_z,
-                 deltaT, timeSteps, Re,
-                 n, n, n,
-                 npy, npz,
-                 periodicPressureBC,
-                 &testDomainData);
+                       origin_x, origin_y, origin_z,
+                       deltaT, timeSteps, Re,
+                       n, n, n,
+                       npy, npz,
+                       periodicPressureBC,
+                       &testDomainData);
 
         enabledLogger.printTitle("Data initialized");
 
-        result_t result = runSolver(0.0, 0.0, 0.0);
+        runSolver(solverInfo);
 
         destroySolverData();
 
         enabledLogger.printTitle("Data destroyed")
                 .closeSection().empty();
 
-        results.push_back(result);
+        results.push_back(solverInfo.results);
     }
 
     if (IS_MAIN_PROC) {
@@ -71,7 +79,7 @@ int testSolver() {
         }
         csvFile << std::endl;
 
-        for (const auto &result : results) {
+        for (const auto &result: results) {
             auto res_iter = result.begin();
             csvFile << res_iter->second;
             ++res_iter;
