@@ -14,7 +14,7 @@ TFunction exactW = [](const Real x, const Real y, const Real z, const Real t) ->
 };
 
 TFunction exactP = [](const Real x, const Real y, const Real z, const Real t) -> Real {
-    return std::cos(x) * std::cos(y) * std::cos(z) * std::sin(t);
+    return std::cos(x) * std::cos(y) * std::sin(z) * std::sin(t);
 };
 
 DomainData testDomainData(DIRICHLET, {exactU, exactV, exactW, exactP},

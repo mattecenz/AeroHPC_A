@@ -13,17 +13,17 @@ int testSolver() {
     const int npy = 1;
     const int npz = 1;
 
-    const Real dim_x = 1.0;
-    const Real dim_y = 1.0;
-    const Real dim_z = 2.0;
+    const Real dim_x = M_PI;
+    const Real dim_y = M_PI;
+    const Real dim_z = M_PI;
 
     const Real origin_x = 0.0;
     const Real origin_y = 0.0;
-    const Real origin_z = -1.0;
+    const Real origin_z = -M_PI/2.0;
 
-    const Real deltaT = 1e-4;
+    const Real deltaT = 1e-3;
     const Real Re = 1000.0;
-    const index_t timeSteps = 1000000;
+    const index_t timeSteps = 100;
 
     const bool periodicPressureBC[3] = {false, false, false};
 
@@ -31,7 +31,7 @@ int testSolver() {
 
 
     std::vector<index_t> nodes = {
-        8, 16, 32, 64
+        32
     };
 
     enabledBufferPrinter.initDir();
