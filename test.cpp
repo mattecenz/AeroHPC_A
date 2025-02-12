@@ -10,7 +10,7 @@
 #include "testDomainFunctions.cpp"
 
 int testSolver() {
-    const int npy = 1;
+    const int npy = THIS_WORLD_SIZE;
     const int npz = 1;
 
     const Real dim_x = M_PI;
@@ -28,7 +28,6 @@ int testSolver() {
     const bool periodicPressureBC[3] = {false, false, false};
 
     std::vector<result_t> results;
-
 
     std::vector<index_t> nodes = {
         32

@@ -1,6 +1,8 @@
 #ifndef BOUNDARIESFUNCTIONS_HPP
 #define BOUNDARIESFUNCTIONS_HPP
 
+#include <ForcingTerm.hpp>
+
 #include "data/SpatialFunctionsCollect.hpp"
 
 /**
@@ -19,6 +21,9 @@ public:
     /// This collection is used only to check L2Norm on domain (so only for test purposes)
     const SpatialFunctionsCollect domainF;
 
+    /// Domain-wise forcing term
+    ForcingTerm forcingF;
+
     DomainData() = delete;
 
     DomainData(
@@ -28,14 +33,15 @@ public:
         const int westType, const SpatialFunctionsCollect &westBF,
         const int frontType, const SpatialFunctionsCollect &frontBF,
         const int backType, const SpatialFunctionsCollect &backBF,
-        const SpatialFunctionsCollect &domainF
+        const SpatialFunctionsCollect &domainF,
+        const ForcingTerm &forcingF
     ) : northType(northType), southType(southType),
         eastType(eastType), westType(westType),
         frontType(frontType), backType(backType),
         northBF(northBF), southBF(southBF),
         eastBF(eastBF), westBF(westBF),
         frontBF(frontBF), backBF(backBF),
-        domainF(domainF) {
+        domainF(domainF), forcingF(forcingF) {
     }
 };
 

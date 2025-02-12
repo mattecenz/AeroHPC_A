@@ -15,9 +15,7 @@ inline void rungeKutta(const Real time) {
     const Real t_1 = time + RKConst::beta1 * params.dt;
     const Real t_2 = time + params.dt;
 
-#if ForcingT
-    ForcingTerm ft(params.Re, time);
-#endif // ForcingT
+    domData.forcingF.set_time(time);
 
     Y2star(rkData.buffer_data, rkData.model_data, rkData.model_data)
 
@@ -41,9 +39,7 @@ inline void rungeKutta(const Real time) {
                                BufferPrinter::PRINT_VELOCITY | BufferPrinter::PRINT_PRESSURE);
 #endif  // DISABLE_PRESSURE
 
-#if ForcingT
-    ft.set_time(t_0);
-#endif // ForcingT
+    domData.forcingF.set_time(t_0);
 
     Y3star(rkData.model_data, rkData.buffer_data, rkData.buffer_data)
 
@@ -68,9 +64,7 @@ inline void rungeKutta(const Real time) {
 #endif // DISABLE_PRESSURE
 
 
-#if ForcingT
-    ft.set_time(t_1);
-#endif // ForcingT
+    domData.forcingF.set_time(t_1);
 
     U_N1star(rkData.buffer_data, rkData.model_data, rkData.model_data)
 

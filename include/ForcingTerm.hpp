@@ -6,28 +6,29 @@
 #include "Traits.hpp"
 
 class ForcingTerm {
+    const TFunction FU, FV, FW;
 
 public:
+    ForcingTerm(const TFunction &forcingU, const TFunction &forcingV, const TFunction &forcingW)
+        : FU(forcingU), FV(forcingV), FW(forcingW) {
+    }
 
-    ForcingTerm(Real Re, Real time) : Re(Re), time(time){}
-
-    void set_time(Real currentTime){
+    void set_time(const Real currentTime) {
         time = currentTime;
     }
 
-    void update_time(Real extraTime){
+    void update_time(const Real extraTime) {
         time += extraTime;
     }
 
     Real get_time() const { return time; };
 
-    Real computeGx(Real x, Real y, Real z) const;
-    Real computeGy(Real x, Real y, Real z) const;
-    Real computeGz(Real x, Real y, Real z) const;
+    Real computeU(const Real x, const Real y, const Real z) const { return FU(x, y, z, time); }
+    Real computeV(const Real x, const Real y, const Real z) const { return FV(x, y, z, time); }
+    Real computeW(const Real x, const Real y, const Real z) const { return FW(x, y, z, time); }
 
 private:
-    Real time;
-    const Real Re;
+    Real time = 0.0;
 };
 
 #endif // FORCING_TERM_HPP
