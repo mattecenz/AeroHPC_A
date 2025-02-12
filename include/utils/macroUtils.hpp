@@ -33,10 +33,10 @@
 
 /// Iterate over velocity domain, allowing not to iterate on direction-last nodes
 /// (skip is useful for optimization, since direction-last nodes are on physical domain, so their value is set by boundaries)
-#define ITERATE_DOMAIN_VELOCITY(i, j, k, compute_physics, skip_C)                                           \
-    ITERATE_DOMAIN(k, 0, ((params.isOnRight && (skip_C & SKIP_W)) ? params.loc_nZ - 1 : params.loc_nZ),     \
-                   j, 0, ((params.isOnTop && (skip_C & SKIP_V)) ? params.loc_nY - 1 : params.loc_nY),       \
-                   i, 0, ((skip_C & SKIP_U) ? params.loc_nX - 1 : params.loc_nX),                           \
+#define ITERATE_DOMAIN_VELOCITY(i, j, k, compute_physics, skip_C)                                                               \
+    ITERATE_DOMAIN(k, 0, ((params.isOnRight && (skip_C & SKIP_W) && !params.periodicZ) ? params.loc_nZ - 1 : params.loc_nZ),    \
+                   j, 0, ((params.isOnTop && (skip_C & SKIP_V) && !params.periodicY) ? params.loc_nY - 1 : params.loc_nY),      \
+                   i, 0, (((skip_C & SKIP_U) && !params.periodicX) ? params.loc_nX - 1 : params.loc_nX),                        \
                    compute_physics, Z, Y, X)
 
 
