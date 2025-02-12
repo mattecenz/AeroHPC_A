@@ -21,16 +21,16 @@ int testSolver() {
     const Real origin_y = 0.0;
     const Real origin_z = -M_PI/2.0;
 
-    const Real deltaT = 1e-3;
+    const Real deltaT = 1e-4;
     const Real Re = 1000.0;
-    const index_t timeSteps = 100;
+    const index_t timeSteps = 1;
 
     const bool periodicPressureBC[3] = {false, false, false};
 
     std::vector<result_t> results;
 
     std::vector<index_t> nodes = {
-        32
+        8, 16, 32, 64, 128
     };
 
     enabledBufferPrinter.initDir();
