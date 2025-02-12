@@ -15,14 +15,14 @@ int testSolver() {
 
     const Real dim_x = 1.0;
     const Real dim_y = 1.0;
-    const Real dim_z = 2.0;
+    const Real dim_z = 1.0;
 
     const Real origin_x = 0.0;
     const Real origin_y = 0.0;
-    const Real origin_z = -1.0;
+    const Real origin_z = 0.0;
 
-    const Real deltaT = 1e-4;
-    const Real Re = 5000.0;
+    const Real deltaT = 1e-3;
+    const Real Re = 1000.0;
     const index_t timeSteps = 1000;
 
     const bool periodicPressureBC[3] = {false, false, false};

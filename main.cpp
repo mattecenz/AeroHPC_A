@@ -6,6 +6,7 @@
 #include "utils/Logger.hpp"
 #include "data/SolverData.hpp"
 #include "data/DomainData.hpp"
+#include "data/SolverInfo.hpp"
 #include <fstream>
 
 using namespace std;
@@ -122,7 +123,15 @@ int runTestCase(int argc, char **argv) {
 
     enabledLogger.printTitle("Data initialized");
 
-    runSolver(extr_px, extr_py, extr_pz);
+    SolverInfo solverInfo{
+        false,
+        10,
+        "solution.vtk",
+        "profile.dat",
+        {extr_px, extr_py, extr_pz},
+    };
+
+    runSolver(solverInfo);
 
     destroySolverData();
 
