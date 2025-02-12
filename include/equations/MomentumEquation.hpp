@@ -26,15 +26,12 @@ compute_rhs(W)
 
 
 //***********/ FORCING TERM /**************************************************************************************//
-#if ForcingT
-#define getForceU(force, i, j, k) const Real force = ft.computeGx(X + params.dX, Y + params.dX2, Z + params.dZ2)
-#define getForceV(force, i, j, k) const Real force = ft.computeGy(X + params.dX2, Y + params.dY, Z + params.dZ2)
-#define getForceW(force, i, j, k) const Real force = ft.computeGz(X + params.dX2, Y + params.dY2, Z + params.dZ)
-#else
-#define getForceU(force, i, j, k) constexpr Real force = 0
-#define getForceV(force, i, j, k) constexpr Real force = 0
-#define getForceW(force, i, j, k) constexpr Real force = 0
-#endif
+#define getForceU(force, i, j, k) \
+    const Real force = domData.forcingF.computeU(X + params.dX, Y + params.dX2, Z + params.dZ2)
+#define getForceV(force, i, j, k) \
+    const Real force = domData.forcingF.computeV(X + params.dX2, Y + params.dY, Z + params.dZ2)
+#define getForceW(force, i, j, k) \
+    const Real force = domData.forcingF.computeW(X + params.dX2, Y + params.dY2, Z + params.dZ)
 //*****************************************************************************************************************//
 
 
@@ -53,7 +50,7 @@ compute_rhs(W)
 
 //***********/ MOMENTUM EQUATIONS /********************************************************************************//
 #define Y2star_C(C, Y2star, U_N, P_N)                                                                               \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)                                                                \
+ITERATE_DOMAIN_VELOCITY(i, j, k, true, SKIP_##C)                                                                    \
     getForce##C(force, i, j, k);                                                                                    \
     getPressureGrad##C(d_press, P_N, i, j, k);                                                                      \
     const Real r = compute_rhs_##C(U_N, i, j, k);                                                                   \
@@ -71,7 +68,7 @@ ITERATE_DOMAIN_END()
 
 
 #define Y3star_C(C, Y3star, Y2, PHI_2)                                                                              \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)                                                                \
+ITERATE_DOMAIN_VELOCITY(i, j, k, true, SKIP_##C)                                                                    \
     getForce##C(force, i, j, k);                                                                                    \
     getPressureGrad##C(d_press, PHI_2, i, j, k);                                                                    \
     const Real r1 = rhs_##C(i, j, k);                                                                               \
@@ -91,7 +88,7 @@ ITERATE_DOMAIN_END()
 
 
 #define U_N1star_C(C, U_N1star, Y3, PHI_3)                                                                          \
-ITERATE_DOMAIN_VELOCITY(i, j, k, ForcingT, SKIP_##C)                                                                \
+ITERATE_DOMAIN_VELOCITY(i, j, k, true, SKIP_##C)                                                                    \
     getForce##C(force, i, j, k);                                                                                    \
     getPressureGrad##C(d_press, PHI_3, i, j, k);                                                                    \
     const Real r = compute_rhs_##C(Y3, i, j, k);                                                                    \

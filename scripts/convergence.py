@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 
-def plot_loglog_order_of_convergence(file_path):
+def plot_loglog_order_of_convergence(file_path, output_path):
     """
     Generate a log-log plot of the order of convergence given a CSV file of errors.
     The plot will also show reference lines for first- and second-order convergence.
@@ -40,7 +40,7 @@ def plot_loglog_order_of_convergence(file_path):
     plt.title('Log-Log Plot of Order of Convergence')
     plt.grid(True, which="both", ls="--")
     plt.legend()
-    plt.savefig("conv.png")
+    plt.savefig(output_path)
 
 # Example usage
 # Ensure that 'output.csv' has a single column named 'error' with error values
@@ -49,4 +49,10 @@ if len(sys.argv) < 2:
     exit()
 
 csv_file_path = sys.argv[1]
-plot_loglog_order_of_convergence(csv_file_path)
+
+if len(sys.argv) < 3:
+    png_file_path = "conv.png"
+else:
+    png_file_path = sys.argv[2]
+
+plot_loglog_order_of_convergence(csv_file_path, png_file_path)
