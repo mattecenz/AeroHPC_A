@@ -5,19 +5,19 @@
 
 //********************************* NON PERIODIC DOMAIN INFO **********************************************//
 TFunction exactU = [](const Real x, const Real y, const Real z, const Real t) -> Real {
-    return std::sin(x) * std::cos(y) * std::sin(z) * std::sin(t);
+    return sin(x) * cos(y) * sin(z) * sin(t);
 };
 
 TFunction exactV = [](const Real x, const Real y, const Real z, const Real t) -> Real {
-    return std::cos(x) * std::sin(y) * std::sin(z) * std::sin(t);
+    return cos(x) * sin(y) * sin(z) * sin(t);
 };
 
 TFunction exactW = [](const Real x, const Real y, const Real z, const Real t) -> Real {
-    return 2 * std::cos(x) * std::cos(y) * std::cos(z) * std::sin(t);
+    return 2 * cos(x) * cos(y) * cos(z) * sin(t);
 };
 
 TFunction exactP = [](const Real x, const Real y, const Real z, const Real t) -> Real {
-    return std::cos(x) * std::cos(y) * std::sin(z);
+    return cos(x) * cos(y) * sin(z) * sin(t);
 };
 
 TFunction forcingU = [](const Real x, const Real y, const Real z, const Real t) -> Real {
@@ -25,7 +25,7 @@ TFunction forcingU = [](const Real x, const Real y, const Real z, const Real t) 
     + pow(sin(t), 2) * sin(x) * pow(sin(z), 2) * cos(x) * pow(cos(y), 2) 
     + 2 * pow(sin(t), 2) * sin(x) * cos(x) * pow(cos(y), 2) * pow(cos(z), 2) 
     + sin(x) * sin(z) * cos(t) * cos(y) 
-    - sin(x) * sin(z) * cos(y) 
+    - sin(x) * sin(z) * cos(y) * sin(t)
     + 3 * sin(t) * sin(x) * sin(z) * cos(y) / params.Re;
 };
 
@@ -34,7 +34,7 @@ TFunction forcingV = [](const Real x, const Real y, const Real z, const Real t) 
     + pow(sin(t), 2) * sin(y) * pow(sin(z), 2) * pow(cos(x), 2) * cos(y) 
     + 2 * pow(sin(t), 2) * sin(y) * pow(cos(x), 2) * cos(y) * pow(cos(z), 2) 
     + sin(y) * sin(z) * cos(t) * cos(x) 
-    - sin(y) * sin(z) * cos(x) 
+    - sin(y) * sin(z) * cos(x) * sin(t)
     + 3 * sin(t) * sin(y) * sin(z) * cos(x) / params.Re;
 };
 
@@ -43,7 +43,7 @@ TFunction forcingW = [](const Real x, const Real y, const Real z, const Real t) 
     - 2 * pow(sin(t), 2) * pow(sin(y), 2) * sin(z) * pow(cos(x), 2) * cos(z) 
     - 4 * pow(sin(t), 2) * sin(z) * pow(cos(x), 2) * pow(cos(y), 2) * cos(z) 
     + 2 * cos(t) * cos(x) * cos(y) * cos(z) 
-    + cos(x) * cos(y) * cos(z) 
+    + cos(x) * cos(y) * cos(z) * sin(t)
     + 6 * sin(t) * cos(x) * cos(y) * cos(z) / params.Re;
 };
 
