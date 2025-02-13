@@ -1,7 +1,6 @@
 #include "Traits.hpp"
 #include "data/DomainData.hpp"
 #include "data/SolverData.hpp"
-#include <cmath>
 
 //********************************* NON PERIODIC DOMAIN INFO **********************************************//
 TFunction exactU = [](const Real x, const Real y, const Real z, const Real t) -> Real {
@@ -20,6 +19,7 @@ TFunction exactP = [](const Real x, const Real y, const Real z, const Real t) ->
     return cos(x) * cos(y) * sin(z) * sin(t);
 };
 
+#define pw2(a) ((a)*(a))
 TFunction forcingU = [](const Real x, const Real y, const Real z, const Real t) -> Real {
     return -pow(sin(t), 2) * sin(x) * pow(sin(y), 2) * pow(sin(z), 2) * cos(x) 
     + pow(sin(t), 2) * sin(x) * pow(sin(z), 2) * cos(x) * pow(cos(y), 2) 
@@ -46,6 +46,7 @@ TFunction forcingW = [](const Real x, const Real y, const Real z, const Real t) 
     + cos(x) * cos(y) * cos(z) * sin(t)
     + 6 * sin(t) * cos(x) * cos(y) * cos(z) / params.Re;
 };
+#undef pw2
 
 DomainData testDomainData(DIRICHLET, {exactU, exactV, exactW, exactP},
                           DIRICHLET, {exactU, exactV, exactW, exactP},

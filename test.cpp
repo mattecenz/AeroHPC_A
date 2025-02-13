@@ -13,50 +13,58 @@ int testSolver() {
     const int npy = THIS_WORLD_SIZE;
     const int npz = 1;
 
-    const Real dim_x = M_PI;
-    const Real dim_y = M_PI;
-    const Real dim_z = M_PI;
+    const Real dim_x = 1.0;
+    const Real dim_y = 1.0;
+    const Real dim_z = 1.0;
 
     const Real origin_x = 0.0;
     const Real origin_y = 0.0;
-    const Real origin_z = -M_PI/2.0;
+    const Real origin_z = 0.0;
 
-    const Real deltaT = 1e-4;
+    const Real deltaT = 1e-3;
     const Real Re = 1000.0;
-    const index_t timeSteps = 1;
+    const index_t timeSteps = 1000;
 
     const bool periodicPressureBC[3] = {false, false, false};
 
-    std::vector<result_t> results;
+    std::vector<SolverInfo::result_t> results;
 
     std::vector<index_t> nodes = {
-        8, 16, 32, 64, 128
+        8, 16, 32, 64
     };
 
     enabledBufferPrinter.initDir();
+
+    SolverInfo solverInfo{
+        false,
+        -1,
+        "solution.vtk",
+        "profile.dat",
+        {0.0, 0.0, 0.0}
+    };
 
     // wrt dim
     for (index_t n: nodes) {
         enabledLogger.openSection("TEST");
 
         initSolverData(dim_x, dim_y, dim_z,
-                 origin_x, origin_y, origin_z,
-                 deltaT, timeSteps, Re,
-                 n, n, n,
-                 npy, npz,
-                 periodicPressureBC,
-                 &testDomainData);
+                       origin_x, origin_y, origin_z,
+                       deltaT, timeSteps, Re,
+                       n, n, n,
+                       npy, npz,
+                       periodicPressureBC,
+                       &testDomainData);
 
         enabledLogger.printTitle("Data initialized");
 
-        result_t result = runSolver(0.0, 0.0, 0.0);
+        runSolver(solverInfo);
 
         destroySolverData();
 
         enabledLogger.printTitle("Data destroyed")
                 .closeSection().empty();
 
-        results.push_back(result);
+        results.push_back(solverInfo.results);
     }
 
     if (IS_MAIN_PROC) {
@@ -71,7 +79,7 @@ int testSolver() {
         }
         csvFile << std::endl;
 
-        for (const auto &result : results) {
+        for (const auto &result: results) {
             auto res_iter = result.begin();
             csvFile << res_iter->second;
             ++res_iter;

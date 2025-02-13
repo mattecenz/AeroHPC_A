@@ -2,8 +2,6 @@
 #define AEROHPC_A_TRAITS_H
 
 #include <functional>
-#include <map>
-#include <string>
 
 #ifndef ForcingT
 #define ForcingT 0
@@ -33,11 +31,6 @@ typedef double Real;
  * Typedef for array indexing
  */
 typedef long index_t;
-
-/**
- * Typedef for solver result
- */
-typedef std::map<std::string, Real> result_t;
 
 /**
  * Typedef shortening Real Physical vector

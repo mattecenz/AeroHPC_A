@@ -10,11 +10,11 @@
 #include "Initialization.hpp"
 #include "vtk/VTKConverter.hpp"
 #include "Interpolation.hpp"
-
+#include "data/SolverInfo.hpp"
 
 #include "utils/printBuffer.hpp"
 
-inline result_t runSolver(const Real extr_px, const Real extr_py, const Real extr_pz) {
+inline void runSolver(SolverInfo &info) {
     initInterpolationData(params);
 
     enabledLogger.printTitle("Subdomain settings")
@@ -58,21 +58,23 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
     int avgCount = 0;
 
     // Printing variables
-    index_t maxTablePrintLine = 200;
-    index_t printIt = ceil(real(params.timesteps) / real(maxTablePrintLine));
+    index_t printIt = ceil(real(params.timesteps) / real(info.stepOutputMaxNumber));
+    bool printSubSteps = printIt > 0;
+
+    // step output vtk directory path
+    const std::string vtkdir = "vtk/proc" + std::to_string(THIS_PROC_RANK);
 
     /// Start RK method ////////////////////////////////////////////////////////////////////////////////////
     enabledLogger.printTitle("Start computation")
-                .openTable("Iter", {"ts", "gl2U", "gl2P", "rkT", "l2T", "TxN"});
+                    .openTable("Iter", {"ts", "gl2U", "gl2P", "rkT", "l2T", "TxN"});
+
 
     chrono_start(compT);
 
     apply_boundaries(rkData.model_data, 0, VELOCITY);
 
-    constexpr bool ENABLE_VTK_DEBUG = false;
-    const std::string vtkdir = "vtk" + std::to_string(THIS_PROC_RANK);
 
-    if (ENABLE_VTK_DEBUG) {
+    if (info.exportIterationVTK) {
         create_directories(vtkdir);
         interpolateData(rkData.model_data, 0);
         VTKConverter::exportGrid(interpData_ptr).writeFile(vtkdir + "/solution_0.vtk");
@@ -87,15 +89,15 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
         rungeKutta(time);
         chrono_stop(rkTime);
 
-        // Prints Log every n iteration or if is the last one
-        if (!((step + 1) % printIt) || step == params.timesteps - 1)
-        {
+        // Prints Log every n iteration or if it is the last one
+        if (((step + 1) % printIt == 0 && printSubSteps) || step == params.timesteps - 1) {
             // Compute l2 norm error of velocity and pressure
             Real currentTime = time + params.dt;
             chrono_start(l2Time);
             computeL2Norm(rkData.model_data, currentTime, localL2NormU, localL2NormP);
             chrono_stop(l2Time);
-            // Collect error from all processors
+
+            // Collect Infos from all processors
             globalL2NormU = 0.0;
             globalL2NormP = 0.0;
             MPI_Allreduce(&localL2NormU, &globalL2NormU, 1, Real_MPI, MPI_SUM, MPI_COMM_WORLD);
@@ -107,10 +109,11 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
             const Real perf = rkTime / params.grid_ndim;
 
             // Print log info
-            enabledLogger.printTableValues(step + 1, {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
+            enabledLogger.printTableValues(step + 1,
+                                           {currentTime, globalL2NormU, globalL2NormP, rkTime, l2Time, perf});
 
             // Export complete vtk if needed
-            if (ENABLE_VTK_DEBUG) {
+            if (info.exportIterationVTK) {
                 interpolateData(rkData.model_data, currentTime);
                 VTKConverter::exportGrid(interpData_ptr).writeFile(vtkdir + "/solution_" + std::to_string(step) + ".vtk");
             }
@@ -137,40 +140,39 @@ inline result_t runSolver(const Real extr_px, const Real extr_py, const Real ext
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    std::string exportFaceFilename = "solution.vtk";
-    std::string exportFaceDescription = "test";
     std::vector<Real> face_points, face_vel, face_pres;
     extractFaceData(face_points, face_vel, face_pres, {0, 0, 0});
-    writeVtkFile(exportFaceFilename, exportFaceDescription, face_points, face_vel, face_pres);
+    writeVtkFile(info.VTKfinalSolutionPath, "",
+                 face_points, face_vel, face_pres);
 
     enabledLogger.printTitle("solution written");
 
-    std::array<Real, 3> point = {extr_px, extr_py, extr_pz};
+    std::string datPrefix = info.DATfinalSolutionPath.substr(0, info.DATfinalSolutionPath.size() - 4);
 
-    std::string exportLine1Filename = "profile1.dat";
+    std::string exportLine1Filename = datPrefix + "1.dat";
     std::vector<Real> line1_points, line1_vel, line1_pres;
-    extractLineData(line1_points, line1_vel, line1_pres, 0, point);
+    extractLineData(line1_points, line1_vel, line1_pres, 0, info.DATextractionPoint);
     writeDatFile(exportLine1Filename, line1_points, line1_vel, line1_pres);
 
-    enabledLogger.printTitle("profile1 written");
+    enabledLogger.printTitle("profile X written");
 
-    std::string exportLine2Filename = "profile2.dat";
+    std::string exportLine2Filename = datPrefix + "2.dat";
     std::vector<Real> line2_points, line2_vel, line2_pres;
-    extractLineData(line2_points, line2_vel, line2_pres, 1, point);
+    extractLineData(line2_points, line2_vel, line2_pres, 1, info.DATextractionPoint);
     writeDatFile(exportLine2Filename, line2_points, line2_vel, line2_pres);
 
-    enabledLogger.printTitle("profile2 written");
+    enabledLogger.printTitle("profile Y written");
 
-    std::string exportLine3Filename = "profile3.dat";
+    std::string exportLine3Filename = datPrefix + "3.dat";
     std::vector<Real> line3_points, line3_vel, line3_pres;
-    extractLineData(line3_points, line3_vel, line3_pres, 2, point);
+    extractLineData(line3_points, line3_vel, line3_pres, 2, info.DATextractionPoint);
     writeDatFile(exportLine3Filename, line3_points, line3_vel, line3_pres);
 
-    enabledLogger.printTitle("profile3 written");
+    enabledLogger.printTitle("profile Z written");
 
     destroyInterpolationData();
 
-    return {
+    info.results = {
         {"Nodes", params.glob_nX},
         {"Uerr", globalL2NormU},
         {"Perr", globalL2NormP},
